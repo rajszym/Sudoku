@@ -2,7 +2,7 @@
 
    @file    sudoku.py
    @author  Rajmund Szymanski
-   @date    27.04.2019
+   @date    28.04.2019
    @brief   Sudoku game
 
 *******************************************************************************
@@ -177,9 +177,10 @@ class Sudoku(list):
 		self.level  = 0 # dificulty level
 		self.help   = 0 # help level
 		self.menu   = 0 # focused menu
+		self.right  = False
 		self.index  = 0 # extreme index
 		self.wait   = False
-		self.demo   = False
+		self.live   = False
 		for i in range(81):
 			self.append(Cell(i))
 			for j in range(i):
@@ -224,7 +225,7 @@ class Sudoku(list):
 
 	def solve_next(self, lst):
 
-		if self.demo: self.update()
+		if self.live: self.update()
 		pygame.event.pump()
 		c = self.smin(lst)
 		if c == None: c = self.smin(self)
@@ -273,7 +274,7 @@ class Sudoku(list):
 
 	def generate_next(self):
 
-		if self.demo: self.update()
+		if self.live: self.update()
 		pygame.event.pump()
 		lst = [x for x in self if x.num != 0]
 		random.shuffle(lst)
@@ -317,7 +318,7 @@ class Sudoku(list):
 		self.index = (self.index + random.randrange(1, len(extreme))) % len(extreme)
 		self.init(extreme[self.index])
 		for r in range(81):
-			if self.demo: self.update()
+			if self.live: self.update()
 			pygame.event.pump()
 			p = random.randrange(24)
 			if   p <  9: self.random_vertical(p)
@@ -391,9 +392,9 @@ class Sudoku(list):
 			self.button = 0
 			self.wait = True
 			self.update()
-			if   self.menu == 1: self.level = [1, 3, 3, 0][self.level]; self.generate()
-			elif self.menu == 2: self.help = (self.help + 1) % 3
-			elif self.menu == 3: self.demo = not self.demo
+			if   self.menu == 1: self.level = ([1, 3, 3, 0] if self.right else[3, 0, 0, 1])[self.level]; self.generate()
+			elif self.menu == 2: self.help  = (self.help + 1 if self.right else self.help - 1) % 3
+			elif self.menu == 3: self.live  = not self.live
 			elif self.menu == 4: self.generate()
 			elif self.menu == 5: self.clear()
 			elif self.menu == 6: self.confirm()
@@ -426,6 +427,7 @@ class Sudoku(list):
 
 	def onmousemotion(self, x, y):
 
+		p = x - (Width + 1) * CellWidth - MenuWidth // 2
 		x = x // CellWidth
 		y = y // CellHeight
 
@@ -437,7 +439,8 @@ class Sudoku(list):
 			self.menu = 0
 		elif x > 9:
 			self.focus = 0
-			self.menu = y + 1
+			self.menu  = y + 1
+			self.right = True if p > 0 and self.menu <= 3 else False
 
 	def update(self):
 
@@ -455,9 +458,9 @@ class Sudoku(list):
 		for p in range(1, 10):
 			if   p == 1:         i = 0 + self.level
 			elif p == 2:         i = 4 + self.help
-			elif p == 3:         i = 7 if not self.demo else 8
+			elif p == 3:         i = 7 if not self.live else 8
 			else:                i = p + 6
-			if   p == self.menu: i = 9 if self.wait else i + 16
+			if   p == self.menu: i = 9 if self.wait else i + (32 if self.right else 16)
 			rect = (Width + 1) * CellWidth, (p - 1) * CellHeight, MenuWidth, MenuHeight
 			screen.blit(menu[i], rect)
 		pygame.display.update()
@@ -528,16 +531,30 @@ def create_menu():
 
 	global menu
 
-	items = ["( EASY )", "( MEDIUM )", "( HARD )", "( EXTREME )",
-	         "( CURRENT )", "( AVAILABLE )", "( TIPS )", "( SILENT )", "( LIVE )",
+	items = ["EASY", "MEDIUM", "HARD", "EXTREME",
+	         "DIGITS", "AVAILABLE", "TIPS", "SILENT", "LIVE",
 	         "WAIT", "NEXT", "CLEAR", "CONFIRM", "BACK", "SOLVE", "EXIT"]
 	menu = []
 	font = pygame.font.Font(None, CellHeight // 2)
-	for i in range(2 * len(items)):
+	leftarrow  = [            (3 * CellWidth // 8,     CellHeight // 4),
+	                          (3 * CellWidth // 8, 3 * CellHeight // 4),
+	                          (    CellWidth // 8,     CellHeight // 2)]
+	rightarrow = [(MenuWidth - 3 * CellWidth // 8,     CellHeight // 4),
+	              (MenuWidth - 3 * CellWidth // 8, 3 * CellHeight // 4),
+	              (MenuWidth -     CellWidth // 8,     CellHeight // 2)]
+	for i in range(2 * len(items) + 9):
 		menu.append(Surface(MenuSize))
 		menu[i].fill(Dark)
-		if i == 9:              menu[i].drawMenu(1, Red)
-		if i >= len(items): menu[i].drawMenu(1, Gray)
+		if i == 9:
+			menu[i].drawMenu(1, Red)
+		if i >= len(items):
+			menu[i].drawMenu(1, Gray)
+			if i < len(items) + 9:
+				pygame.draw.polygon(menu[i], White, leftarrow)
+				pygame.draw.lines(menu[i], Dark, True, rightarrow)
+			if i >= len(items) * 2:
+				pygame.draw.lines(menu[i], Dark, True, leftarrow)
+				pygame.draw.polygon(menu[i], White, rightarrow)
 		text = font.render(items[i % len(items)], 1, White if i < len(items) else Dark)
 		rect = text.get_rect()
 		rect.center = MenuWidth // 2, MenuHeight // 2
