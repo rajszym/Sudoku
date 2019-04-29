@@ -2,7 +2,7 @@
 
    @file    sudoku.py
    @author  Rajmund Szymanski
-   @date    28.04.2019
+   @date    29.04.2019
    @brief   Sudoku game
 
 *******************************************************************************
@@ -42,16 +42,6 @@ Blue   = 0x00, 0x00, 0x80
 Dark   = 0x40, 0x40, 0x40
 Black  = 0x00, 0x00, 0x00
 
-class Surface(pygame.Surface):
-
-	def drawCell(self, margin, color, fill = True):
-
-		pygame.draw.rect(self, color, (margin, margin, CellWidth - 2 * margin, CellHeight - 2 * margin), not fill)
-
-	def drawMenu(self, margin, color, fill = True):
-
-		pygame.draw.rect(self, color, (margin, margin, MenuWidth - 2 * margin, MenuHeight - 2 * margin), not fill)
-	
 class Cell:
 
 	def __init__(self, p, n = 0):
@@ -447,10 +437,14 @@ class Sudoku(list):
 		screen = pygame.display.get_surface()
 		for c in self:
 			c.update(screen, self.button, self.help)
-		for p in range(9):
-			for m in range(2):
-				rect = (p % 3) * 3 * CellWidth + m, (p // 3) * 3 * CellHeight + m, 3 * CellWidth - 2 * m, 3 * CellHeight - 2 * m
-				pygame.draw.rect(screen, White, rect, True)
+		for p in range(CellWidth, BoardWidth, CellWidth):
+			pygame.draw.line(screen, Dark, (p - 1, 0), (p - 1, BoardHeight), 2)
+		for p in range(CellHeight, BoardHeight, CellHeight):
+			pygame.draw.line(screen, Dark, (0, p - 1), (BoardWidth, p - 1), 2)
+		for p in range(3 * CellWidth, BoardWidth, 3 * CellWidth):
+			pygame.draw.line(screen, White, (p - 1, 0), (p - 1, BoardHeight), 3)
+		for p in range(3 * CellHeight, BoardHeight, 3 * CellHeight):
+			pygame.draw.line(screen, White, (0, p - 1), (BoardWidth, p - 1), 3)
 		for p in range(1, 10):
 			i = p + (20 if p == self.button else 10 if p == self.focus else 0)
 			rect = Width * CellWidth, (p - 1) * CellHeight, CellWidth, CellHeight
@@ -472,27 +466,25 @@ def create_digits():
 	digits = []
 	font = pygame.font.Font(None, CellHeight)
 	for i in range(21):
-		digits.append(Surface(CellSize))
-		digits[i].fill(Dark)
+		digits.append(pygame.Surface(CellSize))
 		if   i == 0:
-			digits[i].drawCell(2, Blue)
+			digits[i].fill(Blue)
 		elif i < 10:
-			digits[i].drawCell(2, Green)
-			text = font.render(str(i), 1, White)
-			rect = text.get_rect()
-			rect.center = CellWidth // 2, CellHeight // 2
-			digits[i].blit(text, rect)
+			digits[i].fill(Green)
+			text = font.render(str(i % 10), 1, White)
 		elif i == 10:
-			digits[i].drawCell(2, Azure)
+			digits[i].fill(Azure)
 		elif i < 20:
-			digits[i].drawCell(2, Azure)
-			text = font.render(str(i - 10), 1, Black)
+			digits[i].fill(Azure)
+			text = font.render(str(i % 10), 1, Black)
+		elif i == 20:
+			digits[i].fill(Azure)
+			pygame.draw.rect(digits[i], Black, (CellWidth // 2 - 4, CellWidth // 2 - 4, 8, 8))
+		if i % 10 != 0:
 			rect = text.get_rect()
 			rect.center = CellWidth // 2, CellHeight // 2
 			digits[i].blit(text, rect)
-		elif i == 20:
-			digits[i].drawCell(2, Azure)
-			digits[i].drawCell(CellWidth // 2 - 4, Black)
+			
 
 def create_buttons():
 
@@ -500,32 +492,20 @@ def create_buttons():
 
 	buttons = []
 	font = pygame.font.Font(None, CellHeight)
-	for i in range(10):
-		buttons.append(Surface(CellSize))
-		buttons[i].fill(White)
-		if i > 0:
-			text = font.render(str(i), 1, Black)
-			rect = text.get_rect()
-			rect.center = CellWidth // 2, CellHeight // 2
-			buttons[i].blit(text, rect)
-	for i in range(10, 20):
-		buttons.append(Surface(CellSize))
-		buttons[i].fill(White)
-		if i > 10:
-			buttons[i].drawCell(1, Gray)
-			text = font.render(str(i - 10), 1, Black)
-			rect = text.get_rect()
-			rect.center = CellWidth // 2, CellHeight // 2
-			buttons[i].blit(text, rect)
-	for i in range(20, 30):
-		buttons.append(Surface(CellSize))
-		buttons[i].fill(White)
-		if i > 10:
-			buttons[i].drawCell(1, Red)
-			text = font.render(str(i - 20), 1, White)
-			rect = text.get_rect()
-			rect.center = CellWidth // 2, CellHeight // 2
-			buttons[i].blit(text, rect)
+	for i in range(30):
+		buttons.append(pygame.Surface(CellSize))
+		if   i < 10:
+			buttons[i].fill(White)
+			text = font.render(str(i % 10), 1, Black)
+		elif i < 20:
+			buttons[i].fill(Gray)
+			text = font.render(str(i % 10), 1, Black)
+		else:
+			buttons[i].fill(Red)
+			text = font.render(str(i % 10), 1, White)
+		rect = text.get_rect()
+		rect.center = CellWidth // 2, CellHeight // 2
+		buttons[i].blit(text, rect)
 
 def create_menu():
 
@@ -543,21 +523,22 @@ def create_menu():
 	              (MenuWidth - 3 * CellWidth // 8, 3 * CellHeight // 4),
 	              (MenuWidth -     CellWidth // 8,     CellHeight // 2)]
 	for i in range(2 * len(items) + 9):
-		menu.append(Surface(MenuSize))
-		menu[i].fill(Dark)
-		if i == 9:
-			menu[i].drawMenu(1, Red)
-		if i >= len(items):
-			menu[i].drawMenu(1, Gray)
-			if i < len(items) + 9:
-				pygame.draw.polygon(menu[i], White, leftarrow)
-				pygame.draw.lines(menu[i], Dark, True, rightarrow)
-			if i >= len(items) * 2:
-				pygame.draw.lines(menu[i], Dark, True, leftarrow)
-				pygame.draw.polygon(menu[i], White, rightarrow)
+		menu.append(pygame.Surface(MenuSize))
 		text = font.render(items[i % len(items)], 1, White if i < len(items) else Dark)
 		rect = text.get_rect()
 		rect.center = MenuWidth // 2, MenuHeight // 2
+		if i == 9:
+			menu[i].fill(Red)
+		elif i < len(items):
+			menu[i].fill(Dark)
+		else:
+			menu[i].fill(Gray)
+			if i < len(items) + 9:
+				pygame.draw.polygon(menu[i], Black, leftarrow)
+				pygame.draw.lines(menu[i], Dark, True, rightarrow)
+			if i >= len(items) * 2:
+				pygame.draw.lines(menu[i], Dark, True, leftarrow)
+				pygame.draw.polygon(menu[i], Black, rightarrow)
 		menu[i].blit(text, rect)
 
 def main():
@@ -591,8 +572,9 @@ def main():
 
 Size       = Width, Height = 9, 9
 CellSize   = CellWidth, CellHeight = 64, 64
+BoardSize  = BoardWidth, BoardHeight = Width * CellWidth, Height * CellHeight
 MenuSize   = MenuWidth, MenuHeight = 3 * CellWidth, CellHeight
-ScreenSize = ScreenWidth, ScreenHeight = Width * CellWidth + CellWidth + MenuWidth, Height * CellHeight
+ScreenSize = ScreenWidth, ScreenHeight = BoardWidth + CellWidth + MenuWidth, BoardHeight
 
 extreme = [
 "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..", # rating = 3.48
