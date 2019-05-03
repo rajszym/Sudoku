@@ -2,7 +2,7 @@
 
    @file    sudoku.py
    @author  Rajmund Szymanski
-   @date    29.04.2019
+   @date    03.05.2019
    @brief   Sudoku game
 
 *******************************************************************************
@@ -164,7 +164,7 @@ class Sudoku(list):
 		self.over   = False
 		self.button = 0 # current digit
 		self.focus  = 0 # focused digit
-		self.level  = 0 # dificulty level
+		self.level  = 0 # difficulty level
 		self.help   = 0 # help level
 		self.menu   = 0 # focused menu
 		self.right  = False
@@ -442,9 +442,9 @@ class Sudoku(list):
 		for p in range(CellHeight, BoardHeight, CellHeight):
 			pygame.draw.line(screen, Dark, (0, p - 1), (BoardWidth, p - 1), 2)
 		for p in range(3 * CellWidth, BoardWidth, 3 * CellWidth):
-			pygame.draw.line(screen, White, (p - 1, 0), (p - 1, BoardHeight), 3)
+			pygame.draw.line(screen, White, (p - 1, 0), (p - 1, BoardHeight), 2)
 		for p in range(3 * CellHeight, BoardHeight, 3 * CellHeight):
-			pygame.draw.line(screen, White, (0, p - 1), (BoardWidth, p - 1), 3)
+			pygame.draw.line(screen, White, (0, p - 1), (BoardWidth, p - 1), 2)
 		for p in range(1, 10):
 			i = p + (20 if p == self.button else 10 if p == self.focus else 0)
 			rect = Width * CellWidth, (p - 1) * CellHeight, CellWidth, CellHeight
