@@ -72,31 +72,31 @@ std::vector<std::string> extreme =
 "..4.........1.82...8.2....359............61...4..5..7..178...6.6..71..48.........",//3:23:374:0cc8e545
 "..9.84.27.........7.......3..325..1..1..4.6...5....3...9...7...54..6..9.......8..",//3:23:374:1ad485dc
 "6........4251...9.8.....241.7..6...8.....5...5...7..343.981.....4...2.8.........3",//3:26:368:9dc56091
+"..3.....846...8..9..25...........92.54.829..32.....48..243...7..7..4....3..6.7...",//3:28:362:8a6bbdd1
 "..82..7...3..1.....7.9...6......36...6.....4.1.95...2.......5....4......7.58...1.",//3:22:352:889f6a9d
 "1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1",//3:21:350:d35727f5
 "1.8..4..2.273.........8.7....2...9.1.......2.4...5............985...9.6..6..354..",//3:24:348:0fc1405b
 "61....4...5........8.21..5...54.69...9.7.....2............89.17.............7..28",//3:22:346:488309b4
+".......1.3.8......7.6..28.9....91...57.3.....1...2.6.........4......8....4.1..783",//3:23:345:9912d585
+"91.2.......28.........16.......8.4.5..8.3.2.....52..873....574...7...1..6..7.....",//3:25:345:4c9b81ea
 "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",//3:21:341:a331b75e
 ".7.....15.4.51...36...........49....9...35.....6...2..........2.6...45...2..517.4",//3:24:341:2ab61bd7
+"8..5......72.....55312...46.....3..9.9..2..1...3.5..2....4.2..178.1...6..........",//3:26:339:73066669
+".1.8..72456.......8.......6.8..4.....4.9.3..5.2...841.....8..4...8..9..1.3.1...6.",//3:27:339:6f9a3ac8
 "..3.9...2.298...7.6...1.......5.69....2..8..7.....1.8.3.8.......7...3.14.4.......",//3:24:336:2b38debd
 "...7..2..4..2...39....9..1.6....394...1.....6.8.9.....1......63..7......3..82....",//3:23:334:a3875d51
 "5.3..8..9......7.....9.2...8..5..3....2.....84....3.6.2......34.1.6.5........95..",//3:23:331:4780c9c4
+"...2.6.....23.87...8..9.2.19.......6..1......8.5..1.7..5....94...842..........6.8",//3:25:331:d64896e4
 "..1..2.7..4.51...3.......6...7....8..8....6.791...3........5...43....8....2.36...",//3:23:330:7084ad0b
 "..1...3.9.......685.3....4......8..26..9......74.3......681...4....7..9......9..6",//3:23:328:8d0964d6
+"23....5...9....6...45..82..9..1..........6..2....3.14....84.......65..8185.71..2.",//3:27:328:767536aa
 ".....17...7...2...91..8..6...9......3..8......27...6.5...9...4...5.4......63..2.8",//3:23:326:09f0555c
+".....95..3..8........6.4.98874.12...51.......9..4...8...1..7...4.....65..3.....2.",//3:25:325:22633efc
 "...42.8...6...5..7..1...2..3..........7.1...4.243....6.3..8.69..7...9.5....6.....",//3:24:323:21147c76
+"...9....6..7.81....1.67.....257...6.....6.9....8.....25..1............3.3..54.2.9",//3:24:323:7c116398
+"..6.5.........8..5.4...28.1.6....1721............7..833...8..17...3...4..94.2....",//3:25:323:55d2bc9c
 "....5.739...13..4............6.....8.7164....2.....5..7......5..3..14...9.276....",//3:24:322:1359bf93
-".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8",//3:20:321:66750dfe
-"4.....83.3...915.......71...2..1.3..1....4.....3..8.1.8.7...4..........2.9.5..7..",//3:24:321:f6684f19
-"......6.....4...73.7198..2..2769.....5.2...3......8...2.6...79...8..9....1..6..4.",//3:26:319:8277ae15
-".2.6.47.......72.......8.3...79..5.1.........1......248...6.....35.......425.38..",//3:24:318:5cd254ed
-"7.........4......6..23...191.9.4...........9....7..2......7......82..5..5..6.1.8.",//3:21:315:2f1157bc
-"..6.1.9......7...55..9...4..7.13.62..2...7..1.........2.3...4...697........6....8",//3:24:315:2dccaffe
-"2....1........48..37.9.8.1.7.....3..6...9..75..9....6.8.6....52....5.......4..6.3",//3:25:313:a57a0b61
-".21.38..5....1..925........3.7....4..9..4.7...4.76..1...4...........1.5.....2.8.3",//3:25:313:ad291c77
-"...2..8.5..98...2..........5...9..1...76......1...86.77..5..3..23.1..7..4.......6",//3:24:312:0552e522
-"45.........6...2..2.....93.....9..5.9.8.3..4....7..89.3..981......6......6..4.7..",//3:24:312:9b9f2376
-"...4......7...1..3..1....969....5.....82..9....6..35...43..6..1..2...8.....1.2...",//3:23:310:31a8ae27
+".....5...3.1..8......6..3.1..5.436......6.4..467......2.....98......412..18...547",//3:27:322:560654d7
 };
 
 const char *title = "SUDOKU";
@@ -163,9 +163,9 @@ struct Cell
 	void update ( int, int );
 
 	friend
-	bool min_len( Cell *, Cell * );
+	bool min_length( Cell *, Cell * );
 	friend
-	bool min_rng( Cell *, Cell * );
+	bool min_range( Cell *, Cell * );
 };
 
 struct Value: public std::array<int, 10>
@@ -254,8 +254,7 @@ void Cell::link( std::vector<Cell *> &tab )
 
 	for (Cell *c: tab)
 	{
-		if (c == this)
-			continue;
+		if (c == this) continue;
 
 		int cr = c->pos / 9;
 		int cc = c->pos % 9;
@@ -291,12 +290,12 @@ int Cell::range()
 	return result;
 }
 
-bool min_len( Cell *a, Cell *b )
+bool min_length( Cell *a, Cell *b )
 {
 	return a->num == 0 && (b->num != 0 || a->len() < b->len());
 }
 
-bool min_rng( Cell *a, Cell *b )
+bool min_range( Cell *a, Cell *b )
 {
 	return a->num == 0 && (b->num != 0 || a->range() < b->range());
 }
@@ -522,7 +521,7 @@ struct Sudoku: public std::vector<Cell *>
 	void solve        ();
 	bool solve_test   ( std::vector<Cell *> & );
 	bool generate_next( Cell *, bool = false );
-	void generate     ();
+	void generate     ( bool = false );
 	int  rating_next  ();
 	void rating_calc  ();
 	void signat_calc  ();
@@ -741,8 +740,8 @@ bool Sudoku::simplify()
 
 bool Sudoku::solve_next( std::vector<Cell *> &lst )
 {
-	Cell *cell = *std::min_element(lst.begin(), lst.end(), ::min_len);
-	if (cell->num != 0) cell = *std::min_element(begin(), end(), ::min_len);
+	Cell *cell = *std::min_element(lst.begin(), lst.end(), ::min_length);
+	if (cell->num != 0) cell = *std::min_element(begin(), end(), ::min_length);
 	if (cell->num != 0) return true;
 
 	Value val(cell); val.shuffle();
@@ -765,8 +764,8 @@ void Sudoku::solve()
 
 bool Sudoku::solve_test( std::vector<Cell *> &lst )
 {
-	Cell *cell = *std::min_element(lst.begin(), lst.end(), ::min_len);
-	if (cell->num != 0) cell = *std::min_element(begin(), end(), ::min_len);
+	Cell *cell = *std::min_element(lst.begin(), lst.end(), ::min_length);
+	if (cell->num != 0) cell = *std::min_element(begin(), end(), ::min_length);
 	if (cell->num != 0) return true;
 
 	Value val(cell); val.shuffle();
@@ -808,7 +807,7 @@ bool Sudoku::generate_next( Cell *cell, bool test )
 	return true;
 }
 
-void Sudoku::generate()
+void Sudoku::generate( bool force )
 {
 	if (level == 4)
 	{
@@ -817,12 +816,16 @@ void Sudoku::generate()
 	}
 	else
 	{
-		clear();
-		solve_next(*this);
-		std::vector<Cell *> tab(*this);
-		std::shuffle(tab.begin(), tab.end(), rnd);
-		for (Cell *c: tab)
-			generate_next(c);
+		do
+		{
+			clear();
+			solve_next(*this);
+			std::vector<Cell *> tab(*this);
+			std::shuffle(tab.begin(), tab.end(), rnd);
+			for (Cell *c: tab)
+				generate_next(c);
+		}
+		while (force && level > 0 && !kbhit() && simplify() && solved());
 		confirm();
 	}
 }
@@ -836,24 +839,24 @@ int Sudoku::rating_next()
 		if (c->num == 0 && c->sure(c->tmp) != 0)
 		{
 			c->num = c->tmp;
-			int result = rating_next();
+			int result = rating_next() + 1;
 			c->num = 0;
-			return result + 1;
+			return result;
 		}
 
-	int range  = (*std::min_element(begin(), end(), ::min_rng))->range();
-	int result = 81 * 21 * 9;
+	int range  = (*std::min_element(begin(), end(), ::min_range))->range();
+	int result = (~0U) >> 1;
 
 	for (Cell *c: *this)
 		if (c->num == 0 && c->range() == range)
 		{
 			c->num = c->tmp;
-			int r = rating_next();
+			int r = rating_next() + 1 + range;
 			c->num = 0;
 			if (r < result) result = r;
 		}
 
-	return result + range + 1;
+	return result;
 }
 
 void Sudoku::rating_calc()
@@ -1181,6 +1184,11 @@ struct Base
 	Base( Sudoku & );
 
 	void put();
+
+	friend
+	bool sort_rating( Base &, Base & );
+	friend
+	bool sort_length( Base &, Base & );
 };
 
 Base::Base( Sudoku &sudoku )
@@ -1200,6 +1208,16 @@ void Base::put()
 	sudoku.signature = signature;
 	for (Cell *c: sudoku) c->num = data[c->pos];
 	sudoku.put();
+}
+
+bool sort_rating( Base &a, Base &b )
+{
+	return a.rating > b.rating || a.rating == b.rating && (a.len < b.len || a.len == b.len && a.signature < b.signature);
+}
+
+bool sort_length( Base &a, Base &b )
+{
+	return a.len < b.len || a.len == b.len && (a.rating > b.rating || a.rating == b.rating && a.signature < b.signature);
 }
 
 int main( int argc, char **argv )
@@ -1235,10 +1253,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), [](Base &a, Base &b)
-			{
-				return a.rating > b.rating || a.rating == b.rating && (a.len < b.len || a.len == b.len && a.signature < b.signature);
-			});
+			std::sort(coll.begin(), coll.end(), sort_length);
 
 			for (Base &base: coll)
 				base.put();
@@ -1267,10 +1282,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), [](Base &a, Base &b)
-			{
-				return a.rating > b.rating || a.rating == b.rating && (a.len < b.len || a.len == b.len && a.signature < b.signature);
-			});
+			std::sort(coll.begin(), coll.end(), sort_rating);
 
 			for (Base &base: coll)
 				base.put();
@@ -1288,7 +1300,7 @@ int main( int argc, char **argv )
 
 			while (!kbhit() || getch() != 27)
 			{
-				sudoku.generate();
+				sudoku.generate(true);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test())
 				{
 					data.push_back(sudoku.signature);
