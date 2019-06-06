@@ -65,6 +65,7 @@ std::vector<std::string> extreme =
 {
 "1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1",//3:21:834:d35727f5
 ".54.......3....5..1......76...25....4..8...2..6..43.8.....7...8.....97....9.3.4..",//3:23:800:2bb38492
+".174...8.....6..7..4......32..83.9.......9...1......4....92...4.6......89.3.....7",//2:23:798:ebb61127
 "7..........842...9.1.8.7...8..1...52..1.....7..4....9.....9.4.....6.5.....2.7...1",//2:23:752:62f71367
 "..73....52...15.4............98......5..7..187..1..9........8...3......94..5.6...",//3:22:750:e19357f5
 "3...96.........5.2...8.5...6.3....9..1...2..4.....3............84..3..6.9...1.4.5",//2:22:741:09f687df
@@ -94,7 +95,6 @@ std::vector<std::string> extreme =
 "..1.....4.7...231...6.8.......51.9.........5......4..7..5..3....1.7...2...92...6.",//3:22:643:993d3163
 ".1..2....7..1...9.9.6.....7..9.....4......5.61..53..........3.8..8.64........2...",//3:21:642:29e318ec
 "..2..1.5...1...64.75.........9.62....4...8.......4.9.8........26.....49.1....5.3.",//2:23:642:2d2fd714
-"...9....6..7.81....1.67.....257...6.....6.9....8.....25..1............3.3..5..2.9",//2:23:640:1c63433f
 };
 
 const char *title = "SUDOKU";
@@ -502,8 +502,6 @@ struct Sudoku: public std::vector<Cell *>
 	bool solve_test   ( std::vector<Cell *> & );
 	bool generate_next( Cell *, bool = false );
 	void generate     ();
-	int  look_next    ( int );
-	void look         ();
 	int  rating_next  ();
 	void rating_calc  ();
 	void signat_calc  ();
@@ -581,7 +579,7 @@ bool Sudoku::solved()
 
 bool Sudoku::found()
 {
-	return level == 0 || rating >= 20 * len();
+	return level == 0 || rating >= 20 * len() + 50;
 }
 
 bool Sudoku::tips()
@@ -828,42 +826,6 @@ void Sudoku::generate()
 			generate_next(c);
 		confirm();
 	}
-}
-
-int Sudoku::look_next( int length )
-{
-	for (Cell *c: *this)
-	{
-		if (c->num == 0) continue;
-		std::pair tmp { c->num, c->immutable };
-		c->immutable = false;
-		if (generate_next(c))
-		{
-			if (len() < length)
-			{
-				length = len();
-				reload();
-			}
-			length = look_next(length);
-		}
-		c->restore(tmp);
-	}
-	return length;
-}
-
-void Sudoku::look()
-{
-	simplify();
-	if (solved())
-	{
-		again();
-		return;
-	}
-	confirm(false);
-	reload();
-	look_next(len());
-	restore();
-	specify();
 }
 
 int Sudoku::rating_next()
@@ -1269,31 +1231,6 @@ int main( int argc, char **argv )
 
 	switch (std::toupper(cmd))
 	{
-		case 'L': // look
-		{
-			auto sudoku = Sudoku(1);
-			auto data   = std::vector<unsigned>();
-
-			sudoku.load(file);
-
-			std::cerr << title << " look: " << extreme.size() << " boards loaded" << std::endl;
-
-			for (std::string i: extreme)
-			{
-				std::cerr << ++cnt << '\r';
-				sudoku.init(i);
-				sudoku.look();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end())
-				{
-					data.push_back(sudoku.signature);
-					sudoku.put();
-				}
-			}
-
-			std::cerr << title << " look: " << data.size() << " boards found" << std::endl;
-			break;
-		}
-
 		case 'S': // sort
 		{
 			auto sudoku = Sudoku(1);
@@ -1398,7 +1335,6 @@ int main( int argc, char **argv )
 		{
 			std::cerr << title << ": help"           << std::endl
 			          << "Usage:"                    << std::endl
-			          << "sudoku  /l [file] - check" << std::endl
 			          << "sudoku  /s [file] - sort by rating / length" << std::endl
 			          << "sudoku  /S [file] - sort by length / rating" << std::endl
 			          << "sudoku  /t [file] - test"  << std::endl
