@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    04.06.2019
+   @date    06.06.2019
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -35,15 +35,13 @@
 #include <chrono>
 #include <random>
 #include <string>
+#include <utility>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <conio.h>
 #include "console.hpp"
-
-#define LENGTH     20
-#define RATING    (10 * len())
 
 #define TABX  0
 #define TABY  0
@@ -65,38 +63,38 @@
 
 std::vector<std::string> extreme =
 {
-"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...",//3:21:391:24160b86
-".........9..8.2....5.74...312.9...6...5..7.....6...13......658..1....3...8..2..9.",//3:24:384:5fbde9a4
-".........61...497..3...5.6.97..318............4.7.8...4.......6....5..3.89...7.1.",//3:24:379:6fb47b6f
-".79....6.....5......53.17....6.2....49.....83.......1....8..1.4.....5..8....9..5.",//3:22:376:411408a6
-"..4.........1.82...8.2....359............61...4..5..7..178...6.6..71..48.........",//3:23:374:0cc8e545
-"..9.84.27.........7.......3..325..1..1..4.6...5....3...9...7...54..6..9.......8..",//3:23:374:1ad485dc
-"6........4251...9.8.....241.7..6...8.....5...5...7..343.981.....4...2.8.........3",//3:26:368:9dc56091
-"..3.....846...8..9..25...........92.54.829..32.....48..243...7..7..4....3..6.7...",//3:28:362:8a6bbdd1
-"..82..7...3..1.....7.9...6......36...6.....4.1.95...2.......5....4......7.58...1.",//3:22:352:889f6a9d
-"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1",//3:21:350:d35727f5
-"1.8..4..2.273.........8.7....2...9.1.......2.4...5............985...9.6..6..354..",//3:24:348:0fc1405b
-"61....4...5........8.21..5...54.69...9.7.....2............89.17.............7..28",//3:22:346:488309b4
-".......1.3.8......7.6..28.9....91...57.3.....1...2.6.........4......8....4.1..783",//3:23:345:9912d585
-"91.2.......28.........16.......8.4.5..8.3.2.....52..873....574...7...1..6..7.....",//3:25:345:4c9b81ea
-"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",//3:21:341:a331b75e
-".7.....15.4.51...36...........49....9...35.....6...2..........2.6...45...2..517.4",//3:24:341:2ab61bd7
-"8..5......72.....55312...46.....3..9.9..2..1...3.5..2....4.2..178.1...6..........",//3:26:339:73066669
-".1.8..72456.......8.......6.8..4.....4.9.3..5.2...841.....8..4...8..9..1.3.1...6.",//3:27:339:6f9a3ac8
-"..3.9...2.298...7.6...1.......5.69....2..8..7.....1.8.3.8.......7...3.14.4.......",//3:24:336:2b38debd
-"...7..2..4..2...39....9..1.6....394...1.....6.8.9.....1......63..7......3..82....",//3:23:334:a3875d51
-"5.3..8..9......7.....9.2...8..5..3....2.....84....3.6.2......34.1.6.5........95..",//3:23:331:4780c9c4
-"...2.6.....23.87...8..9.2.19.......6..1......8.5..1.7..5....94...842..........6.8",//3:25:331:d64896e4
-"..1..2.7..4.51...3.......6...7....8..8....6.791...3........5...43....8....2.36...",//3:23:330:7084ad0b
-"..1...3.9.......685.3....4......8..26..9......74.3......681...4....7..9......9..6",//3:23:328:8d0964d6
-"23....5...9....6...45..82..9..1..........6..2....3.14....84.......65..8185.71..2.",//3:27:328:767536aa
-".....17...7...2...91..8..6...9......3..8......27...6.5...9...4...5.4......63..2.8",//3:23:326:09f0555c
-".....95..3..8........6.4.98874.12...51.......9..4...8...1..7...4.....65..3.....2.",//3:25:325:22633efc
-"...42.8...6...5..7..1...2..3..........7.1...4.243....6.3..8.69..7...9.5....6.....",//3:24:323:21147c76
-"...9....6..7.81....1.67.....257...6.....6.9....8.....25..1............3.3..54.2.9",//3:24:323:7c116398
-"..6.5.........8..5.4...28.1.6....1721............7..833...8..17...3...4..94.2....",//3:25:323:55d2bc9c
-"....5.739...13..4............6.....8.7164....2.....5..7......5..3..14...9.276....",//3:24:322:1359bf93
-".....5...3.1..8......6..3.1..5.436......6.4..467......2.....98......412..18...547",//3:27:322:560654d7
+"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1",//3:21:834:d35727f5
+".54.......3....5..1......76...25....4..8...2..6..43.8.....7...8.....97....9.3.4..",//3:23:800:2bb38492
+"7..........842...9.1.8.7...8..1...52..1.....7..4....9.....9.4.....6.5.....2.7...1",//2:23:752:62f71367
+"..73....52...15.4............98......5..7..187..1..9........8...3......94..5.6...",//3:22:750:e19357f5
+"3...96.........5.2...8.5...6.3....9..1...2..4.....3............84..3..6.9...1.4.5",//2:22:741:09f687df
+"5.3...6..4...6...2.2...5.....1.4.2..2...7.4.........181..75.3..7......4...8..97..",//3:25:738:ce52f70e
+"..74.3.2.9...7...31.........21...8.....2..4.64.............8...364...7......9.6.5",//3:23:736:44de53bc
+"....4...8...9...5.8.7.1.4...98.6.5.16...59.8.........6..3..2...15......3....9..7.",//3:25:728:f9683c47
+"96.1.....2.5...3........4.........5....76..1...3..27...87..9..212.8...39........7",//3:24:715:c7b138ce
+".9.7.4.3.4.6.....2..3.......1......5..8645.......2.......4..7..9..1..5..7......93",//2:23:702:58c0a491
+"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",//3:21:688:a331b75e
+"6........4251...9.8.....241.7..6...8.....5...5...7..343.981.....4...2.8.........3",//3:26:681:9dc56091
+".........61...497..3...5.6.97..318............4.7.8...4.......6....5..3.89...7.1.",//3:24:675:6fb47b6f
+".....5..1.3..1......7.62.........5...6....94.7.4...2.....8.....5...31.8238.7....4",//3:24:675:e33d3083
+"..5....137.9.......1...4....8...6.32...7..8.1...28..4...1.2.36.69.3.71...5.......",//3:27:674:d2c14c28
+".3..........7...8.2......156...98.2.5..........9...4.83.61..........62.7.5.94....",//3:23:668:70d1a578
+".....6.....23.87...8..9.2.19.......6..1......8.5..1.7..5....94....42..........6.8",//2:23:664:209d6a19
+"....6..7...25....63..9.21..4...8.........361..7.....8.9....5.......2.5...1.3....8",//2:23:662:0c2158d0
+".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..",//3:21:656:9cd895a7
+".4....2..8......39.53..2......7..96.7..6...8...9.3.7......7.......2..456..4.61...",//3:25:656:5046fa5c
+".....8...3..2.5......4..71..93..4.....5...2.....8...6.862.....3...6...9.93.......",//2:22:653:14be953f
+"8........3.4.18..2..2..7.....967..1......15...8......35..32.79...3....2.....9....",//3:24:653:3034f6e7
+".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8",//3:20:649:66750dfe
+".......4.3..8..9...91.4........3..8.....12..5.1...546..........8..7..65...5....3.",//2:22:649:1dc57bd0
+"4...5.....6.4.79..8....1.....3..2....5....78.....9...2...27.31...6....273....56..",//2:25:648:1d362033
+"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...",//3:21:646:24160b86
+"98..1..4.....6....5.4....6149...3.......2..1....8....5.62.....7...3...5.8..7.....",//2:23:646:7afdcf90
+"5.3..8..9......7.....9.2...8..5..3....2.....84....3.6.2......34.1.6.5........95..",//3:23:644:4780c9c4
+"..1.....4.7...231...6.8.......51.9.........5......4..7..5..3....1.7...2...92...6.",//3:22:643:993d3163
+".1..2....7..1...9.9.6.....7..9.....4......5.61..53..........3.8..8.64........2...",//3:21:642:29e318ec
+"..2..1.5...1...64.75.........9.62....4...8.......4.9.8........26.....49.1....5.3.",//2:23:642:2d2fd714
+"...9....6..7.81....1.67.....257...6.....6.9....8.....25..1............3.3..5..2.9",//2:23:640:1c63433f
 };
 
 const char *title = "SUDOKU";
@@ -139,10 +137,10 @@ struct Cell
 {
 	int  pos;
 	int  num;
-	int  tmp;
 	bool immutable;
+	std::pair<int, bool> tmp;
 
-	Cell( int p, int n = 0 ): pos(p), num(n), tmp(0), immutable(false) {}
+	Cell( int p, int n = 0 ): pos(p), num(n), immutable(false), tmp(std::pair { 0, false }) {}
 
 	std::vector<Cell *> lst;
 	std::vector<Cell *> row;
@@ -158,14 +156,13 @@ struct Cell
 	bool allowed( int );
 	int  sure   ( int = 0 );
 	bool set    ( int, bool );
+	void reload ();
+	void restore();
+	void restore( std::pair<int, bool> );
+	bool reset  ();
 	void put    ( std::ostream & );
 	void draw   ();
 	void update ( int, int );
-
-	friend
-	bool min_length( Cell *, Cell * );
-	friend
-	bool min_range( Cell *, Cell * );
 };
 
 struct Value: public std::array<int, 10>
@@ -204,41 +201,6 @@ struct Undo
 };
 
 std::list <Undo> undo;
-
-struct Temp: public std::array<int, 81>
-{
-	std::vector<Cell *> &tmp;
-	bool res;
-
-	Temp( std::vector<Cell *> &, bool = true );
-	~Temp();
-
-	void restore();
-};
-
-Temp::Temp( std::vector<Cell *> &vec, bool restore ): tmp(vec), res(restore)
-{
-	for (Cell *c: vec)
-	{
-		data()[c->pos] = c->num;
-		if (c->immutable) data()[c->pos] += 256;
-	}
-}
-
-Temp::~Temp()
-{
-	if (res)
-		restore();
-}
-
-void Temp::restore()
-{
-	for (Cell *c: tmp)
-	{
-		c->num = data()[c->pos] % 256;
-		c->immutable = data()[c->pos] >= 256;
-	}
-}
 
 void Cell::clear()
 {
@@ -290,14 +252,9 @@ int Cell::range()
 	return result;
 }
 
-bool min_length( Cell *a, Cell *b )
+bool sort_board( Cell *a, Cell *b )
 {
-	return a->num == 0 && (b->num != 0 || a->len() < b->len());
-}
-
-bool min_range( Cell *a, Cell *b )
-{
-	return a->num == 0 && (b->num != 0 || a->range() < b->range());
+	return a->num == 0 && (b->num != 0 || a->len() < b->len() || a->len() == b->len() && a->range() < b->range());
 }
 
 bool Cell::equal( int n )
@@ -348,13 +305,33 @@ int Cell::sure( int n )
 
 bool Cell::set( int n, bool save )
 {
-	n %= 256;
 	if (!allowed(n) && (n != 0 || immutable))
 		return false;
 	if (save)
 		undo.emplace_back(this);
 	num = n;
 	return true;
+}
+
+void Cell::reload()
+{
+	tmp = std::pair { num, immutable };
+}
+
+void Cell::restore()
+{
+	restore(tmp);
+}
+
+void Cell::restore( std::pair<int, bool> old )
+{
+	num = std::get<int>(old);
+	immutable = std::get<bool>(old);
+}
+
+bool Cell::reset()
+{
+	return set(std::get<int>(tmp), false);
 }
 
 void Cell::put( std::ostream &out )
@@ -501,13 +478,16 @@ struct Sudoku: public std::vector<Cell *>
 	std::vector<Button> btn;
 	std::vector<Menu>   mnu;
 
-	int  len          ( int = 0 );
+	int  len          ();
+	int  len          ( int );
 	bool empty        ();
 	bool solved       ();
 	bool found        ();
 	bool tips         ();
 
-	void confirm      ();
+	void reload       ();
+	void restore      ();
+	void confirm      ( bool = true );
 	void init         ( std::string );
 	void clear        ( bool = true );
 	void again        ();
@@ -521,7 +501,9 @@ struct Sudoku: public std::vector<Cell *>
 	void solve        ();
 	bool solve_test   ( std::vector<Cell *> & );
 	bool generate_next( Cell *, bool = false );
-	void generate     ( bool = false );
+	void generate     ();
+	int  look_next    ( int );
+	void look         ();
 	int  rating_next  ();
 	void rating_calc  ();
 	void signat_calc  ();
@@ -536,6 +518,15 @@ struct Sudoku: public std::vector<Cell *>
 	void update       ();
 	void back         ();
 	void game         ();
+};
+
+template<class T>
+struct Temp
+{
+	T *tmp;
+
+	Temp( T *obj ): tmp(obj) { tmp->reload();  }
+	~Temp()                  { tmp->restore(); }
 };
 
 Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
@@ -556,12 +547,20 @@ Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 	mnu.emplace_back(11).add("EXIT");
 }
 
+int Sudoku::len()
+{
+	int result = 0;
+	for (Cell *c: *this)
+		if (c->num != 0) result++;
+	return result;
+}
+
 int Sudoku::len( int n )
 {
 	int result = 0;
 	for (Cell *c: *this)
 		if (c->num == n) result++;
-	return n ? result : 81 - result;
+	return result;
 }
 
 bool Sudoku::empty()
@@ -582,7 +581,7 @@ bool Sudoku::solved()
 
 bool Sudoku::found()
 {
-	return level == 0 || level >= 3 && rating >= RATING;
+	return level == 0 || rating >= 20 * len();
 }
 
 bool Sudoku::tips()
@@ -593,12 +592,28 @@ bool Sudoku::tips()
 	return false;
 }
 
-void Sudoku::confirm()
+void Sudoku::reload()
+{
+	for (Cell *c: *this)
+		c->reload();
+}
+
+void Sudoku::restore()
+{
+	for (Cell *c: *this)
+		c->restore();
+}
+
+void Sudoku::confirm( bool full )
 {
 	for (Cell *c: *this)
 		c->immutable = c->num != 0;
-	specify();
-	undo.clear();
+
+	if (full)
+	{
+		specify();
+		undo.clear();
+	}
 }
 
 void Sudoku::init( std::string txt )
@@ -661,47 +676,36 @@ void Sudoku::shuffle()
 */
 	for (int i = 0; i < 81; i++)
 	{
-		int p = RND(24);
+		int c1 = RND(9);
+		int c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
+		swap_cols(c1, c2);
 
-		if      (p <  9)
-		{
-			int c1 = p;
-			int c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
-			swap_cols(c1, c2);
-		}
-		else if (p < 18)
-		{
-			int r1 = p - 9;
-			int r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
-			swap_rows(r1, r2);
-		}
-		else if (p < 21)
-		{
-			int c1 = p - 18;
-			int c2 = (c1 + 1) % 3;
-			c1 *=3; c2 *= 3;
-			for (int i = 0; i < 3; i++)
-				swap_cols(c1 + i, c2 + i);
-		}
-		else
-		{
-			int r1 = p - 21;
-			int r2 = (r1 + 1) % 3;
-			r1 *= 3; r2 *= 3;
-			for (int i = 0; i < 3; i++)
-				swap_rows(r1 + i, r2 + i);
-		}
+		int r1 = RND(9);
+		int r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
+		swap_rows(r1, r2);
+
+		c1 = RND(3);
+		c2 = (c1 + 1) % 3;
+		c1 *=3; c2 *= 3;
+		for (int i = 0; i < 3; i++)
+			swap_cols(c1 + i, c2 + i);
+
+		r1 = RND(3);
+		r2 = (r1 + 1) % 3;
+		r1 *= 3; r2 *= 3;
+		for (int i = 0; i < 3; i++)
+			swap_rows(r1 + i, r2 + i);
 	}
 }
 
 bool Sudoku::solvable()
 {
-	Temp tmp(*this);
+	auto tmp = Temp<Sudoku>(this);
 
 	clear(false);
 
 	for (Cell *c: *this)
-		if (!c->set(tmp[c->pos], false))
+		if (!c->reset())
 			return false;
 
 	return true;
@@ -712,7 +716,7 @@ bool Sudoku::correct()
 	if (len() < 17)
 		return false;
 
-	Temp tmp(*this);
+	auto tmp = Temp<Sudoku>(this);
 
 	solve_next(*this);
 
@@ -740,8 +744,8 @@ bool Sudoku::simplify()
 
 bool Sudoku::solve_next( std::vector<Cell *> &lst )
 {
-	Cell *cell = *std::min_element(lst.begin(), lst.end(), ::min_length);
-	if (cell->num != 0) cell = *std::min_element(begin(), end(), ::min_length);
+	              Cell *cell = *std::min_element(lst.begin(), lst.end(), ::sort_board);
+	if (cell->num != 0) cell = *std::min_element(    begin(),     end(), ::sort_board);
 	if (cell->num != 0) return true;
 
 	Value val(cell); val.shuffle();
@@ -764,8 +768,8 @@ void Sudoku::solve()
 
 bool Sudoku::solve_test( std::vector<Cell *> &lst )
 {
-	Cell *cell = *std::min_element(lst.begin(), lst.end(), ::min_length);
-	if (cell->num != 0) cell = *std::min_element(begin(), end(), ::min_length);
+	              Cell *cell = *std::min_element(lst.begin(), lst.end(), ::sort_board);
+	if (cell->num != 0) cell = *std::min_element(    begin(),     end(), ::sort_board);
 	if (cell->num != 0) return true;
 
 	Value val(cell); val.shuffle();
@@ -807,7 +811,7 @@ bool Sudoku::generate_next( Cell *cell, bool test )
 	return true;
 }
 
-void Sudoku::generate( bool force )
+void Sudoku::generate()
 {
 	if (level == 4)
 	{
@@ -816,18 +820,50 @@ void Sudoku::generate( bool force )
 	}
 	else
 	{
-		do
-		{
-			clear();
-			solve_next(*this);
-			std::vector<Cell *> tab(*this);
-			std::shuffle(tab.begin(), tab.end(), rnd);
-			for (Cell *c: tab)
-				generate_next(c);
-		}
-		while (force && level > 0 && !kbhit() && simplify() && solved());
+		clear();
+		solve_next(*this);
+		std::vector<Cell *> tab(*this);
+		std::shuffle(tab.begin(), tab.end(), rnd);
+		for (Cell *c: tab)
+			generate_next(c);
 		confirm();
 	}
+}
+
+int Sudoku::look_next( int length )
+{
+	for (Cell *c: *this)
+	{
+		if (c->num == 0) continue;
+		std::pair tmp { c->num, c->immutable };
+		c->immutable = false;
+		if (generate_next(c))
+		{
+			if (len() < length)
+			{
+				length = len();
+				reload();
+			}
+			length = look_next(length);
+		}
+		c->restore(tmp);
+	}
+	return length;
+}
+
+void Sudoku::look()
+{
+	simplify();
+	if (solved())
+	{
+		again();
+		return;
+	}
+	confirm(false);
+	reload();
+	look_next(len());
+	restore();
+	specify();
 }
 
 int Sudoku::rating_next()
@@ -836,22 +872,24 @@ int Sudoku::rating_next()
 		return 0;
 
 	for (Cell *c: *this)
-		if (c->num == 0 && c->sure(c->tmp) != 0)
+		if (c->num == 0 && c->sure(std::get<int>(c->tmp)) != 0)
 		{
-			c->num = c->tmp;
+			c->num = std::get<int>(c->tmp);
 			int result = rating_next() + 1;
 			c->num = 0;
 			return result;
 		}
 
-	int range  = (*std::min_element(begin(), end(), ::min_range))->range();
-	int result = (~0U) >> 1;
+	Cell *cell = *std::min_element(begin(), end(), ::sort_board);
+	int length = cell->len();
+	int range  = cell->range();
+	int result = (~0U>>1);
 
 	for (Cell *c: *this)
-		if (c->num == 0 && c->range() == range)
+		if (c->num == 0 && c->len() == length && c->range() == range)
 		{
-			c->num = c->tmp;
-			int r = rating_next() + 1 + range;
+			c->num = std::get<int>(c->tmp);
+			int r = rating_next() + 1 + length * range;
 			c->num = 0;
 			if (r < result) result = r;
 		}
@@ -867,7 +905,7 @@ void Sudoku::rating_calc()
 	if (!correct())  { rating = -4; return; }
 
 	solve_next(*this);
-	for (Cell *c: *this) c->tmp = c->num;
+	reload();
 	again();
 
 	rating = rating_next();
@@ -1184,11 +1222,6 @@ struct Base
 	Base( Sudoku & );
 
 	void put();
-
-	friend
-	bool sort_rating( Base &, Base & );
-	friend
-	bool sort_length( Base &, Base & );
 };
 
 Base::Base( Sudoku &sudoku )
@@ -1222,6 +1255,7 @@ bool sort_length( Base &a, Base &b )
 
 int main( int argc, char **argv )
 {
+	int  cnt  = 0;
 	char cmd  = 'g';
 	auto file = std::string(*argv) + ".board";
 
@@ -1231,8 +1265,35 @@ int main( int argc, char **argv )
 		if (--argc > 0) file = std::string(*++argv);
 	}
 
+	con.HideCursor();
+
 	switch (std::toupper(cmd))
 	{
+		case 'L': // look
+		{
+			auto sudoku = Sudoku(1);
+			auto data   = std::vector<unsigned>();
+
+			sudoku.load(file);
+
+			std::cerr << title << " look: " << extreme.size() << " boards loaded" << std::endl;
+
+			for (std::string i: extreme)
+			{
+				std::cerr << ++cnt << '\r';
+				sudoku.init(i);
+				sudoku.look();
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end())
+				{
+					data.push_back(sudoku.signature);
+					sudoku.put();
+				}
+			}
+
+			std::cerr << title << " look: " << data.size() << " boards found" << std::endl;
+			break;
+		}
+
 		case 'S': // sort
 		{
 			auto sudoku = Sudoku(1);
@@ -1245,6 +1306,7 @@ int main( int argc, char **argv )
 
 			for (std::string i: extreme)
 			{
+				std::cerr << ++cnt << '\r';
 				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end())
 				{
@@ -1253,7 +1315,8 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), sort_length);
+			if (cmd =='s') std::sort(coll.begin(), coll.end(), ::sort_rating);
+			else           std::sort(coll.begin(), coll.end(), ::sort_length);
 
 			for (Base &base: coll)
 				base.put();
@@ -1274,6 +1337,7 @@ int main( int argc, char **argv )
 
 			for (std::string i: extreme)
 			{
+				std::cerr << ++cnt << '\r';
 				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test())
 				{
@@ -1282,7 +1346,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), sort_rating);
+			std::sort(coll.begin(), coll.end(), ::sort_rating);
 
 			for (Base &base: coll)
 				base.put();
@@ -1300,7 +1364,7 @@ int main( int argc, char **argv )
 
 			while (!kbhit() || getch() != 27)
 			{
-				sudoku.generate(true);
+				sudoku.generate();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test())
 				{
 					data.push_back(sudoku.signature);
@@ -1320,7 +1384,6 @@ int main( int argc, char **argv )
 			int font = con.GetFontSize();
 			con.SetFontSize(48);
 			con.Maximize();
-			con.HideCursor();
 
 			sudoku.game();
 
@@ -1333,13 +1396,16 @@ int main( int argc, char **argv )
 		case '?': /* falls through */
 		case 'H': // help
 		{
-			std::cerr << title << ": help"             << std::endl
-			          << "Usage:"                      << std::endl
-			          << "sudoku  /sort [file] - sort" << std::endl
-			          << "sudoku  /test [file] - test" << std::endl
-			          << "sudoku  /find [file] - find" << std::endl
-			          << "sudoku [/game]       - game" << std::endl
-			          << "sudoku  /help        - help" << std::endl;
+			std::cerr << title << ": help"           << std::endl
+			          << "Usage:"                    << std::endl
+			          << "sudoku  /l [file] - check" << std::endl
+			          << "sudoku  /s [file] - sort by rating / length" << std::endl
+			          << "sudoku  /S [file] - sort by length / rating" << std::endl
+			          << "sudoku  /t [file] - test"  << std::endl
+			          << "sudoku  /f [file] - find"  << std::endl
+			          << "sudoku [/g]       - game"  << std::endl
+			          << "sudoku  /h        - help"  << std::endl
+			          << "sudoku  /?        - help"  << std::endl;
 			break;
 		}
 
@@ -1349,4 +1415,6 @@ int main( int argc, char **argv )
 			break;
 		}
 	}
+
+	con.ShowCursor();
 }
