@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    10.05.2019
+   @date    13.06.2019
    @brief   Sudoku game
 
 *******************************************************************************
@@ -235,14 +235,14 @@ void Console::SetCursorPos(int x, int y)
 
 int Console::GetFontSize()
 {
-	CONSOLE_FONT_INFOEX cfi = { sizeof(cfi) };
+	CONSOLE_FONT_INFOEX cfi = { sizeof(cfi), 0, { 0, 0 }, 0, 0, { 0 } };
 	GetCurrentConsoleFontEx(Cout, false, &cfi);
 	return (int)cfi.dwFontSize.Y;
 }
 
 void Console::SetFontSize(int size)
 {
-	CONSOLE_FONT_INFOEX cfi = { sizeof(cfi) };
+	CONSOLE_FONT_INFOEX cfi = { sizeof(cfi), 0, { 0, 0 }, 0, 0, { 0 } };
 	GetCurrentConsoleFontEx(Cout, false, &cfi);
 	cfi.dwFontSize.Y = (SHORT)size;
 	SetCurrentConsoleFontEx(Cout, false, &cfi);
