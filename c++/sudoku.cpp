@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    13.06.2019
+   @date    24.06.2019
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -63,49 +63,47 @@
 #define WINW (MNUX + MNUW)
 #define WINH (TABY + TABH)
 
-std::vector<std::string> extreme =
-{
-".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..",//3:21:840:9cd895a7
-"4....1.....9...5...6...9..4.9........2...73....1....8.8..5....1.4.21.8.....8...3.",//3:22:735:f1281efc
-".8.2...7...1.7.6.....5..8....7.45...8........5647.....248............3.1.....9.6.",//3:23:721:58a36231
-"2.....31..9.3.......35.64..721.........1.3.7....7.4....18.....5....3.6..........8",//3:23:721:c8a9dcea
-"..7......12....4.3......9..2.6.947.....278...7....1.9......9..8...4.2....5...3..9",//3:24:708:ceed2c1e
-".......39.....1..5..3.5.8....8.9...6.7...2...1..4.......9.8..5..2....6..4..7.....",//3:21:707:bd715305
-".5.6.39...........3.6.8.5.75...4...9..13..........1..24.5.3....1.....46.2...1....",//3:24:707:8f597f5f
-"....6.......3.5.6..7.....8..3.........5..74..8...9..569..8...45..8....9..5.2.98..",//3:24:707:e70c25db
-"7....4...32..57...9...6..7....79..62.....1....356.........7.4..5..2.9.3.......8..",//3:24:707:f634a664
-"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...",//3:21:702:24160b86
-"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",//3:21:702:a331b75e
-"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1",//3:21:702:d35727f5
-"6....5....9....4.87..2............1..1....764....1.8.9.....2....4.6.....38.5.....",//3:21:702:f33dc0aa
-".....8416.154...9.4...7.5.........3....249......3.5...1.4...2....2...9..8...24...",//3:25:693:a5f4df69
-"84.9.12....2.83..99......8....1..9.......8..26..7..1...9.217......8.....7.......5",//3:25:693:c7c96e35
-"..........7....93.3.8....26.....6..1....1268.16.3....57....1.6..5..6..4.6...2....",//3:25:693:ef3bf228
-".1...........6.....39..8.7...4.....5.8...59...6.7.1....4.92..6...2............852",//3:22:689:7848155d
-".5.....8.71.64...9.........57...2..1...7....5..29....4.27.........1......6..3...7",//3:22:689:e5fd5428
-"4.6......2..8..5..1......9.8..1.63.53....9..45....8......28...3......1....4.7....",//3:23:677:990119ab
-"....5.71....7.......6.4...2..1....3.983..2..7.........15....348..8.....1..45.....",//3:23:676:1128bffd
-".79..4.36...6...4...............9..5..6...21..1...8...79.5..3...4.......3.82..9..",//3:23:676:2a16dbd7
-"....3..8..2......495......6..61...9.....54..7....9....27.8......6...9.521..3.....",//3:23:676:6e9c5c5e
-"51...7.8.........4.....1.56.6..9.3.7.......2.785........8...4.....3.6..2.31......",//3:23:676:86af38d2
-"2...4.6..........9.5..7.....18...9...2.6..83.....8.2.78.....4.3.........3.4.2..8.",//3:23:676:b7b447bb
-"..5.....7..76.2....93.....2.7....38....3.4..613..............53.4...9..8....1.7..",//3:23:676:e3143659
-"5.......9.2.........4..285...316...4...728.....6......6..9....51.......7....739..",//3:23:676:f68c25f0
-"...2...7...3.......7.41.6..........51....68.9.98...........5.1.5....7.9..698.1...",//3:23:676:ffb46cfd
-".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8",//3:20:666:66750dfe
-"96..........3...9..37.95.6.4.6.827....81....6..9.......7...1..2..1.3..........5..",//3:24:666:8369df77
-".8.64....29.1......4.7....1...2..6.3.2.....1..7....4.....4....69.2..8...8.4....9.",//3:24:664:018133dc
-".3.68..5...5.4.8.1.78...3.6..........8..6.2.......5.8..4..3....9..4...1....1...7.",//3:24:664:01a48815
-"23......6.....4.5.4.9..............834.2.....5..4.63.1...54367......2.8....6.....",//3:24:664:e110b1bd
-};
-
 const char *title = "SUDOKU";
 
-Console con(title);
+auto con = Console(title);
 
-std::ranlux48 rnd(std::time(nullptr));
+auto rnd = std::mt19937_64(std::time(nullptr));
 
-#define RND(v) (rnd() % (v))
+std::vector<std::string> extreme =
+{
+".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..",//3:21:702:9cd895a7
+"7.48..............328...16....2....15.......8....93........6.....63..5...351.2...",//3:22:642:78d35561
+"52.....8...........1....7.575694......467...............8.1..29.6...24.......9..8",//3:23:630:1304dc2d
+"...2.8.1..4.3.18............94.2...56.7.5..8.1........7.6...35......7..44........",//3:23:584:b52495ca
+"2.....31..9.3.......35.64..721.........1.3.7....7.4....18.....5....3.6..........8",//3:23:584:c8a9dcea
+"..7.........9....384..1..2..7....2..36....7.......7.8.......94.18..4...2.....216.",//3:23:583:068b3d5a
+".56....82..........28...1.6....56.....5..13....14.........1...8.....2..7.7.59.4..",//3:23:583:44a09195
+"....14.3.1..9...47.4..63.1..5.....2...9....5.42....16..6..32...8................1",//3:24:572:49903533
+"2...........8...6.5...2.3.4...958...9...42....8........1..8..498.......142..7...5",//3:24:572:5adcc2a2
+".5.......4.....753....579.1.4.8...3.9.2..........4.....9.6.......4.7.26..2...4.9.",//3:24:572:5bb73733
+"..7......12....4.3......9..2.6.947.....278...7....1.9......9..8...4.2....5...3..9",//3:24:572:ceed2c1e
+"7....4...32..57...9...6..7....79..62.....1....356.........7.4..5..2.9.3.......8..",//3:24:572:f634a664
+".......39.....1..5..3.5.8....8.9...6.7...2...1..4.......9.8..5..2....6..4..7.....",//3:21:556:bd715305
+"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...",//3:21:555:24160b86
+"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",//3:21:555:a331b75e
+"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1",//3:21:555:d35727f5
+"6....5....9....4.87..2............1..1....764....1.8.9.....2....4.6.....38.5.....",//3:21:555:f33dc0aa
+".5.....8.71.64...9.........57...2..1...7....5..29....4.27.........1......6..3...7",//3:22:548:e5fd5428
+"..6...1.882..9.6.......................315.46.1...6..57...3.2....3....9...4..8...",//3:22:545:1262668b
+"...9..6.......71...64.5.3..............8.2....16......9......5.675.2..4.3....5.2.",//3:22:545:2199fc41
+"...37...88..........71....9.13......7....5.2........86.4.2.6.....9....6......98.4",//3:22:545:306cb144
+".1...........6.....39..8.7...4.....5.8...59...6.7.1....4.92..6...2............852",//3:22:545:7848155d
+"....2..56..7....8...8..5..2..1..6...........5.9..4..1.46....8...1.26..3....9.....",//3:22:545:7b0d8493
+"4....1.....9...5...6...9..4.9........2...73....1....8.8..5....1.4.21.8.....8...3.",//3:22:545:f1281efc
+"..........6..9712.....1.9.7...2.4.568.5..........53.....9..87....7.2..9.......4..",//3:23:541:1da63c2d
+"...9.8.75........3.2..3...4......1.74.........79..643..5..73...8............92.4.",//3:23:536:08e08fc9
+".8.2...7...1.7.6.....5..8....7.45...8........5647.....248............3.1.....9.6.",//3:23:536:58a36231
+"8.5....1..14...58.3...........1.......8.64.......32.........6...6...32....17.6.95",//3:23:536:ca492fe3
+"827.....1...8..4371........2..9............79..56......1..48..........58...7.6.4.",//3:23:536:da6aa4ce
+"..5........8.645..6..8...1..9....7....3.4...2....2.839..9..........8..2...71.3...",//3:23:535:0df29dff
+".74..9....6..4...5...6..4.....37...2....916.3.3......4352..................1..38.",//3:23:535:0e39d71f
+"8...4...6...36..9.165...........7...354.........9..8..5...2...4..6.5..83......5..",//3:23:535:11972b92
+};
 
 struct CRC32
 {
@@ -117,23 +115,34 @@ private:
 	unsigned calc( const void *, size_t, unsigned );
 };
 
-unsigned CRC32::calc( const void *data, size_t size, unsigned crc )
+struct Button
 {
-	const unsigned char *buffer = reinterpret_cast<const unsigned char *>(data);
+	static int button;
+	static int menu;
 
-	#define POLY 0xEDB88320
+	int num;
 
-	crc = ~crc;
-	while (size--)
-	{
-		crc ^= *buffer++;
-		for (int i = 8; i > 0; i--)
-			crc = (crc & 1) ? (crc >> 1) ^ (POLY) : (crc >> 1);
-	}
-	crc = ~crc;
+	Button( int n ): num(n) {}
 
-	return crc;
-}
+	void draw  ();
+	void update();
+};
+
+struct Menu: std::vector<const char *>
+{
+	static int  menu;
+	static bool back;
+
+	int pos;
+	int idx;
+
+	Menu( int p ): pos(p), idx(0) {}
+
+	Menu &add  ( const char * );
+	int  next  ();
+	void draw  ();
+	void update();
+};
 
 struct Cell
 {
@@ -153,9 +162,9 @@ struct Cell
 	int  len    ();
 	int  range  ();
 	bool equal  ( int );
+	bool dummy  ();
 	bool allowed( int );
 	int  sure   ( int = 0 );
-	bool dummy  ();
 	void clear  ();
 	bool set    ( int, bool );
 	void reload ();
@@ -176,211 +185,102 @@ struct Value: public std::array<int, 10>
 	void shuffle();
 };
 
-Value::Value( Cell *cell )
+struct Sudoku: public std::vector<Cell *>
 {
- 	std::iota(Value::begin(), Value::end(), 0);
-	Value::data()[cell->num] = 0;
-	for (Cell *c: cell->lst) Value::data()[c->num] = 0;
-}
+	bool wait;
+	int  help;
+	int  level;
+	int  rating;
+	unsigned signature;
 
-int Value::len()
-{
-	int result = 0;
-	for (int v: *this) if (v != 0) result++;
-	return result;
-}
+	Sudoku( int = 0 );
 
-void Value::shuffle()
-{
-	std::shuffle(Value::begin(), Value::end(), rnd);
-}
+	std::vector<Button> btn;
+	std::vector<Menu>   mnu;
 
-struct Undo
-{
-	Cell *cell;
-	int   num;
+	int  len          ();
+	int  len          ( int );
+	bool empty        ();
+	bool solved       ();
+	bool difficult    ();
+	bool tips         ();
 
-	Undo( Cell *c ): cell(c), num(c->num) {}
+	void reload       ();
+	void restore      ();
+	bool changed      ();
+	void clear        ( bool = true );
+	void confirm      ( bool = true );
+	void init         ( std::string );
+	void again        ();
+	void swap_cells   ( int, int );
+	void swap_rows    ( int, int );
+	void swap_cols    ( int, int );
+	void shuffle      ();
+	bool solvable     ();
+	bool correct      ();
+	bool simplify     ();
+	bool solve_next   ( std::vector<Cell *> &, bool = false );
+	void solve        ();
+	bool check_next   ( Cell *, bool );
+	void check        ();
+	bool generate_next( Cell *, bool = false );
+	void generate     ();
+	int  rating_next  ();
+	void rating_calc  ();
+	void signat_calc  ();
+	void level_calc   ();
+	void specify      ();
+	void put          ( std::ostream & = std::cout );
+	void save         ( std::string );
+	bool test         ( bool = false );
+	void draw         ();
+	void draw_spec    ();
+	void update       ();
+	void back         ();
+	void game         ();
 };
 
-std::list <Undo> undo;
-
-void Cell::link( std::vector<Cell *> &tab )
+template<class T>
+struct Temp
 {
-	int tr = Cell::pos / 9;
-	int tc = Cell::pos % 9;
-	int ts = (tr / 3) * 3 + (tc / 3);
+	T *tmp;
 
-	for (Cell *c: tab)
-	{
-		if (c == this) continue;
-
-		int cr = c->pos / 9;
-		int cc = c->pos % 9;
-		int cs = (cr / 3) * 3 + (cc / 3);
-
-		if (cr == tr || cc == tc || cs == ts) { Cell::lst.push_back(c); c->lst.push_back(this); }
-		if (cr == tr)                         { Cell::row.push_back(c); c->row.push_back(this); }
-		if             (cc == tc)             { Cell::col.push_back(c); c->col.push_back(this); }
-		if                         (cs == ts) { Cell::seg.push_back(c); c->seg.push_back(this); }
-	}
-}
-
-int Cell::len()
-{
-	if (Cell::num != 0) return 0;
-
-	Value val(this);
-	return val.len();
-}
-
-int Cell::range()
-{
-	if (Cell::num != 0) return 0;
-
-	int result = Cell::len();
-	for (Cell *c: Cell::lst) result += c->len();
-	return result;
-}
-
-bool Cell::equal( int n )
-{
-	return Cell::num != 0 && Cell::num == n;
-}
-
-bool Cell::allowed( int n )
-{
-	if (Cell::num != 0 || n == 0)
-		return false;
-
-	for (Cell *c: Cell::lst)
-		if (c->num == n)
-			return false;
-	return true;
-}
-
-bool allowed( std::vector<Cell *> &lst, int n )
-{
-	for (Cell *c: lst)
-		if (c->allowed(n))
-			return true;
-	return false;
-}
-
-int Cell::sure( int n )
-{
-	if (Cell::num == 0 && n == 0)
-	{
-		Value val(this);
-		for (int v: val)
-			if (v != 0 && Cell::sure(v))
-				return v;
-		return 0;
-	}
-
-	if (!Cell::allowed(n))  return 0;
-	if ( Cell::len() == 1)  return n;
-	if (!::allowed(row, n)) return n;
-	if (!::allowed(col, n)) return n;
-	if (!::allowed(seg, n)) return n;
-
-	return 0;
-}	
-
-bool Cell::dummy()
-{
-	if (Cell::num == 0 && Cell::len() == 0)
-		return true;
-
-	return false;
-}
-
-void Cell::clear()
-{
-	Cell::num = 0;
-	Cell::immutable = false;
-}
-
-bool Cell::set( int n, bool save )
-{
-	if (!Cell::allowed(n) && (n != 0 || Cell::immutable))
-		return false;
-	if (save)
-		undo.emplace_back(this);
-	Cell::num = n;
-	return true;
-}
-
-void Cell::reload()
-{
-	Cell::tmp = std::pair { Cell::num, Cell::immutable };
-}
-
-void Cell::restore()
-{
-	Cell::restore(Cell::tmp);
-}
-
-void Cell::restore( std::pair<int, bool> old )
-{
-	Cell::num = std::get<int>(old);
-	Cell::immutable = std::get<bool>(old);
-}
-
-bool Cell::reset()
-{
-	return Cell::set(std::get<int>(Cell::tmp), false);
-}
-
-bool Cell::changed()
-{
-	return Cell::num != std::get<int>(Cell::tmp);
-}
-
-void Cell::put( std::ostream &out )
-{
-	out << ".123456789"[Cell::num];
-}
-
-void Cell::draw()
-{
-	int x = TABX + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
-	int y = TABY + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
-
-	con.Put(x, y, "-123456789"[Cell::num]);
-}
-
-void Cell::update(int n, int h)
-{
-	int x = TABX + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
-	int y = TABY + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
-
-	if      (h >= 3 && Cell::sure(n))    con.Put(x, y, Console::White, Console::LightRed);
-	else if (h >= 2 && Cell::allowed(n)) con.Put(x, y, Console::White, Console::Grey);
-	else if (h >= 1 && Cell::equal(n))   con.Put(x, y, Console::White, Console::LightBlue);
-	else if (          Cell::num != 0)   con.Put(x, y, Console::White);
-	else                                 con.Put(x, y, Console::LightGrey);
-}
-
-bool select_cell( Cell *a, Cell *b )
-{
-	return (a->num == 0) && ((b->num != 0)          ||
-	                         (a->len()  < b->len()) ||
-	                        ((a->len() == b->len()) && (a->range() < b->range())));
-}
-
-struct Button
-{
-	static int button;
-	static int menu;
-
-	int num;
-
-	Button( int n ): num(n) {}
-
-	void draw  ();
-	void update();
+	Temp( T *obj ): tmp(obj) { tmp->reload();  }
+	~Temp()                  { tmp->restore(); }
 };
+
+struct Base
+{
+	int level;
+	int len;
+	int rating;
+	unsigned signature;
+	int data[81];
+
+	Base( Sudoku & );
+
+	void put();
+};
+
+std::list<std::pair<Cell *, int>> undo;
+
+unsigned CRC32::calc( const void *data, size_t size, unsigned crc )
+{
+	const unsigned char *buffer = reinterpret_cast<const unsigned char *>(data);
+
+	#define POLY 0xEDB88320
+
+	crc = ~crc;
+	while (size--)
+	{
+		crc ^= *buffer++;
+		for (int i = 8; i > 0; i--)
+			crc = (crc & 1) ? (crc >> 1) ^ (POLY) : (crc >> 1);
+	}
+	crc = ~crc;
+
+	return crc;
+}
 
 int Button::button = 0;
 int Button::menu   = 0;
@@ -400,22 +300,6 @@ void Button::update()
 	else
 		con.Put(BARX + 1, y, Console::LightGrey, Console::Black);
 }
-
-struct Menu: std::vector<const char *>
-{
-	static int  menu;
-	static bool back;
-
-	int pos;
-	int idx;
-
-	Menu( int p ): pos(p), idx(0) {}
-
-	Menu &add  ( const char * );
-	int  next  ();
-	void draw  ();
-	void update();
-};
 
 int  Menu::menu = 0;
 bool Menu::back = false;
@@ -475,70 +359,198 @@ void Menu::update()
 	}
 }
 
-struct Sudoku: public std::vector<Cell *>
+Value::Value( Cell *cell )
 {
-	bool wait;
-	int  help;
-	int  level;
-	int  rating;
-	unsigned signature;
+ 	std::iota(Value::begin(), Value::end(), 0);
+	Value::data()[cell->num] = 0;
+	for (Cell *c: cell->lst) Value::data()[c->num] = 0;
+}
 
-	Sudoku( int = 0 );
-
-	std::vector<Button> btn;
-	std::vector<Menu>   mnu;
-
-	int  len          ();
-	int  len          ( int );
-	bool empty        ();
-	bool solved       ();
-	bool difficult    ();
-	bool tips         ();
-
-	void reload       ();
-	void restore      ();
-	bool changed      ();
-	void clear        ( bool = true );
-	void confirm      ( bool = true );
-	void init         ( std::string );
-	void again        ();
-	void swap_cells   ( int, int );
-	void swap_rows    ( int, int );
-	void swap_cols    ( int, int );
-	void shuffle      ();
-	bool convergent   ( std::vector<Cell *> & );
-	bool solvable     ();
-	bool correct      ();
-	bool simplify     ();
-	bool solve_next   ( std::vector<Cell *> &, bool = false );
-	void solve        ();
-	bool check_next   ( Cell *, bool );
-	void check        ();
-	bool generate_next( Cell *, bool = false );
-	void generate     ();
-	int  rating_next  ();
-	void rating_calc  ();
-	void signat_calc  ();
-	void level_calc   ();
-	void specify      ();
-	void put          ( std::ostream & = std::cout );
-	void save         ( std::string );
-	bool test         ( bool = false );
-	void draw         ();
-	void draw_spec    ();
-	void update       ();
-	void back         ();
-	void game         ();
-};
-
-template<class T>
-struct Temp
+int Value::len()
 {
-	T *tmp;
+	int result = 0;
+	for (int v: *this) if (v != 0) result++;
+	return result;
+}
 
-	Temp( T *obj ): tmp(obj) { tmp->reload();  }
-	~Temp()                  { tmp->restore(); }
-};
+void Value::shuffle()
+{
+	std::shuffle(Value::begin(), Value::end(), rnd);
+}
+
+void Cell::link( std::vector<Cell *> &tab )
+{
+	int tr = Cell::pos / 9;
+	int tc = Cell::pos % 9;
+	int ts = (tr / 3) * 3 + (tc / 3);
+
+	for (Cell *c: tab)
+	{
+		if (c == this) continue;
+
+		int cr = c->pos / 9;
+		int cc = c->pos % 9;
+		int cs = (cr / 3) * 3 + (cc / 3);
+
+		if (cr == tr || cc == tc || cs == ts) { Cell::lst.push_back(c); c->lst.push_back(this); }
+		if (cr == tr)                         { Cell::row.push_back(c); c->row.push_back(this); }
+		if             (cc == tc)             { Cell::col.push_back(c); c->col.push_back(this); }
+		if                         (cs == ts) { Cell::seg.push_back(c); c->seg.push_back(this); }
+	}
+}
+
+int Cell::len()
+{
+	if (Cell::num != 0) return 0;
+
+	Value val(this);
+	return val.len();
+}
+
+int Cell::range()
+{
+	if (Cell::num != 0) return 0;
+
+	int result = Cell::len();
+	for (Cell *c: Cell::lst) result += c->len();
+	return result;
+}
+
+bool Cell::equal( int n )
+{
+	return Cell::num != 0 && Cell::num == n;
+}
+
+bool Cell::dummy()
+{
+	return Cell::num == 0 && Cell::len() == 0;
+}
+
+bool convergent( std::vector<Cell *> &lst )
+{
+	for (Cell *c: lst)
+		if (c->dummy())
+			return false;
+	return true;
+}
+
+bool Cell::allowed( int n )
+{
+	if (Cell::num != 0 || n == 0)
+		return false;
+
+	for (Cell *c: Cell::lst)
+		if (c->num == n)
+			return false;
+
+	Cell::num = n;
+	bool result = ::convergent(Cell::lst);
+	Cell::num = 0;
+
+	return result;
+}
+
+bool allowed( std::vector<Cell *> &lst, int n )
+{
+	for (Cell *c: lst)
+		if (c->allowed(n))
+			return true;
+	return false;
+}
+
+int Cell::sure( int n )
+{
+	if (Cell::num == 0 && n == 0)
+	{
+		Value val(this);
+		for (int v: val)
+			if (v != 0 && Cell::sure(v))
+				return v;
+		return 0;
+	}
+
+	if (!Cell::allowed(n))  return 0;
+	if ( Cell::len() == 1)  return n;
+	if (!::allowed(row, n)) return n;
+	if (!::allowed(col, n)) return n;
+	if (!::allowed(seg, n)) return n;
+
+	return 0;
+}
+
+void Cell::clear()
+{
+	Cell::num = 0;
+	Cell::immutable = false;
+}
+
+bool Cell::set( int n, bool save )
+{
+	if (!Cell::allowed(n) && (n != 0 || Cell::immutable))
+		return false;
+	if (save)
+		undo.emplace_back(this, Cell::num);
+	Cell::num = n;
+	return true;
+}
+
+void Cell::reload()
+{
+	Cell::tmp = std::pair { Cell::num, Cell::immutable };
+}
+
+void Cell::restore()
+{
+	Cell::restore(Cell::tmp);
+}
+
+void Cell::restore( std::pair<int, bool> old )
+{
+	Cell::num = std::get<int>(old);
+	Cell::immutable = std::get<bool>(old);
+}
+
+bool Cell::reset()
+{
+	return Cell::set(std::get<int>(Cell::tmp), false);
+}
+
+bool Cell::changed()
+{
+	return Cell::num != std::get<int>(Cell::tmp);
+}
+
+void Cell::put( std::ostream &out )
+{
+	out << ".123456789"[Cell::num];
+}
+
+void Cell::draw()
+{
+	int x = TABX + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
+	int y = TABY + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
+
+	con.Put(x, y, "-123456789"[Cell::num]);
+}
+
+void Cell::update(int n, int h)
+{
+	int x = TABX + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
+	int y = TABY + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
+
+	if      (h >= 3 && Cell::sure(n))    con.Put(x, y, Console::White, Console::LightRed);
+	else if (h >= 2 && Cell::allowed(n)) con.Put(x, y, Console::White, Console::Grey);
+	else if (h >= 1 && Cell::equal(n))   con.Put(x, y, Console::White, Console::LightBlue);
+	else if (          Cell::num != 0)   con.Put(x, y, Console::White);
+	else                                 con.Put(x, y, Console::LightGrey);
+}
+
+bool select_cell( Cell *a, Cell *b )
+{
+	return a->num == 0 && (b->num != 0          ||
+	                       a->len()  < b->len() ||
+	                      (a->len() == b->len() && a->range() < b->range()));
+}
 
 Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 {
@@ -592,7 +604,7 @@ bool Sudoku::solved()
 
 bool Sudoku::difficult()
 {
-	return Sudoku::rating >= (Sudoku::len() + 2) * 25;
+	return Sudoku::rating >= (Sudoku::len() - 2) * 25;
 }
 
 bool Sudoku::tips()
@@ -695,28 +707,24 @@ void Sudoku::shuffle()
  	std::iota(v, v + 10, 0);
 	std::shuffle(v + 1, v + 10, rnd);
 	for (Cell *c: *this) c->num = v[c->num];
-/*
-	for (int i = 0; i < 9; i++)
-		for (int j = i + 1; j < 9; j++)
-			swap_cells(9 * i + j, 9 * j + i);
-*/
+
 	for (int i = 0; i < 81; i++)
 	{
-		int c1 = RND(9);
+		int c1 = rnd() % 9;
 		int c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
 		Sudoku::swap_cols(c1, c2);
 
-		int r1 = RND(9);
+		int r1 = rnd() % 9;
 		int r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
 		Sudoku::swap_rows(r1, r2);
 
-		c1 = RND(3);
+		c1 = rnd() % 3;
 		c2 = (c1 + 1) % 3;
 		c1 *= 3; c2 *= 3;
 		for (int j = 0; j < 3; j++)
 			Sudoku::swap_cols(c1 + j, c2 + j);
 
-		r1 = RND(3);
+		r1 = rnd() % 3;
 		r2 = (r1 + 1) % 3;
 		r1 *= 3; r2 *= 3;
 		for (int j = 0; j < 3; j++)
@@ -724,17 +732,9 @@ void Sudoku::shuffle()
 	}
 }
 
-bool Sudoku::convergent( std::vector<Cell *> &lst )
-{
-	for (Cell *c: lst)
-		if (c->dummy())
-			return false;
-	return true;
-}
-
 bool Sudoku::solvable()
 {
-	if (!Sudoku::convergent(*this))
+	if (!::convergent(*this))
 		return false;
 
 	auto tmp = Temp<Sudoku>(this);
@@ -914,7 +914,7 @@ void Sudoku::generate()
 {
 	if (Sudoku::level == 4)
 	{
-		Sudoku::init(extreme[RND(extreme.size())]);
+		Sudoku::init(extreme[rnd() % extreme.size()]);
 		Sudoku::shuffle();
 	}
 	else
@@ -931,41 +931,51 @@ void Sudoku::generate()
 
 int Sudoku::rating_next()
 {
-	if (Sudoku::solved())
-		return 0;
-
-	std::vector<Cell *> sure;
+	std::vector<std::pair<Cell *, int>> sure;
 	for (Cell *c: *this)
-		if (c->sure())
-			sure.push_back(c);
+		if (c->num == 0)
+		{
+			int n = c->sure();
+			if (n != 0)
+				sure.emplace_back(c, n);
+			else
+			if (c->len() < 2) // wrong way
+				return 0;
+		}
+
 	if (!sure.empty())
 	{
-		for (Cell *c: sure)
-			c->num = c->sure();
-		int result = Sudoku::rating_next();
-		for (Cell *c: sure)
-			c->num = 0;
-		return result + sure.size();
+		int  result  = 0;
+		bool success = true;
+		for (std::pair p: sure)
+			if (!std::get<Cell *>(p)->set(std::get<int>(p), false))
+				success = false;
+		if (success)
+			result = Sudoku::rating_next() + 1;
+		for (std::pair p: sure)
+			std::get<Cell *>(p)->num = 0;
+		return result;
 	}
 			
 	Cell *cell = *std::min_element(Sudoku::begin(), Sudoku::end(), ::select_cell);
-	int len = cell->len();
-
-	if (len == 0) // wrong way
+	if (cell->num != 0) // solved!
 		return 1;
 
+	int len    = cell->len();
 	int range  = cell->range();
-	int result = ~0U>>1;
+	int result = 0;
 	for (Cell *c: *this)
 		if (c->num == 0 && c->len() == len && c->range() == range)
 		{
 			Value val(c);
 			int r = 0;
 			for (int v: val)
-				if ((c->num = v) != 0)
+				if (v != 0 && c->set(v, false))
+				{
 					r += Sudoku::rating_next();
-			if (r < result) result = r;
-			c->num = 0;
+					c->num = 0;
+				}
+			if (result == 0 || r < result) result = r;
 		}
 
 	return result + 1;
@@ -976,12 +986,17 @@ void Sudoku::rating_calc()
 	if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
 	if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
 
+	Sudoku::solve_next(*this);
+	Sudoku::reload();
+	Sudoku::again();
+
 	Sudoku::rating = 0;
 	int msb = 0;
 	int result = Sudoku::rating_next();
 	for (int i = Sudoku::len(0); result > 0; Sudoku::rating += i--, result >>= 1)
 		msb = (result & 1) ? msb + 1 : 0;
 	Sudoku::rating += msb - 1;
+//	Sudoku::rating = Sudoku::rating_next();
 }
 
 void Sudoku::level_calc()
@@ -1114,7 +1129,7 @@ void Sudoku::back()
 {
 	if (!undo.empty())
 	{
-		undo.back().cell->num = undo.back().num;
+		std::get<Cell *>(undo.back())->num = std::get<int>(undo.back());
 		undo.pop_back();
 	}
 	else
@@ -1137,7 +1152,7 @@ void Sudoku::game()
 
 	for (Button b: Sudoku::btn)
 		b.draw();
-	
+
 	for (Menu m: Sudoku::mnu)
 		m.draw();
 
@@ -1242,7 +1257,7 @@ void Sudoku::game()
 					else
 					if (x >= MNUX && x < MNUX + MNUW && y >= MNUY && y < MNUY + MNUH)
 					{
-						
+
 						Menu::menu = y - MNUY;
 						Menu::back = x < MNUX + MNUW / 2;
 					}
@@ -1299,19 +1314,6 @@ bool Sudoku::test( bool all )
 	return Sudoku::level == 0 || all || Sudoku::difficult();
 }
 
-struct Base
-{
-	int level;
-	int len;
-	int rating;
-	unsigned signature;
-	int data[81];
-
-	Base( Sudoku & );
-
-	void put();
-};
-
 Base::Base( Sudoku &sudoku ): level    (sudoku.level),
                               len      (sudoku.len()),
                               rating   (sudoku.rating),
@@ -1332,18 +1334,25 @@ void Base::put()
 
 bool select_rating( Base &a, Base &b )
 {
-	return (a.rating  > b.rating) ||
-	      ((a.rating == b.rating) && ((a.len  < b.len) ||
-	                                 ((a.len == b.len) && ((a.level  > b.level) ||
-	                                                      ((a.level == b.level) && (a.signature < b.signature))))));
+	return a.rating  > b.rating ||
+	      (a.rating == b.rating && (a.len  < b.len ||
+	                               (a.len == b.len && (a.level  > b.level ||
+	                                                  (a.level == b.level && a.signature < b.signature)))));
 }
 
 bool select_len( Base &a, Base &b )
 {
-	return (a.len  < b.len) ||
-	      ((a.len == b.len) && ((a.rating  > b.rating) ||
-	                           ((a.rating == b.rating) && ((a.level  > b.level) ||
-	                                                      ((a.level == b.level) && (a.signature < b.signature))))));
+	return a.len  < b.len ||
+	      (a.len == b.len && (a.rating  > b.rating ||
+	                         (a.rating == b.rating && (a.level  > b.level ||
+	                                                  (a.level == b.level && a.signature < b.signature)))));
+}
+
+double elapsed( std::chrono::time_point<std::chrono::high_resolution_clock> &start )
+{
+	auto stop = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> diff = stop - start;
+	return diff.count();
 }
 
 int main( int argc, char **argv )
@@ -1356,6 +1365,8 @@ int main( int argc, char **argv )
 		cmd = *++*argv;
 
 	con.HideCursor();
+
+	auto start = std::chrono::high_resolution_clock::now();
 
 	switch (std::toupper(cmd))
 	{
@@ -1387,7 +1398,7 @@ int main( int argc, char **argv )
 			for (Base &base: coll)
 				base.put();
 
-			std::cerr << title << " check: " << data.size() << " boards found" << std::endl;
+			std::cerr << title << " check: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
@@ -1418,7 +1429,7 @@ int main( int argc, char **argv )
 			for (Base &base: coll)
 				base.put();
 
-			std::cerr << title << " sort: " << data.size() << " boards found" << std::endl;
+			std::cerr << title << " sort: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
@@ -1437,19 +1448,19 @@ int main( int argc, char **argv )
 			{
 				std::cerr << ++cnt << '\r';
 				sudoku.init(i);
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test())
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
 					data.push_back(sudoku.signature);
 					coll.emplace_back(sudoku);
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), ::select_rating);
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? ::select_rating : ::select_len);
 
 			for (Base &base: coll)
 				base.put();
 
-			std::cerr << title << " test: " << data.size() << " boards found" << std::endl;
+			std::cerr << title << " test: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
@@ -1475,7 +1486,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::cerr << title << " find: " << data.size() << " boards found" << std::endl;
+			std::cerr << title << " find: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
