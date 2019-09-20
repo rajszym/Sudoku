@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    24.06.2019
+   @date    20.09.2019
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -29,17 +29,7 @@
 
 ******************************************************************************/
 
-#include <list>
-#include <array>
-#include <vector>
-#include <chrono>
-#include <random>
-#include <string>
-#include <utility>
-#include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
+#include <bits/stdc++.h>
 #include <conio.h>
 #include "console.hpp"
 
@@ -100,9 +90,9 @@ std::vector<std::string> extreme =
 ".8.2...7...1.7.6.....5..8....7.45...8........5647.....248............3.1.....9.6.",//3:23:536:58a36231
 "8.5....1..14...58.3...........1.......8.64.......32.........6...6...32....17.6.95",//3:23:536:ca492fe3
 "827.....1...8..4371........2..9............79..56......1..48..........58...7.6.4.",//3:23:536:da6aa4ce
+".82.........6.....9....2..7.1...3..4.......654......8127.5..4..3.584....1........",//3:23:536:fc84c257
 "..5........8.645..6..8...1..9....7....3.4...2....2.839..9..........8..2...71.3...",//3:23:535:0df29dff
 ".74..9....6..4...5...6..4.....37...2....916.3.3......4352..................1..38.",//3:23:535:0e39d71f
-"8...4...6...36..9.165...........7...354.........9..8..5...2...4..6.5..83......5..",//3:23:535:11972b92
 };
 
 struct CRC32
@@ -151,7 +141,7 @@ struct Cell
 	bool immutable;
 	std::pair<int, bool> tmp;
 
-	Cell( int p, int n = 0 ): pos(p), num(n), immutable(false), tmp(std::pair { 0, false }) {}
+	Cell( int p, int n = 0 ): pos(p), num(n), immutable(false), tmp(std::pair<int, bool> { 0, false }) {}
 
 	std::vector<Cell *> lst;
 	std::vector<Cell *> row;
@@ -496,7 +486,7 @@ bool Cell::set( int n, bool save )
 
 void Cell::reload()
 {
-	Cell::tmp = std::pair { Cell::num, Cell::immutable };
+	Cell::tmp = std::pair<int, bool> { Cell::num, Cell::immutable };
 }
 
 void Cell::restore()
@@ -554,20 +544,23 @@ bool select_cell( Cell *a, Cell *b )
 
 Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 {
-	for (int i = 0; i < 81; i++)
-		Sudoku::emplace_back(new Cell(i))->link(*this);
+	for (int i = 0; i < 81; i++) {
+		Cell *c = new Cell(i);
+		Sudoku::emplace_back(c);
+		c->link(*this);
+	}
 
 	for (int i = 1; i < 10; i++)
 		Sudoku::btn.emplace_back(i);
 
-	Sudoku::mnu.emplace_back( 4).add("NONE").add("CURRENT").add("AVAILABLE").add("SURE").idx = Sudoku::help;
-	Sudoku::mnu.emplace_back( 5).add("EASY").add("MEDIUM").add("HARD").add("EXPERT").add("EXTREME").idx = Sudoku::level;
-	Sudoku::mnu.emplace_back( 6).add("NEXT");
-	Sudoku::mnu.emplace_back( 7).add("CLEAR");
-	Sudoku::mnu.emplace_back( 8).add("CONFIRM");
-	Sudoku::mnu.emplace_back( 9).add("UNDO");
-	Sudoku::mnu.emplace_back(10).add("SOLVE");
-	Sudoku::mnu.emplace_back(11).add("EXIT");
+	Sudoku::mnu.emplace_back( 4); Sudoku::mnu.back().add("NONE").add("CURRENT").add("AVAILABLE").add("SURE").idx = Sudoku::help;
+	Sudoku::mnu.emplace_back( 5); Sudoku::mnu.back().add("EASY").add("MEDIUM").add("HARD").add("EXPERT").add("EXTREME").idx = Sudoku::level;
+	Sudoku::mnu.emplace_back( 6); Sudoku::mnu.back().add("NEXT");
+	Sudoku::mnu.emplace_back( 7); Sudoku::mnu.back().add("CLEAR");
+	Sudoku::mnu.emplace_back( 8); Sudoku::mnu.back().add("CONFIRM");
+	Sudoku::mnu.emplace_back( 9); Sudoku::mnu.back().add("UNDO");
+	Sudoku::mnu.emplace_back(10); Sudoku::mnu.back().add("SOLVE");
+	Sudoku::mnu.emplace_back(11); Sudoku::mnu.back().add("EXIT");
 }
 
 int Sudoku::len()
@@ -947,12 +940,12 @@ int Sudoku::rating_next()
 	{
 		int  result  = 0;
 		bool success = true;
-		for (std::pair p: sure)
+		for (std::pair<Cell *, int> p: sure)
 			if (!std::get<Cell *>(p)->set(std::get<int>(p), false))
 				success = false;
 		if (success)
 			result = Sudoku::rating_next() + 1;
-		for (std::pair p: sure)
+		for (std::pair<Cell *, int> p: sure)
 			std::get<Cell *>(p)->num = 0;
 		return result;
 	}
