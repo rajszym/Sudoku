@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    20.09.2019
+   @date    03.04.2020
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -129,7 +129,7 @@ struct Menu: std::vector<const char *>
 	Menu( int p ): pos(p), idx(0) {}
 
 	Menu &add  ( const char * );
-	int  next  ();
+	int  next  ( bool );
 	void draw  ();
 	void update();
 };
@@ -300,20 +300,20 @@ Menu &Menu::add( const char *item )
 	return *this;
 }
 
-int Menu::next()
+int Menu::next(bool prev)
 {
 	int max = Menu::size() - 1;
 
 	if (Menu::pos == 5)
 	{
-		if (Menu::back) Menu::idx = Menu::idx == 0 ? max : Menu::idx == max ? 1 : 0;
-		else            Menu::idx = Menu::idx == max ? 0 : Menu::idx == 0 ? 1 : max;
+		if (prev) Menu::idx = Menu::idx == 0 ? max : Menu::idx == max ? 1 : 0;
+		else      Menu::idx = Menu::idx == max ? 0 : Menu::idx == 0 ? 1 : max;
 	}
 	else
 	if (max > 0)
 	{
-		if (Menu::back) Menu::idx = (Menu::idx + max) % (max + 1);
-		else            Menu::idx = (Menu::idx + 1)   % (max + 1);
+		if (prev) Menu::idx = (Menu::idx + max) % (max + 1);
+		else      Menu::idx = (Menu::idx + 1)   % (max + 1);
 	}
 
 	return Menu::idx;
@@ -344,7 +344,7 @@ void Menu::update()
 	else
 	{
 		if (Menu::size() != 1)
-			con.Put(MNUX + MNUW - 2, MNUY + Menu::pos, ">>");
+			con.Put(MNUX + MNUW - 2, MNUY + Menu::pos, "..");
 		con.FillColor(MNUX, MNUY + Menu::pos, MNUW, 1, Console::LightGrey);
 	}
 }
@@ -1090,8 +1090,7 @@ void Sudoku::draw()
 
 void Sudoku::draw_spec()
 {
-	con.SetTextColor(Console::Cyan);
-	con.SetCursorPos(MNUX + MNUW - 9, MNUY + 3);
+	con.SetText(MNUX + MNUW - 9, MNUY + 3, Console::Cyan);
 	printf("%4d:%2d:%d", Sudoku::rating, Sudoku::len(), Sudoku::level);
 
 	Sudoku::mnu[0].idx = Sudoku::help;  Sudoku::mnu[0].draw();
@@ -1226,8 +1225,8 @@ void Sudoku::game()
 
 						switch (y)
 						{
-						case  4: Sudoku::help  =     Sudoku::mnu[0].next(); break;
-						case  5: Sudoku::level =     Sudoku::mnu[1].next(); /* falls through */
+						case  4: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
+						case  5: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
 						case  6: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
 						case  7: Sudoku::clear();    Sudoku::draw(); Button::button = 0; break;
 						case  8: Sudoku::confirm();  break;
@@ -1276,12 +1275,22 @@ void Sudoku::game()
 
 				if (input.Event.KeyEvent.bKeyDown)
 				{
+					bool prev = false;
 					switch (input.Event.KeyEvent.wVirtualKeyCode)
 					{
-					case VK_ESCAPE: return;
 					case VK_CANCEL: return;
+					case VK_ESCAPE: return;
+					case VK_LEFT  : prev = true; /* falls through */
+					case VK_RIGHT : Sudoku::help  =     Sudoku::mnu[0].next(prev); break;
+					case VK_NEXT  : prev = true; /* falls through */
+					case VK_PRIOR : Sudoku::level =     Sudoku::mnu[1].next(prev); /* falls through */
+					case VK_INSERT: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
+					case VK_DELETE: Sudoku::clear();    Sudoku::draw(); Button::button = 0; break;
+					case VK_HOME  : Sudoku::confirm();  break;
+					case VK_BACK  : Sudoku::back();     Sudoku::draw(); break;
+					case VK_RETURN: Sudoku::solve();    Sudoku::draw(); Button::button = 0; break;
+					case 'C'      : Sudoku::check();    Sudoku::draw(); break;
 					case 'S'      : Sudoku::save("sudoku.board"); break;
-					case 'C'      : Sudoku::check(); Sudoku::draw(); break;
 					}
 				}
 
@@ -1357,6 +1366,7 @@ int main( int argc, char **argv )
 	if (--argc > 0 && (**++argv == '/' || **argv == '-'))
 		cmd = *++*argv;
 
+	con.Maximize();
 	con.HideCursor();
 
 	auto start = std::chrono::high_resolution_clock::now();
