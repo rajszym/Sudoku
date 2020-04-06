@@ -2,12 +2,12 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    04.04.2020
+   @date    06.04.2020
    @brief   Sudoku game
 
 *******************************************************************************
 
-   Copyright (c) 2018 Rajmund Szymanski. All rights reserved.
+   Copyright (c) 2018-2020 Rajmund Szymanski. All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
