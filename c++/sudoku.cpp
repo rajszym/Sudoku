@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    03.04.2020
+   @date    07.04.2020
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -323,7 +323,7 @@ void Menu::draw()
 {
 	if (Menu::size() > 0)
 	{
-		con.Fill(MNUX, MNUY + Menu::pos, MNUW - 2, 1);
+		con.Fill(MNUX, MNUY + Menu::pos, MNUW - 2, 0);
 		con.Put (MNUX, MNUY + Menu::pos, Menu::data()[Menu::idx]);
 	}
 }
@@ -333,19 +333,19 @@ void Menu::update()
 	if (Menu::menu == Menu::pos)
 	{
 		if (Menu::size() == 1)
-			con.FillColor(MNUX, MNUY + Menu::pos, MNUW, 1, Console::White, Console::Grey);
+			con.Fill(MNUX, MNUY + Menu::pos, MNUW, 1, Console::White, Console::Grey);
 		else
 		{
 			con.Put(MNUX + MNUW - 2, MNUY + Menu::pos, Menu::back ? "<<" : ">>");
-			con.FillColor(MNUX, MNUY + Menu::pos, MNUW - 2, 1, Console::White, Console::Grey);
-			con.FillColor(MNUX + MNUW - 2, MNUY + Menu::pos, 2, 1, Menu::back ? Console::LightRed : Console::LightGreen, Console::Grey);
+			con.Fill(MNUX, MNUY + Menu::pos, MNUW - 2, 1, Console::White, Console::Grey);
+			con.Fill(MNUX + MNUW - 2, MNUY + Menu::pos, 2, 1, Menu::back ? Console::LightRed : Console::LightGreen, Console::Grey);
 		}
 	}
 	else
 	{
 		if (Menu::size() != 1)
 			con.Put(MNUX + MNUW - 2, MNUY + Menu::pos, "..");
-		con.FillColor(MNUX, MNUY + Menu::pos, MNUW, 1, Console::LightGrey);
+		con.Fill(MNUX, MNUY + Menu::pos, MNUW, 1, Console::LightGrey);
 	}
 }
 
@@ -1099,7 +1099,7 @@ void Sudoku::draw_spec()
 
 void Sudoku::update()
 {
-	con.DrawColor(MNUX, MNUY, MNUW, 3, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::LightBlue : Console::Green);
+	con.ColorFrame(MNUX, MNUY, MNUW, 3, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::LightBlue : Console::Green);
 
 	for (Cell *c: *this)
 		c->update(Button::button, help);
