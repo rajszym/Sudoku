@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    07.04.2020
+   @date    08.04.2020
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -323,8 +323,8 @@ void Menu::draw()
 {
 	if (Menu::size() > 0)
 	{
-		con.Fill(MNUX, MNUY + Menu::pos, MNUW - 2, 0);
-		con.Put (MNUX, MNUY + Menu::pos, Menu::data()[Menu::idx]);
+		con.Fill(MNUX, MNUY + Menu::pos, MNUW - 2, 1);
+		con.Put(MNUX, MNUY + Menu::pos, Menu::data()[Menu::idx]);
 	}
 }
 
