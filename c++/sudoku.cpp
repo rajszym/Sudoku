@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    08.04.2020
+   @date    09.04.2020
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -1090,8 +1090,8 @@ void Sudoku::draw()
 
 void Sudoku::draw_spec()
 {
-	con.SetText(MNUX + MNUW - 9, MNUY + 3, Console::Cyan);
-	printf("%4d:%2d:%d", Sudoku::rating, Sudoku::len(), Sudoku::level);
+	con.SetText(MNUX + MNUW - 10, MNUY + 3, Console::Cyan);
+	printf("%4d:%d:%2d", Sudoku::rating, Sudoku::level, Sudoku::len());
 
 	Sudoku::mnu[0].idx = Sudoku::help;  Sudoku::mnu[0].draw();
 	Sudoku::mnu[1].idx = Sudoku::level; Sudoku::mnu[1].draw();
@@ -1110,11 +1110,14 @@ void Sudoku::update()
 	for (Menu m: Sudoku::mnu)
 		m.update();
 
-	int len = Sudoku::len(Button::button);
-	if (Button::button > 0 && len < 9)
-		con.Put(MNUX, MNUY + 3, '0' + len, Console::Yellow);
-	else
-		con.Put(MNUX, MNUY + 3, ' ');
+	if (Button::button > 0) {
+		con.SetText(MNUX + MNUW - 3, MNUY + 3, Console::Yellow);
+		printf("%2d", Sudoku::len(Button::button));
+	}
+	else {
+		con.SetText(MNUX + MNUW - 3, MNUY + 3, Console::Cyan);
+		printf("%2d", Sudoku::len());
+	}
 }
 
 void Sudoku::back()
