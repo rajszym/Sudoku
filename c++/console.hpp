@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    07.04.2020
+   @date    09.04.2020
    @brief   Sudoku game
 
 *******************************************************************************
@@ -38,7 +38,23 @@
 
 struct Console
 {
-	enum Color
+	struct Rectangle
+	{
+		Rectangle() : Rectangle(0, 0, 0, 0) {}
+		Rectangle(int _x, int _y, int _w, int _h) :
+			x(_x), y(_y), width(_w), height(_h), left(_x), right(_x + _w - 1), top(_y), bottom(_y + _h - 1) {}
+
+		const int x;
+		const int y;
+		const int width;
+		const int height;
+		const int left;
+		const int right;
+		const int top;
+		const int bottom;
+	};
+
+	enum Color : unsigned
 	{
 		Black       = 0,
 		Blue        =                                                            FOREGROUND_BLUE,
@@ -58,13 +74,23 @@ struct Console
 		White       = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
 	};
 
-	enum Bar
+	enum Grade : unsigned
+	{
+		NoGrade     = 0,
+		SmallGrade  = 1,
+		MediumGrade = 2,
+		LargeGrade  = 3,
+		FullGrade   = 4,
+	};
+
+	enum Bar : unsigned
 	{
 		NoBar    = 0,
-		BarRight = 1,
-		BarDown  = 2,
-		BarLeft  = 4,
-		BarUp    = 8,
+		RightBar = 1,
+		DownBar  = 2,
+		LeftBar  = 4,
+		UpBar    = 8,
+		AllBars  = RightBar | DownBar | LeftBar | UpBar
 	};
 
 	HANDLE Cin;
@@ -99,6 +125,11 @@ struct Console
 	~Console()
 	{
 		FreeConsole();
+	}
+
+	void SetTitle( const char *title )
+	{
+		SetConsoleTitle(title);
 	}
 
 	void SetWindowed()
@@ -142,6 +173,33 @@ struct Console
 		ShowWindow(Hwnd, SW_SHOWMAXIMIZED);
 	}
 
+	bool GetInput( INPUT_RECORD *rec = NULL, unsigned len = 1 )
+	{
+		DWORD count;
+		GetNumberOfConsoleInputEvents(Cin, &count);
+		if (count == 0) return false;
+		if (rec == NULL) return true;
+		return ReadConsoleInput(Cin, rec, len, &count) != 0;
+	}
+
+	void Clear()
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(Cout, &csbi);
+
+		COORD home = { 0, 0 };
+		DWORD size = csbi.dwSize.X * csbi.dwSize.Y;
+		DWORD count;
+		FillConsoleOutputCharacter(Cout, ' ',              size, home, &count);
+		FillConsoleOutputAttribute(Cout, csbi.wAttributes, size, home, &count);
+		Home();
+	}
+
+	void Home()
+	{
+		SetCursorPos(0, 0);
+	}
+
 	void HideCursor()
 	{
 		CONSOLE_CURSOR_INFO cci;
@@ -163,21 +221,6 @@ struct Console
 		else           SetConsoleCursorInfo(Cout, &cci);
 	}
 
-	void GetCursorPos( int *x, int *y )
-	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		if (x != NULL) *x = csbi.dwCursorPosition.X;
-		if (y != NULL) *y = csbi.dwCursorPosition.Y;
-	}
-
-	void SetCursorPos( int x, int y )
-	{
-	//	flushall();
-		COORD coord = { (SHORT)x, (SHORT)y };
-		SetConsoleCursorPosition(Cout, coord);
-	}
-
 	int GetFontSize()
 	{
 		CONSOLE_FONT_INFOEX cfi = {};
@@ -193,6 +236,21 @@ struct Console
 		GetCurrentConsoleFontEx(Cout, false, &cfi);
 		cfi.dwFontSize.Y = (SHORT)size;
 		SetCurrentConsoleFontEx(Cout, false, &cfi);
+	}
+
+	void GetCursorPos( int *x, int *y )
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(Cout, &csbi);
+		if (x != NULL) *x = csbi.dwCursorPosition.X;
+		if (y != NULL) *y = csbi.dwCursorPosition.Y;
+	}
+
+	void SetCursorPos( int x, int y )
+	{
+	//	flushall();
+		COORD coord = { (SHORT)x, (SHORT)y };
+		SetConsoleCursorPosition(Cout, coord);
 	}
 
 	WORD MakeAttribute( Color fore, Color back )
@@ -229,39 +287,6 @@ struct Console
 		SetTextColor(fore, back);
 	}
 
-	void SetTitle( const char *title )
-	{
-		SetConsoleTitle((LPCTSTR)title);
-	}
-
-	bool GetInput( INPUT_RECORD *rec = NULL, unsigned len = 1 )
-	{
-		DWORD count;
-		GetNumberOfConsoleInputEvents(Cin, &count);
-		if (count == 0) return false;
-		if (rec == NULL) return true;
-		return ReadConsoleInput(Cin, rec, len, &count) != 0;
-	}
-
-	void Clear()
-	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-
-		COORD home = { 0, 0 };
-		DWORD size = csbi.dwSize.X * csbi.dwSize.Y;
-		DWORD count;
-		FillConsoleOutputCharacter(Cout, ' ',              size, home, &count);
-		FillConsoleOutputAttribute(Cout, csbi.wAttributes, size, home, &count);
-		Home();
-	}
-
-	void Home()
-	{
-		COORD home = { 0, 0 };
-		SetConsoleCursorPosition(Cout, home);
-	}
-
 	char Get( int x, int y )
 	{
 		CHAR  c;
@@ -280,13 +305,6 @@ struct Console
 		if (fore != NULL) *fore = GetForeColor(a);
 		if (back != NULL) *back = GetBackColor(a);
 		return Get(x, y);
-	}
-
-	char Get()
-	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		return Get(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
 	}
 
 	void Put( int x, int y, Color fore, Color back = Black )
@@ -310,17 +328,36 @@ struct Console
 			WriteConsoleOutputCharacter(Cout, &c, 1, coord, &count);
 	}
 
+	void Put( int x, int y, const char *s )
+	{
+		while (*s)
+			Put(x++, y, *s++);
+	}
+
 	void Put( int x, int y, char c, Color fore, Color back = Black )
 	{
 		Put(x, y, fore, back);
 		Put(x, y, c);
 	}
 
-	void Put( Color fore, Color back = Black )
+	void Put( int x, int y, const char *s, Color fore, Color back = Black )
+	{
+		while (*s)
+			Put(x++, y, *s++, fore, back);
+	}
+
+	char Get()
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi;
 		GetConsoleScreenBufferInfo(Cout, &csbi);
-		Put(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, fore, back);
+		return Get(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
+	}
+
+	char Get( Color *fore, Color *back = NULL )
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(Cout, &csbi);
+		return Get(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, fore, back);
 	}
 
 	void Put( char c )
@@ -330,201 +367,205 @@ struct Console
 		Put(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, c);
 	}
 
-	void Put( int x, int y, const char *s )
+	void Put( Color fore, Color back = Black )
 	{
-		while (*s)
-			Put(x++, y, *s++);
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(Cout, &csbi);
+		Put(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, fore, back);
 	}
 
-	void Put( int x, int y, const char *s, Color fore, Color back = Black )
+	void ColorHLine( Rectangle &rc, int y, Color fore, Color back = Black )
 	{
-		while (*s)
-			Put(x++, y, *s++, fore, back);
+		if (rc.height <= 0) return;
+
+		for (int x = rc.left; x <= rc.right; x++)
+			Put(x, y, fore, back);
 	}
 
-	void ColorHLine( int xl, int xr, int y, Color fore, Color back = Black )
+	void ColorVLine( Rectangle &rc, int x, Color fore, Color back = Black )
 	{
-		for (int i = xl; i <= xr; i++)
-			Put(i, y, fore, back);
+		if (rc.width <= 0) return;
+
+		for (int y = rc.top; y <= rc.bottom; y++)
+			Put(x, y, fore, back);
 	}
 
-	void ColorVLine( int x, int yt, int yb, Color fore, Color back = Black )
+	void ColorFrame( Rectangle &rc, Color fore, Color back = Black )
 	{
-		for (int i = yt; i <= yb; i++)
-			Put(x, i, fore, back);
-	}
-
-	void ColorFrame( LPRECT rc, Color fore, Color back = Black )
-	{
-		if ((rc->left > rc->right) || (rc->top > rc->bottom))
-			return;
-		ColorHLine(rc->left, rc->right, rc->top, fore, back);
-		if (rc->top != rc->bottom)
-			ColorHLine(rc->left, rc->right, rc->bottom, fore, back);
-		ColorVLine(rc->left, rc->top, rc->bottom, fore, back);
-		if (rc->left != rc->right)
-			ColorVLine(rc->right, rc->top, rc->bottom, fore, back);
+		ColorHLine(rc, rc.top, fore, back);
+		ColorVLine(rc, rc.left, fore, back);
+		ColorVLine(rc, rc.right, fore, back);
+		ColorHLine(rc, rc.bottom, fore, back);
 	}
 
 	//[[deprecated]]
 	void ColorFrame( int x, int y, int width, int height, Color fore, Color back = Black )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		ColorFrame(&rc, fore, back);
+		Rectangle rc(x, y, width, height);
+		ColorFrame(rc, fore, back);
 	}
 
-	void DrawHLine( int xl, int xr, int y, const char *box, Bar b = NoBar )
+	void DrawHLine( Rectangle &rc, int y, const char *box, Bar b = NoBar )
 	{
-		int p;
-		if (xl >= xr) return;
-		p = strchr(box, Get(xl, y)) - box; if (p < 0 || p > 15) p = 0;
-		Put(xl, y, box[p | b | BarRight]);
-		for (int i = xl + 1; i < xr; i++) {
-			p = strchr(box, Get(i, y)) - box; if (p < 0 || p > 15) p = 0;
-			Put(i, y, box[p | BarLeft | BarRight]);
+		if (rc.width <= 1) return;
+
+		int x = rc.left;
+		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		Put(x++, y, box[p | b | RightBar]);
+		while (x < rc.right) {
+			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+			Put(x++, y, box[p | LeftBar | RightBar]);
 		}
-		p = strchr(box, Get(xr, y)) - box; if (p < 0 || p > 15) p = 0;
-		Put(xr, y, box[p | b | BarLeft]);
+		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		Put(x++, y, box[p | b | LeftBar]);
 	}
 
-	void DrawVLine( int x, int yt, int yb, const char *box, Bar b = NoBar )
+	void DrawVLine( Rectangle &rc, int x, const char *box, Bar b = NoBar )
 	{
-		int p;
-		if (yt >= yb) return;
-		p = strchr(box, Get(x, yt)) - box; if (p < 0 || p > 15) p = 0;
-		Put(x, yt, box[p | b | BarDown]);
-		for (int i = yt + 1; i < yb; i++) {
-			p = strchr(box, Get(x, i)) - box; if (p < 0 || p > 15) p = 0;
-			Put(x, i, box[p | BarUp | BarDown]);
+		if (rc.height <= 1) return;
+
+		int y = rc.top;
+		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		Put(x, y++, box[p | b | DownBar]);
+		while (y < rc.bottom) {
+			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+			Put(x, y++, box[p | UpBar | DownBar]);
 		}
-		p = strchr(box, Get(x, yb)) - box; if (p < 0 || p > 15) p = 0;
-		Put(x, yb, box[p | b | BarUp]);
+		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		Put(x, y++, box[p | b | UpBar]);
 	}
 
-	void DrawFrame( LPRECT rc, const char *box )
+	void DrawFrame( Rectangle &rc, const char *box )
 	{
-		if ((rc->left > rc->right) || (rc->top > rc->bottom))
-			return;
-		if (rc->top == rc->bottom)
-			DrawHLine(rc->left, rc->right, rc->top, box);
+		if (rc.width > 1) {
+			if (rc.height > 1) {
+				DrawHLine(rc, rc.top, box, DownBar);
+				DrawVLine(rc, rc.left, box, RightBar);
+				DrawVLine(rc, rc.right, box, LeftBar);
+				DrawHLine(rc, rc.bottom, box, UpBar);
+			}
+			else
+			if (rc.height == 1)
+				DrawHLine(rc, rc.y, box);
+		}
 		else
-		if (rc->left == rc->right)
-			DrawVLine(rc->left, rc->top, rc->bottom, box);
-		else
-		{
-			DrawHLine(rc->left, rc->right, rc->top, box, BarDown);
-			DrawVLine(rc->left, rc->top, rc->bottom, box, BarRight);
-			DrawVLine(rc->right, rc->top, rc->bottom, box, BarLeft);
-			DrawHLine(rc->left, rc->right, rc->bottom, box, BarUp);
+		if (rc.height > 1) {
+			if (rc.width == 1)
+				DrawVLine(rc, rc.x, box);
 		}
 	}
 
 	//[[deprecated]]
 	void DrawFrame( int x, int y, int width, int height, const char *box )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		DrawFrame(&rc, box);
+		Rectangle rc(x, y, width, height);
+		DrawFrame(rc, box);
 	}
 
-	void DrawSingle( LPRECT rc )
+	void DrawSingle( Rectangle &rc )
 	{
-		const char *box = "\x20\x20\x20\xDA\x20\xC4\xBF\xC2\x20\xC0\xB3\xC3\xD9\xC1\xB4\xC5";
+ 		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
+		const char *box = "\x20""\x20""\x20""\xDA""\x20""\xC4""\xBF""\xC2""\x20""\xC0""\xB3""\xC3""\xD9""\xC1""\xB4""\xC5";
 		DrawFrame(rc, box);
 	}
 
 	//[[deprecated]]
 	void DrawSingle( int x, int y, int width, int height )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		DrawSingle(&rc);
+		Rectangle rc(x, y, width, height);
+		DrawSingle(rc);
 	}
 
-	void DrawDouble( LPRECT rc )
+	void DrawDouble( Rectangle &rc )
 	{
-		const char *box = "\x20\x20\x20\xC9\x20\xCD\xBB\xCB\x20\xC8\xBA\xCC\xBC\xCA\xB9\xCE";
+ 		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
+		const char *box = "\x20""\x20""\x20""\xC9""\x20""\xCD""\xBB""\xCB""\x20""\xC8""\xBA""\xCC""\xBC""\xCA""\xB9""\xCE";
 		DrawFrame(rc, box);
 	}
 
 	//[[deprecated]]
 	void DrawDouble( int x, int y, int width, int height )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		DrawDouble(&rc);
+		Rectangle rc(x, y, width, height);
+		DrawDouble(rc);
 	}
 
-	void DrawBold( LPRECT rc )
+	void DrawBold( Rectangle &rc )
 	{
-		const char *bkg = "\xDC\xFE\xDB\xDF";
+		const char *box = "\xDC\xDB\xDF\xFE";
 
-		if ((rc->left > rc->right) || (rc->top > rc->bottom))
-			return;
+		if ((rc.width <= 0) || (rc.height <= 0)) return;
 
-		if (rc->top == rc->bottom) {
-			for (int i = rc->left; i <= rc->right; i++)
-				Put(i, rc->top, bkg[1]);
+		if (rc.height == 1) {
+			for (int x = rc.left; x <= rc.right; x++)
+				Put(x, rc.y, box[3]);
 		}
 		else {
-			for (int i = rc->left; i <= rc->right; i++) {
-				Put(i, rc->top, bkg[0]);
-				Put(i, rc->bottom, bkg[3]);
+			for (int x = rc.left; x <= rc.right; x++) {
+				Put(x, rc.top,    box[0]);
+				Put(x, rc.bottom, box[2]);
 			}
-			for (int i = rc->top + 1; i < rc->bottom; i++) {
-				Put(rc->left, i, bkg[2]);
-				Put(rc->right, i, bkg[2]);
+			for (int y = rc.top + 1; y < rc.bottom; y++) {
+				Put(rc.left,  y, box[1]);
+				Put(rc.right, y, box[1]);
 			}
 		}
+	}
+
+	void drawbold( Rectangle &rc )
+	{
+ 		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
+		const char *box = "\x20""\x20""\x20""\xDC""\x20""\xFE""\xDC""\xDC""\x20""\xDF""\xDB""\xDB""\xDF""\xDF""\xDB""\xDB";
+//		const char *box = "\x20""\x20""\x20""\xDC""\x20""\xDC""\xDC""\xDC""\x20""\xDC""\xDB""\xDB""\xDC""\xDC""\xDB""\xDB";
+		DrawFrame(rc, box);
 	}
 
 	//[[deprecated]]
 	void DrawBold( int x, int y, int width, int height )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		DrawBold(&rc);
+		Rectangle rc(x, y, width, height);
+		DrawBold(rc);
 	}
 
-	void Fill( LPRECT rc, Color fore, Color back = Black )
+	void Fill( Rectangle &rc, Color fore, Color back = Black )
 	{
-		for (int j = rc->top; j <= rc->bottom; j++)
-			for (int i = rc->left; i <= rc->right; i++)
-				Put(i, j, fore, back);
+		for (int y = rc.top; y <= rc.bottom; y++)
+			for (int x = rc.left; x <= rc.right; x++)
+				Put(x, y, fore, back);
 	}
 
 	//[[deprecated]]
 	void Fill( int x, int y, int width, int height, Color fore, Color back = Black )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		Fill(&rc, fore, back);
+		Rectangle rc(x, y, width, height);
+		Fill(rc, fore, back);
 	}
 
-	void Fill( LPRECT rc, char c = ' ' )
+	void Fill( Rectangle &rc, char c = ' ' )
 	{
-		for (int j = rc->top; j <= rc->bottom; j++)
-			for (int i = rc->left; i <= rc->right; i++)
-				Put(i, j, c);
+		for (int y = rc.top; y <= rc.bottom; y++)
+			for (int x = rc.left; x <= rc.right; x++)
+				Put(x, y, c);
 	}
 
 	//[[deprecated]]
 	void Fill( int x, int y, int width, int height, char c = ' ' )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		Fill(&rc, c);
+		Rectangle rc(x, y, width, height);
+		Fill(rc, c);
 	}
 
-	void Fill( LPRECT rc, int fill )
+	void Fill( Rectangle &rc, Grade g )
 	{
 		const char *bkg = "\x20\xB0\xB1\xB2\xDB";
-
-		if (fill < 0 || fill > 100)
-			return;
-
-		Fill(rc, bkg[(fill + 12) / 25]);
+		Fill(rc, bkg[g]);
 	}
 
 	//[[deprecated]]
-	void Fill( int x, int y, int width, int height, int fill )
+	void Fill( int x, int y, int width, int height, Grade g )
 	{
-		RECT rc = { x, y, x + width - 1, y + height - 1 };
-		Fill(&rc, fill);
+		Rectangle rc(x, y, width, height);
+		Fill(rc, g);
 	}
 };
 
