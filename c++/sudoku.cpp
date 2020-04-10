@@ -1503,7 +1503,6 @@ int main( int argc, char **argv )
 			con.Maximize();
 			con.HideCursor();
 			sudoku.game();
-			con.ShowCursor();
 			break;
 		}
 

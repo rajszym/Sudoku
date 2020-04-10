@@ -123,6 +123,7 @@ public:
 		LightPurple = FOREGROUND_INTENSITY | FOREGROUND_RED |                    FOREGROUND_BLUE,
 		Yellow      = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,
 		White       = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+		Default     = LightGrey
 	};
 
 	enum Grade : unsigned
@@ -165,7 +166,7 @@ public:
 	{
 		SetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
 		Maximize();
-		Clear();
+		ShowCursor();
 		FreeConsole();
 	}
 
@@ -283,6 +284,12 @@ public:
 		FillConsoleOutputCharacter(Cout, ' ',              size, home, &count);
 		FillConsoleOutputAttribute(Cout, csbi.wAttributes, size, home, &count);
 		Home();
+	}
+
+	void Clear( Color fore, Color back = Black )
+	{
+		SetTextColor(fore, back);
+		Clear();
 	}
 
 	void Home()
