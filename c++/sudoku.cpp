@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    09.04.2020
+   @date    10.04.2020
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -29,8 +29,6 @@
 
 ******************************************************************************/
 
-#include <bits/stdc++.h>
-#include <conio.h>
 #include "console.hpp"
 
 #define TEST  true
@@ -1369,9 +1367,6 @@ int main( int argc, char **argv )
 	if (--argc > 0 && (**++argv == '/' || **argv == '-'))
 		cmd = *++*argv;
 
-	con.Maximize();
-	con.HideCursor();
-
 	auto start = std::chrono::high_resolution_clock::now();
 
 	switch (std::toupper(cmd))
@@ -1480,7 +1475,8 @@ int main( int argc, char **argv )
 
 			std::cerr << title << " find" << std::endl;
 
-			while (!kbhit() || getch() != 27)
+			INPUT_RECORD input;
+			while (!con.GetInput(&input) || input.EventType != KEY_EVENT || input.Event.KeyEvent.wVirtualKeyCode != VK_ESCAPE)
 			{
 				sudoku.generate();
 				if (sudoku.level == 2) sudoku.check();
@@ -1503,15 +1499,11 @@ int main( int argc, char **argv )
 			while (--argc > 0)
 				::load(*++argv);
 
-			int font = con.GetFontSize();
-			con.SetFontSize(48);
+			con.SetFontSize(56);
 			con.Maximize();
-
+			con.HideCursor();
 			sudoku.game();
-
-			con.SetFontSize(font);
-			con.Maximize();
-
+			con.ShowCursor();
 			break;
 		}
 
@@ -1536,6 +1528,4 @@ int main( int argc, char **argv )
 			break;
 		}
 	}
-
-	con.ShowCursor();
 }

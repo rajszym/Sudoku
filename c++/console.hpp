@@ -2,8 +2,8 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    09.04.2020
-   @brief   Sudoku game
+   @date    10.04.2020
+   @brief   console class
 
 *******************************************************************************
 
@@ -29,15 +29,66 @@
 
 ******************************************************************************/
 
-#ifndef CONSOLE_HPP
-#define CONSOLE_HPP
+#pragma once
 
 #include <windows.h>
-#include <iostream>
-#include <cstring>
+#include <bits/stdc++.h>
 
-struct Console
+class Timer
 {
+	HANDLE timer = NULL;
+	std::atomic_flag flag = ATOMIC_FLAG_INIT;
+
+	static
+	void __stdcall handler(PVOID f, BOOLEAN)
+	{
+		atomic_flag_clear(static_cast<std::atomic_flag *>(f));
+	}
+
+public:
+
+	Timer( DWORD ms = 0 )
+	{
+		if (ms) {
+			CreateTimerQueueTimer(&timer, NULL, handler, &flag, ms, ms, WT_EXECUTEDEFAULT);
+		}
+	}
+
+	~Timer()
+	{
+		if (timer) {
+			DeleteTimerQueueTimer(NULL, timer, NULL);
+			CloseHandle(timer);
+		}
+	}
+
+	bool wait()
+	{
+		return atomic_flag_test_and_set(&flag);
+	}
+};
+
+class Console : public Timer
+{
+	CONSOLE_FONT_INFOEX cfi_;
+
+	enum Bar : unsigned
+	{
+		NoBar    = 0,
+		RightBar = 1,
+		DownBar  = 2,
+		LeftBar  = 4,
+		UpBar    = 8,
+		AllBars  = RightBar | DownBar | LeftBar | UpBar
+	};
+
+public:
+
+	HANDLE Cin;
+	HANDLE Cout;
+	HANDLE Cerr;
+	HWND   Hwnd;
+
 	struct Rectangle
 	{
 		Rectangle() : Rectangle(0, 0, 0, 0) {}
@@ -83,22 +134,7 @@ struct Console
 		FullGrade   = 4,
 	};
 
-	enum Bar : unsigned
-	{
-		NoBar    = 0,
-		RightBar = 1,
-		DownBar  = 2,
-		LeftBar  = 4,
-		UpBar    = 8,
-		AllBars  = RightBar | DownBar | LeftBar | UpBar
-	};
-
-	HANDLE Cin;
-	HANDLE Cout;
-	HANDLE Cerr;
-	HWND   Hwnd;
-
-	Console( const char *title = NULL )
+	Console( const char *title = NULL, unsigned freq = 0 ) : Timer(freq)
 	{
 		if (AllocConsole()) {
 			AttachConsole(ATTACH_PARENT_PROCESS);
@@ -112,6 +148,9 @@ struct Console
 		Cerr = GetStdHandle(STD_ERROR_HANDLE);
 		Hwnd = GetConsoleWindow();
 
+		cfi_.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+		GetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
+
 		DWORD mode;
 		GetConsoleMode(Cin, &mode);
 		SetConsoleMode(Cin, mode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
@@ -124,6 +163,9 @@ struct Console
 
 	~Console()
 	{
+		SetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
+		Maximize();
+		Clear();
 		FreeConsole();
 	}
 
@@ -132,45 +174,93 @@ struct Console
 		SetConsoleTitle(title);
 	}
 
+	void Minimize()
+	{
+		ShowWindow(Hwnd, SW_MINIMIZE);
+	}
+
+	void Maximize()
+	{
+		COORD size = GetLargestConsoleWindowSize(Cout);
+		SetSize(size.X, size.Y);
+		ShowWindow(Hwnd, SW_MAXIMIZE);
+	}
+
+	void Restore()
+	{
+		ShowWindow(Hwnd, SW_RESTORE);
+	}
+
+	bool IsMinimized()
+	{
+		return (GetWindowLong(Hwnd, GWL_STYLE) & WS_MINIMIZE) != 0;
+	}
+
+	bool IsMaximized()
+	{
+		return (GetWindowLong(Hwnd, GWL_STYLE) & WS_MAXIMIZE) != 0;
+	}
+
+	bool IsRestored()
+	{
+		return (GetWindowLong(Hwnd, GWL_STYLE) & (WS_MINIMIZE | WS_MAXIMIZE)) == 0;
+	}
+
 	void SetWindowed()
 	{
 		COORD size;
 		SetConsoleDisplayMode(Cout, CONSOLE_WINDOWED_MODE, &size);
+		Restore();
 	}
 
 	void SetFullScreen()
 	{
 		COORD size;
 		SetConsoleDisplayMode(Cout, CONSOLE_FULLSCREEN_MODE, &size);
+		Maximize();
 	}
 
 	void GetSize( int *width, int *height )
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		if (width  != NULL) *width  = csbi.dwSize.X;
-		if (height != NULL) *height = csbi.dwSize.Y;
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (width  != NULL) *width  = sbi.dwSize.X;
+		if (height != NULL) *height = sbi.dwSize.Y;
+	}
+
+	void GetWndSize( int *width, int *height )
+	{
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (width  != NULL) *width  = sbi.srWindow.Right - sbi.srWindow.Left + 1;
+		if (height != NULL) *height = sbi.srWindow.Bottom - sbi.srWindow.Top + 1;
+	}
+
+	void GetMaxSize( int *width, int *height )
+	{
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (width  != NULL) *width  = sbi.dwMaximumWindowSize.X;
+		if (height != NULL) *height = sbi.dwMaximumWindowSize.Y;
 	}
 
 	void SetSize( int width, int height )
 	{
+		LockWindowUpdate(Hwnd);
+		while (!IsRestored()) Restore();
+
 		int w, h;
 		GetSize(&w, &h);
-		if (w > width ) w = width;
-		if (h > height) h = height;
-		SMALL_RECT rc = { 0, 0, (SHORT)(w - 1), (SHORT)(h - 1) };
-		SetConsoleWindowInfo(Cout, TRUE, &rc);
-
-		COORD size = { (SHORT)width, (SHORT)height };
-		SetConsoleScreenBufferSize(Cout, size);
-
+		w = std::min(w, width);
+		h = std::min(h, height);
+		SMALL_RECT temp = { 0, 0, (SHORT)(w - 1), (SHORT)(h - 1) };
 		SMALL_RECT rect = { 0, 0, (SHORT)(width - 1), (SHORT)(height - 1) };
+		COORD      size = { (SHORT)width, (SHORT)height };
+		SetConsoleWindowInfo(Cout, TRUE, &temp);
+		SetConsoleScreenBufferSize(Cout, size);
 		SetConsoleWindowInfo(Cout, TRUE, &rect);
-	}
 
-	void Maximize()
-	{
-		ShowWindow(Hwnd, SW_SHOWMAXIMIZED);
+		LockWindowUpdate(NULL);
 	}
 
 	bool GetInput( INPUT_RECORD *rec = NULL, unsigned len = 1 )
@@ -225,7 +315,7 @@ struct Console
 	{
 		CONSOLE_FONT_INFOEX cfi = {};
 		cfi.cbSize = sizeof(cfi);
-		GetCurrentConsoleFontEx(Cout, false, &cfi);
+		GetCurrentConsoleFontEx(Cout, FALSE, &cfi);
 		return (int)cfi.dwFontSize.Y;
 	}
 
@@ -233,9 +323,10 @@ struct Console
 	{
 		CONSOLE_FONT_INFOEX cfi = {};
 		cfi.cbSize = sizeof(cfi);
-		GetCurrentConsoleFontEx(Cout, false, &cfi);
+		GetCurrentConsoleFontEx(Cout, FALSE, &cfi);
+		cfi.dwFontSize.X = 0;
 		cfi.dwFontSize.Y = (SHORT)size;
-		SetCurrentConsoleFontEx(Cout, false, &cfi);
+		SetCurrentConsoleFontEx(Cout, FALSE, &cfi);
 	}
 
 	void GetCursorPos( int *x, int *y )
@@ -568,5 +659,3 @@ struct Console
 		Fill(rc, g);
 	}
 };
-
-#endif // CONSOLE_HPP
