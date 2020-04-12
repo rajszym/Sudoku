@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    10.04.2020
+   @date    12.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -209,16 +209,14 @@ public:
 
 	void SetWindowed()
 	{
-		COORD size;
-		SetConsoleDisplayMode(Cout, CONSOLE_WINDOWED_MODE, &size);
-		Restore();
+		if (SetConsoleDisplayMode(Cout, CONSOLE_WINDOWED_MODE, NULL))
+			Maximize();
 	}
 
 	void SetFullScreen()
 	{
-		COORD size;
-		SetConsoleDisplayMode(Cout, CONSOLE_FULLSCREEN_MODE, &size);
-		Maximize();
+		if (SetConsoleDisplayMode(Cout, CONSOLE_FULLSCREEN_MODE, NULL))
+			Maximize();
 	}
 
 	void GetSize( int *width, int *height )
