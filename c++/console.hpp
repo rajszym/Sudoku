@@ -340,13 +340,17 @@ public:
 		return (int)cfi.dwFontSize.Y;
 	}
 
-	void SetFontSize( int size )
+	void SetFont( int size, const wchar_t *name = NULL )
 	{
 		CONSOLE_FONT_INFOEX cfi = {};
 		cfi.cbSize = sizeof(cfi);
 		GetCurrentConsoleFontEx(Cout, FALSE, &cfi);
 		cfi.dwFontSize.X = 0;
 		cfi.dwFontSize.Y = (SHORT)size;
+		if (name != NULL) {
+			cfi.FontWeight = FW_NORMAL;
+			wcsncpy(cfi.FaceName, name, LF_FACESIZE);
+		}
 		SetCurrentConsoleFontEx(Cout, FALSE, &cfi);
 	}
 
