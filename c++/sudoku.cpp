@@ -1530,7 +1530,8 @@ int main( int argc, char **argv )
 			while (--argc > 0)
 				::load(*++argv);
 
-			con.SetFontSize(56);
+//			con.SetFont(56, L"Lucida Console");
+			con.SetFont(56, L"Consolas");
 			con.Center(WINW + 1, WINH);
 			con.HideCursor();
 			sudoku.game();
