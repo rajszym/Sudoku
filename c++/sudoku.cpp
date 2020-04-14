@@ -1531,7 +1531,7 @@ int main( int argc, char **argv )
 				::load(*++argv);
 
 			con.SetFontSize(56);
-			con.Maximize();
+			con.Center(WINW + 1, WINH);
 			con.HideCursor();
 			sudoku.game();
 			break;
