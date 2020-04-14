@@ -137,17 +137,13 @@ public:
 
 	Console( const char *title = NULL, unsigned freq = 0 ) : Timer(freq)
 	{
-		if (AllocConsole()) {
-			AttachConsole(ATTACH_PARENT_PROCESS);
-			freopen("CONIN$",  "rb", stdin );
-			freopen("CONOUT$", "wb", stdout);
-			freopen("CONOUT$", "wb", stderr);
-		}
-
 		Cin  = GetStdHandle(STD_INPUT_HANDLE);
 		Cout = GetStdHandle(STD_OUTPUT_HANDLE);
 		Cerr = GetStdHandle(STD_ERROR_HANDLE);
 		Hwnd = GetConsoleWindow();
+
+		if (!Cin || !Cout || !Cerr || !Hwnd)
+			throw std::runtime_error("console error");
 
 		cfi_.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 		GetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
@@ -229,6 +225,7 @@ public:
 		int x = (GetSystemMetrics(SM_CXSCREEN) - cx) / 2;
 		int y = (GetSystemMetrics(SM_CYSCREEN) - cy) / 2;
 		SetWindowPos(Hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+//		MoveWindow(Hwnd, x, y, cx, cy, FALSE);
 	}
 
 	void Center( int width, int height )
@@ -277,6 +274,7 @@ public:
 		SetConsoleScreenBufferSize(Cout, size);
 		SetConsoleWindowInfo(Cout, TRUE, &rect);
 
+		Clear();
 		LockWindowUpdate(NULL);
 	}
 
