@@ -224,8 +224,8 @@ struct Sudoku: public std::vector<Cell *>
 	void save         ( std::string );
 	bool test         ( bool = false );
 	void draw         ();
-	void draw_info    ();
-	void draw_menu    ();
+	void update_info  ();
+	void update_menu  ();
 	void update       ();
 	void back         ();
 	void game         ();
@@ -301,7 +301,7 @@ Menu &Menu::add( const char *item )
 	return *this;
 }
 
-int Menu::next(bool prev)
+int Menu::next( bool prev )
 {
 	int max = Menu::size() - 1;
 
@@ -483,7 +483,8 @@ bool Cell::set( int n, bool real )
 	if (!Cell::allowed(n) && (n != 0 || Cell::immutable))
 		return false;
 	std::swap(Cell::num, n);
-	if (real) {
+	if (real)
+	{
 		undo.emplace_back(this, n);
 		draw();
 	}
@@ -550,7 +551,8 @@ bool select_cell( Cell *a, Cell *b )
 
 Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 {
-	for (int i = 0; i < 81; i++) {
+	for (int i = 0; i < 81; i++)
+	{
 		Cell *c = new Cell(i);
 		Sudoku::emplace_back(c);
 		c->link(*this);
@@ -1092,11 +1094,11 @@ void Sudoku::save( std::string filename )
 void Sudoku::draw()
 {
 	for (Cell *c: *this) c->draw();
-	Sudoku::draw_info();
-	Sudoku::draw_menu();
+	Sudoku::update_info();
+	Sudoku::update_menu();
 }
 
-void Sudoku::draw_info()
+void Sudoku::update_info()
 {
 	con.SetText(MNUX + MNUW - 10, MNUY + 3, Console::Cyan);
 	printf("%4d:%d:", Sudoku::rating, Sudoku::level);
@@ -1105,7 +1107,7 @@ void Sudoku::draw_info()
 	printf("%2d", Button::button == 0 ? Sudoku::len() : Sudoku::len(Button::button));
 }
 
-void Sudoku::draw_menu()
+void Sudoku::update_menu()
 {
 	Sudoku::mnu[0].idx = Sudoku::help;  Sudoku::mnu[0].draw();
 	Sudoku::mnu[1].idx = Sudoku::level; Sudoku::mnu[1].draw();
@@ -1124,7 +1126,7 @@ void Sudoku::update()
 	for (Menu m: Sudoku::mnu)
 		m.update();
 
-	draw_info();
+	update_info();
 }
 
 void Sudoku::back()
@@ -1195,11 +1197,13 @@ void Sudoku::game()
 						switch (input.Event.MouseEvent.dwButtonState)
 						{
 						case FROM_LEFT_1ST_BUTTON_PRESSED:
-							if (c->num != 0) {
+							if (c->num != 0)
+							{
 								if (!solved())
 									Button::button = c->num;
 							}
-							else {
+							else
+							{
 								c->set(Button::button, true);
 							}
 							break;
@@ -1208,7 +1212,7 @@ void Sudoku::game()
 							break;
 						}
 
-						Sudoku::draw_info();
+						Sudoku::update_info();
 					}
 					else
 					if (x >= BARX && x < BARX + BARW && y >= BARY && y < BARY + BARH && !solved())
@@ -1248,8 +1252,8 @@ void Sudoku::game()
 						case 11: return;
 						}
 
-						Sudoku::draw_info();
-						Sudoku::draw_menu();
+						Sudoku::update_info();
+						Sudoku::update_menu();
 						Sudoku::wait = false;
 					}
 					break;
@@ -1321,8 +1325,8 @@ void Sudoku::game()
 					}
 				}
 
-				Sudoku::draw_info();
-				Sudoku::draw_menu();
+				Sudoku::update_info();
+				Sudoku::update_menu();
 				Sudoku::wait = false;
 
 				break;
