@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    12.04.2020
+   @date    14.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -164,6 +164,7 @@ public:
 
 	~Console()
 	{
+		FlushConsoleInputBuffer(Cin);
 		SetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
 		Maximize();
 		ShowCursor();
@@ -217,6 +218,23 @@ public:
 	{
 		if (SetConsoleDisplayMode(Cout, CONSOLE_FULLSCREEN_MODE, NULL))
 			Maximize();
+	}
+
+	void Center()
+	{
+		RECT rc;
+		GetWindowRect(Hwnd, &rc);
+		int cx = rc.right - rc.left;
+		int cy = rc.bottom - rc.top;
+		int x = (GetSystemMetrics(SM_CXSCREEN) - cx) / 2;
+		int y = (GetSystemMetrics(SM_CYSCREEN) - cy) / 2;
+		SetWindowPos(Hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	}
+
+	void Center( int width, int height )
+	{
+		SetSize(width, height);
+		Center();
 	}
 
 	void GetSize( int *width, int *height )
