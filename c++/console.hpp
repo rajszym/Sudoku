@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    14.04.2020
+   @date    15.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -162,9 +162,8 @@ public:
 	{
 		FlushConsoleInputBuffer(Cin);
 		SetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
-		Maximize();
 		ShowCursor();
-		FreeConsole();
+		Maximize();
 	}
 
 	void SetTitle( const char *title )
@@ -274,7 +273,6 @@ public:
 		SetConsoleScreenBufferSize(Cout, size);
 		SetConsoleWindowInfo(Cout, TRUE, &rect);
 
-		Clear();
 		LockWindowUpdate(NULL);
 	}
 
