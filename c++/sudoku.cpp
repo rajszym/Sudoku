@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    12.04.2020
+   @date    17.04.2020
    @brief   Sudoku game and generator
 
 *******************************************************************************
@@ -48,7 +48,7 @@
 #define MNUW  12
 #define MNUH (BARH)
 
-#define WINW (MNUX + MNUW)
+#define WINW (MNUX + MNUW + 1)
 #define WINH (TABY + TABH)
 
 const char *title = "SUDOKU";
@@ -1100,11 +1100,10 @@ void Sudoku::draw()
 
 void Sudoku::update_info()
 {
-	con.SetText(MNUX + MNUW - 10, MNUY + 3, Console::Cyan);
-	printf("%4d:%d:", Sudoku::rating, Sudoku::level);
-
-	con.SetText(MNUX + MNUW - 3, MNUY + 3, Button::button == 0 ? Console::Cyan : Console::Yellow);
-	printf("%2d", Button::button == 0 ? Sudoku::len() : Sudoku::len(Button::button));
+	con.SetText(MNUX + MNUW - 11, MNUY + 3, Console::Cyan);
+	printf("%d  %3d  %2d", Sudoku::level, Sudoku::rating, Button::button != 0 ? Sudoku::len(Button::button) : Sudoku::len());
+	if (Button::button != 0)
+		con.Put(MNUX + MNUW - 2, MNUY + 3, Console::Yellow);
 }
 
 void Sudoku::update_menu()
@@ -1242,6 +1241,7 @@ void Sudoku::game()
 
 						switch (y)
 						{
+						case  3: if (Sudoku::level > 1) { Sudoku::check(); Sudoku::draw(); } break;
 						case  4: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
 						case  5: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
 						case  6: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
@@ -1532,7 +1532,7 @@ int main( int argc, char **argv )
 
 //			con.SetFont(56, L"Lucida Console");
 			con.SetFont(56, L"Consolas");
-			con.Center(WINW + 1, WINH);
+			con.Center(WINW, WINH);
 			con.HideCursor();
 			sudoku.game();
 			break;
