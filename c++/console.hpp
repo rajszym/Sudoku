@@ -49,13 +49,14 @@ public:
 
 	Timer( const DWORD freq = 0 )
 	{
-		if (freq > 0)
+		if (freq) {
 			CreateTimerQueueTimer(&timer, NULL, handler, &flag, freq, freq, WT_EXECUTEDEFAULT);
+		}
 	}
 
 	~Timer()
 	{
-		if (timer != NULL) {
+		if (timer) {
 			DeleteTimerQueueTimer(NULL, timer, NULL);
 			CloseHandle(timer);
 		}
@@ -85,6 +86,46 @@ class Console: public Timer
 		UpBar    = 8,
 		AllBars  = RightBar | DownBar | LeftBar | UpBar
 	};
+
+	bool Create( LPCTSTR title )
+	{
+		hwnd_ = GetConsoleWindow();
+		if (!hwnd_)
+			return false;
+
+		cin_  = GetStdHandle(STD_INPUT_HANDLE);
+		cout_ = GetStdHandle(STD_OUTPUT_HANDLE);
+		cerr_ = GetStdHandle(STD_ERROR_HANDLE);
+		if (!cin_ || !cout_ || !cerr_)
+			return false;
+
+		if (!FlushConsoleInputBuffer(Cin))
+			return false;
+
+		cfi_.cbSize = sizeof(cfi_);
+		if (!GetCurrentConsoleFontEx(Cout, FALSE, &cfi_))
+			return false;
+
+		DWORD mode;
+		if (!GetConsoleMode(Cin, &mode))
+			return false;
+
+		mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+		mode &= ~ENABLE_QUICK_EDIT_MODE;
+		if (!SetConsoleMode(Cin, mode))
+			return false;
+
+		return SetTitle(title) &&
+		       Clear();
+	}
+
+	bool Delete()
+	{
+		return FlushConsoleInputBuffer(Cin) &&
+		       SetCurrentConsoleFontEx(Cout, FALSE, &cfi_) &&
+		       ShowCursor() &&
+		       Maximize();
+	}
 
 public:
 
@@ -141,227 +182,258 @@ public:
 
 	Console( LPCTSTR title = NULL, const DWORD freq = 0 ): Timer(freq), Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
 	{
-		hwnd_ = GetConsoleWindow();
-		cin_  = GetStdHandle(STD_INPUT_HANDLE);
-		cout_ = GetStdHandle(STD_OUTPUT_HANDLE);
-		cerr_ = GetStdHandle(STD_ERROR_HANDLE);
-
-		if (!hwnd_ || !cin_ || !cout_ || !cerr_)
-			throw std::runtime_error("console error");
-
-		cfi_.cbSize = sizeof(cfi_);
-		GetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
-
-		DWORD mode;
-		GetConsoleMode(Cin, &mode);
-		mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-		mode &= ~ENABLE_QUICK_EDIT_MODE;
-		SetConsoleMode(Cin, mode);
-
-		SetTitle(title);
-		Clear();
+ 		if (!Create(title))
+			throw std::runtime_error("console construction error");
 	}
 
 	~Console()
 	{
-		FlushConsoleInputBuffer(Cin);
-		SetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
-		ShowCursor();
-		Maximize();
+		(void) Delete();
 	}
 
-	void SetTitle( LPCTSTR title ) const
+	bool SetTitle( LPCTSTR title ) const
 	{
-		if (title != NULL)
-			SetConsoleTitle(title);
+		return !title || SetConsoleTitle(title);
 	}
 
-	void Minimize() const
+	bool Minimize() const
 	{
-		ShowWindow(Hwnd, SW_MINIMIZE);
+		return ShowWindow(Hwnd, SW_MINIMIZE);
 	}
 
-	void Maximize() const
+	bool Maximize() const
 	{
 		const COORD size = GetLargestConsoleWindowSize(Cout);
-		SetSize(size.X, size.Y);
-		ShowWindow(Hwnd, SW_MAXIMIZE);
+		if (size.X == 0 && size.Y == 0)
+			return false;
+
+		return SetSize(size.X, size.Y) &&
+		       ShowWindow(Hwnd, SW_MAXIMIZE);
 	}
 
-	void Restore() const
+	bool Restore() const
 	{
-		ShowWindow(Hwnd, SW_RESTORE);
+		return ShowWindow(Hwnd, SW_RESTORE);
 	}
 
 	bool Minimized() const
 	{
-		return (GetWindowLong(Hwnd, GWL_STYLE) & WS_MINIMIZE) != 0;
+		LONG result;
+		result = GetWindowLong(Hwnd, GWL_STYLE);
+		return (result & WS_MINIMIZE) != 0L;
 	}
 
 	bool Maximized() const
 	{
-		return (GetWindowLong(Hwnd, GWL_STYLE) & WS_MAXIMIZE) != 0;
+		LONG result;
+		result = GetWindowLong(Hwnd, GWL_STYLE);
+		return (result & WS_MAXIMIZE) != 0L;
 	}
 
 	bool Windowed() const
 	{
-		return (GetWindowLong(Hwnd, GWL_STYLE) & (WS_MINIMIZE | WS_MAXIMIZE)) == 0;
+		LONG result;
+		result = GetWindowLong(Hwnd, GWL_STYLE);
+		return result != 0L && (result & (WS_MINIMIZE | WS_MAXIMIZE)) == 0L;
 	}
 
-	void SetFullScreen( const bool fullscreen = true ) const
+	bool SetFullScreen( const bool fullscreen = true ) const
 	{
-		SetConsoleDisplayMode(Cout, fullscreen ? CONSOLE_FULLSCREEN_MODE : CONSOLE_WINDOWED_MODE, NULL);
-		Maximize();
+		return SetConsoleDisplayMode(Cout, fullscreen ? CONSOLE_FULLSCREEN_MODE : CONSOLE_WINDOWED_MODE, NULL) &&
+		       Maximize();
 	}
 
-	void GetSize( int * const width, int * const height ) const
-	{
-		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
-		if (width  != NULL) *width  = static_cast<int>(sbi.dwSize.X);
-		if (height != NULL) *height = static_cast<int>(sbi.dwSize.Y);
-	}
-
-	void GetWndSize( int * const width, int * const height ) const
+	bool GetSize( int * const width, int * const height ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
-		if (width  != NULL) *width  = static_cast<int>(sbi.srWindow.Right - sbi.srWindow.Left + 1);
-		if (height != NULL) *height = static_cast<int>(sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
+
+		if (width)  *width  = static_cast<int>(sbi.dwSize.X);
+		if (height) *height = static_cast<int>(sbi.dwSize.Y);
+
+		return true;
 	}
 
-	void GetMaxSize( int * const width, int * const height ) const
+	bool GetWndSize( int * const width, int * const height ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
-		if (width  != NULL) *width  = static_cast<int>(sbi.dwMaximumWindowSize.X);
-		if (height != NULL) *height = static_cast<int>(sbi.dwMaximumWindowSize.Y);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
+
+		if (width)  *width  = static_cast<int>(sbi.srWindow.Right - sbi.srWindow.Left + 1);
+		if (height) *height = static_cast<int>(sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
+
+		return true;
 	}
 
-	void SetSize( const int width, const int height ) const
+	bool GetMaxSize( int * const width, int * const height ) const
 	{
-		Home();
-		while (!Windowed()) Restore();
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
+
+		if (width)  *width  = static_cast<int>(sbi.dwMaximumWindowSize.X);
+		if (height) *height = static_cast<int>(sbi.dwMaximumWindowSize.Y);
+
+		return true;
+	}
+
+	bool SetSize( const int width, const int height ) const
+	{
+		while (!Windowed())
+			if (!Restore())
+				return false;
 
 		int w, h;
-		GetSize(&w, &h);
+		if (!GetSize(&w, &h))
+			return false;
+
 		w = std::min(w, width);
 		h = std::min(h, height);
 		const SMALL_RECT temp = { 0, 0, static_cast<SHORT>(w - 1),     static_cast<SHORT>(h - 1) };
 		const SMALL_RECT rect = { 0, 0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height - 1) };
 		const COORD      size = {       static_cast<SHORT>(width),     static_cast<SHORT>(height) };
-		SetConsoleWindowInfo(Cout, TRUE, &temp);
-		SetConsoleScreenBufferSize(Cout, size);
-		SetConsoleWindowInfo(Cout, TRUE, &rect);
+
+		return SetConsoleWindowInfo(Cout, TRUE, &temp) &&
+		       SetConsoleScreenBufferSize(Cout, size) &&
+		       SetConsoleWindowInfo(Cout, TRUE, &rect) &&
+		       Home();
 	}
 
-	void Center() const
+	bool Center() const
 	{
-		while (!Windowed()) Restore();
+		while (!Windowed())
+			if (!Restore())
+				return false;
 
-		RECT rc;
 		const int cx = GetSystemMetrics(SM_CXSCREEN);
 		const int cy = GetSystemMetrics(SM_CYSCREEN);
-		GetWindowRect(Hwnd, &rc);
+		if (cx == 0 || cy == 0)
+			return false;
+
+		RECT rc;
+		if (!GetWindowRect(Hwnd, &rc))
+			return false;
+
 		const int x = (cx - (rc.right - rc.left + 1)) / 2;
 		const int y = (cy - (rc.bottom - rc.top + 1)) / 2;
-		SetWindowPos(Hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+
+		return SetWindowPos(Hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
 	}
 
-	void Center( const int width, const int height ) const
+	bool Center( const int width, const int height ) const
 	{
-		SetSize(width, height);
-		Center();
+		return SetSize(width, height) &&
+		       Center();
 	}
 
 	bool GetInput( INPUT_RECORD * const ir = NULL, const DWORD len = 1 ) const
 	{
 		DWORD count;
-		GetNumberOfConsoleInputEvents(Cin, &count);
-		if (count == 0) return false;
-		if (ir == NULL) return true;
-		return ReadConsoleInput(Cin, ir, len, &count) != 0;
+		if (!GetNumberOfConsoleInputEvents(Cin, &count) || count == 0)
+			return false;
+
+		return !ir || ReadConsoleInput(Cin, ir, len, &count);
 	}
 
-	void Clear() const
+	bool Clear() const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
 
 		const COORD home = { 0, 0 };
 		const DWORD size = sbi.dwSize.X * sbi.dwSize.Y;
 		DWORD count;
-		FillConsoleOutputCharacter(Cout, ' ',             size, home, &count);
-		FillConsoleOutputAttribute(Cout, sbi.wAttributes, size, home, &count);
-		Home();
+
+		return FillConsoleOutputCharacter(Cout, ' ', size, home, &count) &&
+		       FillConsoleOutputAttribute(Cout, sbi.wAttributes, size, home, &count) &&
+		       Home();
 	}
 
-	void Clear( const Color fore, const Color back = Black ) const
+	bool Clear( const Color fore, const Color back = Black ) const
 	{
-		SetTextColor(fore, back);
-		Clear();
+		return SetTextColor(fore, back) &&
+		       Clear();
 	}
 
-	void Home() const
+	bool Home() const
 	{
-		SetCursorPos(0, 0);
+		return SetCursorPos(0, 0);
 	}
 
-	void HideCursor() const
-	{
-		CONSOLE_CURSOR_INFO cci;
-		GetConsoleCursorInfo(Cout, &cci); cci.bVisible = FALSE;
-		SetConsoleCursorInfo(Cout, &cci);
-	}
-
-	void ShowCursor() const
+	bool HideCursor() const
 	{
 		CONSOLE_CURSOR_INFO cci;
-		GetConsoleCursorInfo(Cout, &cci); cci.bVisible = TRUE;
-		SetConsoleCursorInfo(Cout, &cci);
+		if (!GetConsoleCursorInfo(Cout, &cci))
+			return false;
+
+		cci.bVisible = FALSE;
+		return SetConsoleCursorInfo(Cout, &cci);
 	}
 
-	void SetCursorSize( const DWORD size ) const
+	bool ShowCursor() const
 	{
-		const CONSOLE_CURSOR_INFO cci = { size, TRUE };
-		if (size == 0) HideCursor();
-		else           SetConsoleCursorInfo(Cout, &cci);
+		CONSOLE_CURSOR_INFO cci;
+		if (!GetConsoleCursorInfo(Cout, &cci))
+			return false;
+
+		cci.bVisible = TRUE;
+		return SetConsoleCursorInfo(Cout, &cci);
+	}
+
+	bool SetCursorSize( const DWORD size ) const
+	{
+		const CONSOLE_CURSOR_INFO cci = { size, true };
+		if (size == 0)
+			return HideCursor();
+		else
+			return SetConsoleCursorInfo(Cout, &cci);
 	}
 
 	int GetFontSize() const
 	{
 		CONSOLE_FONT_INFOEX cfi = {};
 		cfi.cbSize = sizeof(cfi);
-		GetCurrentConsoleFontEx(Cout, FALSE, &cfi);
+		if (!GetCurrentConsoleFontEx(Cout, FALSE, &cfi))
+			return 0;
+
 		return static_cast<int>(cfi.dwFontSize.Y);
 	}
 
-	void SetFont( const SHORT size, const WCHAR *name = NULL ) const
+	bool SetFont( const SHORT size, const WCHAR *name = NULL ) const
 	{
 		CONSOLE_FONT_INFOEX cfi = {};
 		cfi.cbSize = sizeof(cfi);
-		GetCurrentConsoleFontEx(Cout, FALSE, &cfi);
+		if (!GetCurrentConsoleFontEx(Cout, FALSE, &cfi))
+			return false;
+
 		cfi.dwFontSize = { 0, size };
-		if (name != NULL) {
+		if (name) {
 			cfi.FontWeight = FW_NORMAL;
 			wcsncpy(cfi.FaceName, name, LF_FACESIZE);
 		}
-		SetCurrentConsoleFontEx(Cout, FALSE, &cfi);
+
+		return SetCurrentConsoleFontEx(Cout, FALSE, &cfi);
 	}
 
-	void GetCursorPos( int * const x, int * const y ) const
+	bool GetCursorPos( int * const x, int * const y ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
-		if (x != NULL) *x = sbi.dwCursorPosition.X;
-		if (y != NULL) *y = sbi.dwCursorPosition.Y;
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
+
+		if (x) *x = sbi.dwCursorPosition.X;
+		if (y) *y = sbi.dwCursorPosition.Y;
+
+		return true;
 	}
 
-	void SetCursorPos( const int x, const int y ) const
+	bool SetCursorPos( const int x, const int y ) const
 	{
-	//	flushall();
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
-		SetConsoleCursorPosition(Cout, coord);
+		return SetConsoleCursorPosition(Cout, coord);
 	}
 
 	WORD MakeAttribute( const Color fore, const Color back ) const
@@ -379,23 +451,27 @@ public:
 		return static_cast<Color>((a / 16) % 16);
 	}
 
-	void GetTextColor( Color * const fore, Color * const back = NULL ) const
+	bool GetTextColor( Color * const fore, Color * const back = NULL ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
-		if (fore != NULL) *fore = GetForeColor(sbi.wAttributes);
-		if (back != NULL) *back = GetBackColor(sbi.wAttributes);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
+
+		if (fore) *fore = GetForeColor(sbi.wAttributes);
+		if (back) *back = GetBackColor(sbi.wAttributes);
+
+		return true;
 	}
 
-	void SetTextColor( const Color fore, const Color back = Black ) const
+	bool SetTextColor( const Color fore, const Color back = Black ) const
 	{
-		SetConsoleTextAttribute(Cout, MakeAttribute(fore, back));
+		return SetConsoleTextAttribute(Cout, MakeAttribute(fore, back));
 	}
 
-	void SetText( const int x, const int y, const Color fore, const Color back = Black ) const
+	bool SetText( const int x, const int y, const Color fore, const Color back = Black ) const
 	{
-		SetCursorPos(x, y);
-		SetTextColor(fore, back);
+		return SetCursorPos(x, y) &&
+		       SetTextColor(fore, back);
 	}
 
 	char Get( const int x, const int y ) const
@@ -403,7 +479,9 @@ public:
 		CHAR  c;
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
-		ReadConsoleOutputCharacter(Cout, &c, 1, coord, &count);
+		if (!ReadConsoleOutputCharacter(Cout, &c, 1, coord, &count))
+			return 0;
+
 		return c;
 	}
 
@@ -412,263 +490,318 @@ public:
 		WORD  a;
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
-		ReadConsoleOutputAttribute(Cout, &a, 1, coord, &count);
-		if (fore != NULL) *fore = GetForeColor(a);
-		if (back != NULL) *back = GetBackColor(a);
+		if (!ReadConsoleOutputAttribute(Cout, &a, 1, coord, &count))
+			return 0;
+
+		if (fore) *fore = GetForeColor(a);
+		if (back) *back = GetBackColor(a);
+
 		return Get(x, y);
 	}
 
-	void Put( const int x, const int y, const Color fore, const Color back = Black ) const
+	bool Put( const int x, const int y, const Color fore, const Color back = Black ) const
 	{
 		WORD  t;
 		const WORD  a = MakeAttribute(fore, back);
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
-		ReadConsoleOutputAttribute(Cout, &t, 1, coord, &count);
-		if (a != t)
-			WriteConsoleOutputAttribute(Cout, &a, 1, coord, &count);
+		if (!ReadConsoleOutputAttribute(Cout, &t, 1, coord, &count))
+			return false;
+
+		return a == t || WriteConsoleOutputAttribute(Cout, &a, 1, coord, &count);
 	}
 
-	void Put( const int x, const int y, const char c ) const
+	bool Put( const int x, const int y, const char c ) const
 	{
 		CHAR  t;
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
-		ReadConsoleOutputCharacter(Cout, &t, 1, coord, &count);
-		if (c != t)
-			WriteConsoleOutputCharacter(Cout, &c, 1, coord, &count);
+		if (!ReadConsoleOutputCharacter(Cout, &t, 1, coord, &count))
+			return false;
+
+		return c == t || WriteConsoleOutputCharacter(Cout, &c, 1, coord, &count);
 	}
 
-	void Put( const int x, const int y, const char * const s ) const
+	bool Put( const int x, const int y, const char * const s ) const
 	{
 		int i = x;
 		const char *p = s;
-		while (*p) Put(i++, y, *p++);
+		while (*p)
+			if (!Put(i++, y, *p++))
+				return false;
+
+		return true;
 	}
 
-	void Put( const int x, const int y, const char c, const Color fore, const Color back = Black ) const
+	bool Put( const int x, const int y, const char c, const Color fore, const Color back = Black ) const
 	{
-		Put(x, y, fore, back);
-		Put(x, y, c);
+		return Put(x, y, fore, back) &&
+		       Put(x, y, c);
 	}
 
-	void Put( const int x, const int y, const char * const s, const Color fore, const Color back = Black ) const
+	bool Put( const int x, const int y, const char * const s, const Color fore, const Color back = Black ) const
 	{
 		int i = x;
 		const char *p = s;
-		while (*p) Put(i++, y, *p++, fore, back);
+		while (*p)
+			if (!Put(i++, y, *p++, fore, back))
+				return false;
+
+		return true;
 	}
 
 	char Get() const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return 0;
+
 		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y);
 	}
 
 	char Get( Color * const fore, Color * const back = NULL ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return 0;
+
 		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
 
-	void Put( const char c ) const
+	bool Put( const char c ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
-		Put(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, c);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
+
+		return Put(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, c);
 	}
 
-	void Put( const Color fore, const Color back = Black ) const
+	bool Put( const Color fore, const Color back = Black ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		GetConsoleScreenBufferInfo(Cout, &sbi);
-		Put(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return false;
+
+		return Put(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
 
-	void ColorHLine( const Rectangle &rc, const int y, const Color fore, const Color back = Black ) const
+	bool ColorHLine( const Rectangle &rc, const int y, const Color fore, const Color back = Black ) const
 	{
-		if (rc.height > 0)
-			for (int x = rc.left; x <= rc.right; x++)
-				Put(x, y, fore, back);
+		if (y < rc.top || y > rc.bottom || rc.width < 1)
+			return false;
+
+		for (int x = rc.left; x <= rc.right; x++)
+			if (!Put(x, y, fore, back))
+				return false;
+
+		return true;
 	}
 
-	void ColorVLine( const Rectangle &rc, const int x, const Color fore, const Color back = Black ) const
+	bool ColorVLine( const Rectangle &rc, const int x, const Color fore, const Color back = Black ) const
 	{
-		if (rc.width > 0)
-			for (int y = rc.top; y <= rc.bottom; y++)
-				Put(x, y, fore, back);
+		if (x < rc.left || x > rc.right || rc.height < 1)
+			return false;
+
+		for (int y = rc.top; y <= rc.bottom; y++)
+			if (!Put(x, y, fore, back))
+				return false;
+
+		return true;
 	}
 
-	void ColorFrame( const Rectangle &rc, const Color fore, const Color back = Black ) const
+	bool ColorFrame( const Rectangle &rc, const Color fore, const Color back = Black ) const
 	{
-		ColorHLine(rc, rc.top, fore, back);
-		ColorVLine(rc, rc.left, fore, back);
-		ColorVLine(rc, rc.right, fore, back);
-		ColorHLine(rc, rc.bottom, fore, back);
+		return ColorHLine(rc, rc.top, fore, back) &&
+		       ColorVLine(rc, rc.left, fore, back) &&
+		       ColorVLine(rc, rc.right, fore, back) &&
+		       ColorHLine(rc, rc.bottom, fore, back);
 	}
 
-	void ColorFrame( const int x, const int y, const int width, const int height, const Color fore, const Color back = Black ) const
+	bool ColorFrame( const int x, const int y, const int width, const int height, const Color fore, const Color back = Black ) const
 	{
 		const Rectangle rc(x, y, width, height);
-		ColorFrame(rc, fore, back);
+		return ColorFrame(rc, fore, back);
 	}
 
-	void DrawHLine( const Rectangle &rc, const int y, const char * const box, const Bar b = NoBar ) const
+	bool DrawHLine( const Rectangle &rc, const int y, const char * const box, const Bar b = NoBar ) const
 	{
-		if (rc.width <= 1) return;
+		if (y < rc.top || y > rc.bottom || rc.width <= 1)
+			return false;
 
 		int x = rc.left;
 		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		Put(x++, y, box[p | b | RightBar]);
+		if (!Put(x++, y, box[p | b | RightBar]))
+			return false;
+
 		while (x < rc.right) {
 			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-			Put(x++, y, box[p | LeftBar | RightBar]);
+			if (!Put(x++, y, box[p | LeftBar | RightBar]))
+				return false;
 		}
+
 		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		Put(x++, y, box[p | b | LeftBar]);
+		if (!Put(x++, y, box[p | b | LeftBar]))
+			return false;
+
+		return true;
 	}
 
-	void DrawVLine( const Rectangle &rc, const int x, const char * const box, const Bar b = NoBar ) const
+	bool DrawVLine( const Rectangle &rc, const int x, const char * const box, const Bar b = NoBar ) const
 	{
-		if (rc.height <= 1) return;
+		if (x < rc.left || x > rc.right || rc.height <= 1)
+			return false;
 
 		int y = rc.top;
 		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		Put(x, y++, box[p | b | DownBar]);
+		if (!Put(x, y++, box[p | b | DownBar]))
+			return false;
+
 		while (y < rc.bottom) {
 			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-			Put(x, y++, box[p | UpBar | DownBar]);
+			if (!Put(x, y++, box[p | UpBar | DownBar]))
+				return false;
 		}
+
 		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		Put(x, y++, box[p | b | UpBar]);
+		if (!Put(x, y++, box[p | b | UpBar]))
+			return false;
+
+		return true;
 	}
 
-	void DrawFrame( const Rectangle &rc, const char * const box ) const
+	bool DrawFrame( const Rectangle &rc, const char * const box ) const
 	{
+		if (rc.width < 1 || rc.height < 1)
+			return false;
+
 		if (rc.width > 1) {
-			if (rc.height > 1) {
-				DrawHLine(rc, rc.top, box, DownBar);
-				DrawVLine(rc, rc.left, box, RightBar);
-				DrawVLine(rc, rc.right, box, LeftBar);
-				DrawHLine(rc, rc.bottom, box, UpBar);
-			}
+			if (rc.height > 1)
+				return DrawHLine(rc, rc.top, box, DownBar) &&
+				       DrawVLine(rc, rc.left, box, RightBar) &&
+				       DrawVLine(rc, rc.right, box, LeftBar) &&
+				       DrawHLine(rc, rc.bottom, box, UpBar);
 			else
-			if (rc.height == 1)
-				DrawHLine(rc, rc.y, box);
+				return DrawHLine(rc, rc.y, box);
 		}
-		else
-		if (rc.height > 1) {
-			if (rc.width == 1)
-				DrawVLine(rc, rc.x, box);
+		else {
+			if (rc.height > 1)
+				return DrawVLine(rc, rc.x, box);
+			else
+				return false;
 		}
 	}
 
-	void DrawFrame( const int x, const int y, const int width, const int height, const char * const box ) const
+	bool DrawFrame( const int x, const int y, const int width, const int height, const char * const box ) const
 	{
 		const Rectangle rc(x, y, width, height);
-		DrawFrame(rc, box);
+		return DrawFrame(rc, box);
 	}
 
-	void DrawSingle( const Rectangle &rc ) const
+	bool DrawSingle( const Rectangle &rc ) const
 	{
  		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
 		const char *box = "\x20""\x20""\x20""\xDA""\x20""\xC4""\xBF""\xC2""\x20""\xC0""\xB3""\xC3""\xD9""\xC1""\xB4""\xC5";
-		DrawFrame(rc, box);
+		return DrawFrame(rc, box);
 	}
 
-	void DrawSingle( const int x, const int y, const int width, const int height ) const
+	bool DrawSingle( const int x, const int y, const int width, const int height ) const
 	{
 		const Rectangle rc(x, y, width, height);
-		DrawSingle(rc);
+		return DrawSingle(rc);
 	}
 
-	void DrawDouble( const Rectangle &rc ) const
+	bool DrawDouble( const Rectangle &rc ) const
 	{
  		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
 		const char *box = "\x20""\x20""\x20""\xC9""\x20""\xCD""\xBB""\xCB""\x20""\xC8""\xBA""\xCC""\xBC""\xCA""\xB9""\xCE";
-		DrawFrame(rc, box);
+		return DrawFrame(rc, box);
 	}
 
-	void DrawDouble( const int x, const int y, const int width, const int height ) const
+	bool DrawDouble( const int x, const int y, const int width, const int height ) const
 	{
 		const Rectangle rc(x, y, width, height);
-		DrawDouble(rc);
+		return DrawDouble(rc);
 	}
 
-	void DrawBold( const Rectangle &rc ) const
+	bool DrawBold( const Rectangle &rc ) const
 	{
 		const char *box = "\xDC\xDB\xDF\xFE";
 
-		if ((rc.width <= 0) || (rc.height <= 0)) return;
+		if (rc.width <= 0 || rc.height <= 0)
+			return false;
 
 		if (rc.height == 1) {
 			for (int x = rc.left; x <= rc.right; x++)
-				Put(x, rc.y, box[3]);
+				if (!Put(x, rc.y, box[3]))
+					return false;
 		}
 		else {
-			for (int x = rc.left; x <= rc.right; x++) {
-				Put(x, rc.top,    box[0]);
-				Put(x, rc.bottom, box[2]);
-			}
-			for (int y = rc.top + 1; y < rc.bottom; y++) {
-				Put(rc.left,  y, box[1]);
-				Put(rc.right, y, box[1]);
-			}
+			for (int x = rc.left; x <= rc.right; x++)
+				if (!Put(x, rc.top,    box[0]) ||
+				    !Put(x, rc.bottom, box[2]))
+					return false;
+			for (int y = rc.top + 1; y < rc.bottom; y++)
+				if (!Put(rc.left,  y, box[1]) ||
+				    !Put(rc.right, y, box[1]))
+					return false;
 		}
+
+		return true;
 	}
 
-	void drawbold( const Rectangle &rc ) const
-	{
- 		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
-		const char *box = "\x20""\x20""\x20""\xDC""\x20""\xFE""\xDC""\xDC""\x20""\xDF""\xDB""\xDB""\xDF""\xDF""\xDB""\xDB";
-//		const char *box = "\x20""\x20""\x20""\xDC""\x20""\xDC""\xDC""\xDC""\x20""\xDC""\xDB""\xDB""\xDC""\xDC""\xDB""\xDB";
-		DrawFrame(rc, box);
-	}
-
-	void DrawBold( const int x, const int y, const int width, const int height ) const
+	bool DrawBold( const int x, const int y, const int width, const int height ) const
 	{
 		const Rectangle rc(x, y, width, height);
-		DrawBold(rc);
+		return DrawBold(rc);
 	}
 
-	void Fill( const int x, const int y, const int width, const int height, const Color fore, const Color back = Black ) const
+	bool Fill( const int x, const int y, const int width, const int height, const Color fore, const Color back = Black ) const
 	{
+		if (width <= 0 || height <= 0)
+			return false;
+
 		COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		DWORD count;
-		if (width > 0)
-			for (int h = height; h > 0; h--, coord.Y++)
-				FillConsoleOutputAttribute(Cout, MakeAttribute(fore, back), width, coord, &count);
+		for (int h = height; h > 0; h--, coord.Y++)
+			if (!FillConsoleOutputAttribute(Cout, MakeAttribute(fore, back), width, coord, &count))
+				return false;
+
+		return true;
 	}
 
-	void Fill( const Rectangle &rc, const Color fore, const Color back = Black ) const
+	bool Fill( const Rectangle &rc, const Color fore, const Color back = Black ) const
 	{
-		Fill(rc.x, rc.y, rc.width, rc.height, fore, back);
+		return Fill(rc.x, rc.y, rc.width, rc.height, fore, back);
 	}
 
-	void Fill( const int x, const int y, const int width, const int height, const char c = ' ' ) const
+	bool Fill( const int x, const int y, const int width, const int height, const char c = ' ' ) const
 	{
+		if (width <= 0 || height <= 0)
+			return false;
+
 		COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		DWORD count;
-		if (width > 0)
-			for (int h = height; h > 0; h--, coord.Y++)
-				FillConsoleOutputCharacter(Cout, c, width, coord, &count);
+		for (int h = height; h > 0; h--, coord.Y++)
+			if (!FillConsoleOutputCharacter(Cout, c, width, coord, &count))
+				return false;
+
+		return true;
 	}
 
-	void Fill( const Rectangle &rc, const char c = ' ' ) const
+	bool Fill( const Rectangle &rc, const char c = ' ' ) const
 	{
-		Fill(rc.x, rc.y, rc.width, rc.height, c);
+		return Fill(rc.x, rc.y, rc.width, rc.height, c);
 	}
 
-	void Fill( const int x, const int y, const int width, const int height, const Grade g )
+	bool Fill( const int x, const int y, const int width, const int height, const Grade g )
 	{
 		const char *bkg = "\x20\xB0\xB1\xB2\xDB";
-		Fill(x, y, width, height, bkg[g]);
+		return Fill(x, y, width, height, bkg[g]);
 	}
 
-	void Fill( const Rectangle &rc, const Grade g ) const
+	bool Fill( const Rectangle &rc, const Grade g ) const
 	{
-		Fill(rc.x, rc.y, rc.width, rc.height, g);
+		return Fill(rc.x, rc.y, rc.width, rc.height, g);
 	}
 };
