@@ -243,11 +243,19 @@ public:
 		       Maximize();
 	}
 
+	template <typename T>
+	int GetNone( T * const a, T * const b ) const
+	{
+		if (a) *a = static_cast<T>(0);
+		if (b) *b = static_cast<T>(0);
+		return 0;
+	}
+
 	bool GetSize( int * const width, int * const height ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return false;
+			return GetNone(width, height);
 
 		if (width)  *width  = static_cast<int>(sbi.dwSize.X);
 		if (height) *height = static_cast<int>(sbi.dwSize.Y);
@@ -259,7 +267,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return false;
+			return GetNone(width, height);
 
 		if (width)  *width  = static_cast<int>(sbi.srWindow.Right - sbi.srWindow.Left + 1);
 		if (height) *height = static_cast<int>(sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
@@ -271,7 +279,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return false;
+			return GetNone(width, height);
 
 		if (width)  *width  = static_cast<int>(sbi.dwMaximumWindowSize.X);
 		if (height) *height = static_cast<int>(sbi.dwMaximumWindowSize.Y);
@@ -422,7 +430,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return false;
+			return GetNone(x, y);
 
 		if (x) *x = sbi.dwCursorPosition.X;
 		if (y) *y = sbi.dwCursorPosition.Y;
@@ -455,7 +463,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return false;
+			return GetNone(fore, back);
 
 		if (fore) *fore = GetForeColor(sbi.wAttributes);
 		if (back) *back = GetBackColor(sbi.wAttributes);
@@ -491,7 +499,7 @@ public:
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		if (!ReadConsoleOutputAttribute(Cout, &a, 1, coord, &count))
-			return 0;
+			return GetNone(fore, back);
 
 		if (fore) *fore = GetForeColor(a);
 		if (back) *back = GetBackColor(a);
@@ -563,7 +571,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return 0;
+			return GetNone(fore, back);
 
 		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
