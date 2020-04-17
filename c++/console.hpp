@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    15.04.2020
+   @date    17.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -84,10 +84,10 @@ class Console : public Timer
 
 public:
 
+	HWND   Hwnd;
 	HANDLE Cin;
 	HANDLE Cout;
 	HANDLE Cerr;
-	HWND   Hwnd;
 
 	struct Rectangle
 	{
@@ -137,20 +137,22 @@ public:
 
 	Console( const char *title = NULL, unsigned freq = 0 ) : Timer(freq)
 	{
+		Hwnd = GetConsoleWindow();
 		Cin  = GetStdHandle(STD_INPUT_HANDLE);
 		Cout = GetStdHandle(STD_OUTPUT_HANDLE);
 		Cerr = GetStdHandle(STD_ERROR_HANDLE);
-		Hwnd = GetConsoleWindow();
 
-		if (!Cin || !Cout || !Cerr || !Hwnd)
+		if (!Hwnd || !Cin || !Cout || !Cerr)
 			throw std::runtime_error("console error");
 
-		cfi_.cbSize = sizeof(CONSOLE_FONT_INFOEX);
+		cfi_.cbSize = sizeof(cfi_);
 		GetCurrentConsoleFontEx(Cout, FALSE, &cfi_);
 
 		DWORD mode;
 		GetConsoleMode(Cin, &mode);
-		SetConsoleMode(Cin, mode | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
+		mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+		mode &= ~ENABLE_QUICK_EDIT_MODE;
+		SetConsoleMode(Cin, mode);
 
 		if (title != NULL)
 			SetTitle(title);
@@ -188,49 +190,25 @@ public:
 		ShowWindow(Hwnd, SW_RESTORE);
 	}
 
-	bool IsMinimized()
+	bool Minimized()
 	{
 		return (GetWindowLong(Hwnd, GWL_STYLE) & WS_MINIMIZE) != 0;
 	}
 
-	bool IsMaximized()
+	bool Maximized()
 	{
 		return (GetWindowLong(Hwnd, GWL_STYLE) & WS_MAXIMIZE) != 0;
 	}
 
-	bool IsRestored()
+	bool Windowed()
 	{
 		return (GetWindowLong(Hwnd, GWL_STYLE) & (WS_MINIMIZE | WS_MAXIMIZE)) == 0;
 	}
 
-	void SetWindowed()
+	void SetFullScreen( bool fullscreen = true )
 	{
-		if (SetConsoleDisplayMode(Cout, CONSOLE_WINDOWED_MODE, NULL))
-			Maximize();
-	}
-
-	void SetFullScreen()
-	{
-		if (SetConsoleDisplayMode(Cout, CONSOLE_FULLSCREEN_MODE, NULL))
-			Maximize();
-	}
-
-	void Center()
-	{
-		RECT rc;
-		GetWindowRect(Hwnd, &rc);
-		int cx = rc.right - rc.left;
-		int cy = rc.bottom - rc.top;
-		int x = (GetSystemMetrics(SM_CXSCREEN) - cx) / 2;
-		int y = (GetSystemMetrics(SM_CYSCREEN) - cy) / 2;
-		SetWindowPos(Hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-//		MoveWindow(Hwnd, x, y, cx, cy, FALSE);
-	}
-
-	void Center( int width, int height )
-	{
-		SetSize(width, height);
-		Center();
+		SetConsoleDisplayMode(Cout, fullscreen ? CONSOLE_FULLSCREEN_MODE : CONSOLE_WINDOWED_MODE, NULL);
+		Maximize();
 	}
 
 	void GetSize( int *width, int *height )
@@ -259,8 +237,8 @@ public:
 
 	void SetSize( int width, int height )
 	{
-		LockWindowUpdate(Hwnd);
-		while (!IsRestored()) Restore();
+		Home();
+		while (!Windowed()) Restore();
 
 		int w, h;
 		GetSize(&w, &h);
@@ -272,8 +250,25 @@ public:
 		SetConsoleWindowInfo(Cout, TRUE, &temp);
 		SetConsoleScreenBufferSize(Cout, size);
 		SetConsoleWindowInfo(Cout, TRUE, &rect);
+	}
 
-		LockWindowUpdate(NULL);
+	void Center()
+	{
+		while (!Windowed()) Restore();
+
+		RECT rc;
+		int cx = GetSystemMetrics(SM_CXSCREEN);
+		int cy = GetSystemMetrics(SM_CYSCREEN);
+		GetWindowRect(Hwnd, &rc);
+		int x = (cx - (rc.right - rc.left + 1)) / 2;
+		int y = (cy - (rc.bottom - rc.top + 1)) / 2;
+		SetWindowPos(Hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+	}
+
+	void Center( int width, int height )
+	{
+		SetSize(width, height);
+		Center();
 	}
 
 	bool GetInput( INPUT_RECORD *rec = NULL, unsigned len = 1 )
@@ -287,14 +282,14 @@ public:
 
 	void Clear()
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
 
 		COORD home = { 0, 0 };
-		DWORD size = csbi.dwSize.X * csbi.dwSize.Y;
+		DWORD size = sbi.dwSize.X * sbi.dwSize.Y;
 		DWORD count;
 		FillConsoleOutputCharacter(Cout, ' ',              size, home, &count);
-		FillConsoleOutputAttribute(Cout, csbi.wAttributes, size, home, &count);
+		FillConsoleOutputAttribute(Cout, sbi.wAttributes, size, home, &count);
 		Home();
 	}
 
@@ -354,10 +349,10 @@ public:
 
 	void GetCursorPos( int *x, int *y )
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		if (x != NULL) *x = csbi.dwCursorPosition.X;
-		if (y != NULL) *y = csbi.dwCursorPosition.Y;
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (x != NULL) *x = sbi.dwCursorPosition.X;
+		if (y != NULL) *y = sbi.dwCursorPosition.Y;
 	}
 
 	void SetCursorPos( int x, int y )
@@ -384,10 +379,10 @@ public:
 
 	void GetTextColor( Color *fore, Color *back = NULL )
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		if (fore != NULL) *fore = GetForeColor(csbi.wAttributes);
-		if (back != NULL) *back = GetBackColor(csbi.wAttributes);
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		if (fore != NULL) *fore = GetForeColor(sbi.wAttributes);
+		if (back != NULL) *back = GetBackColor(sbi.wAttributes);
 	}
 
 	void SetTextColor( Color fore, Color back = Black )
@@ -462,46 +457,44 @@ public:
 
 	char Get()
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		return Get(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y);
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y);
 	}
 
 	char Get( Color *fore, Color *back = NULL )
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		return Get(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, fore, back);
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
 
 	void Put( char c )
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		Put(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, c);
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		Put(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, c);
 	}
 
 	void Put( Color fore, Color back = Black )
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		GetConsoleScreenBufferInfo(Cout, &csbi);
-		Put(csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, fore, back);
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		GetConsoleScreenBufferInfo(Cout, &sbi);
+		Put(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
 
 	void ColorHLine( Rectangle &rc, int y, Color fore, Color back = Black )
 	{
-		if (rc.height <= 0) return;
-
-		for (int x = rc.left; x <= rc.right; x++)
-			Put(x, y, fore, back);
+		if (rc.height > 0)
+			for (int x = rc.left; x <= rc.right; x++)
+				Put(x, y, fore, back);
 	}
 
 	void ColorVLine( Rectangle &rc, int x, Color fore, Color back = Black )
 	{
-		if (rc.width <= 0) return;
-
-		for (int y = rc.top; y <= rc.bottom; y++)
-			Put(x, y, fore, back);
+		if (rc.width > 0)
+			for (int y = rc.top; y <= rc.bottom; y++)
+				Put(x, y, fore, back);
 	}
 
 	void ColorFrame( Rectangle &rc, Color fore, Color back = Black )
@@ -512,7 +505,6 @@ public:
 		ColorHLine(rc, rc.bottom, fore, back);
 	}
 
-	//[[deprecated]]
 	void ColorFrame( int x, int y, int width, int height, Color fore, Color back = Black )
 	{
 		Rectangle rc(x, y, width, height);
@@ -569,7 +561,6 @@ public:
 		}
 	}
 
-	//[[deprecated]]
 	void DrawFrame( int x, int y, int width, int height, const char *box )
 	{
 		Rectangle rc(x, y, width, height);
@@ -583,7 +574,6 @@ public:
 		DrawFrame(rc, box);
 	}
 
-	//[[deprecated]]
 	void DrawSingle( int x, int y, int width, int height )
 	{
 		Rectangle rc(x, y, width, height);
@@ -597,7 +587,6 @@ public:
 		DrawFrame(rc, box);
 	}
 
-	//[[deprecated]]
 	void DrawDouble( int x, int y, int width, int height )
 	{
 		Rectangle rc(x, y, width, height);
@@ -634,7 +623,6 @@ public:
 		DrawFrame(rc, box);
 	}
 
-	//[[deprecated]]
 	void DrawBold( int x, int y, int width, int height )
 	{
 		Rectangle rc(x, y, width, height);
@@ -643,42 +631,42 @@ public:
 
 	void Fill( Rectangle &rc, Color fore, Color back = Black )
 	{
-		for (int y = rc.top; y <= rc.bottom; y++)
-			for (int x = rc.left; x <= rc.right; x++)
-				Put(x, y, fore, back);
+		Fill(rc.x, rc.y, rc.width, rc.height, fore, back);
 	}
 
-	//[[deprecated]]
 	void Fill( int x, int y, int width, int height, Color fore, Color back = Black )
 	{
-		Rectangle rc(x, y, width, height);
-		Fill(rc, fore, back);
+		COORD coord = { (SHORT)x, (SHORT)y };
+		DWORD count;
+		while (width > 0 && --height >= 0) {
+			FillConsoleOutputAttribute(Cout, MakeAttribute(fore, back), width, coord, &count);
+			coord.Y++;
+		}
 	}
 
 	void Fill( Rectangle &rc, char c = ' ' )
 	{
-		for (int y = rc.top; y <= rc.bottom; y++)
-			for (int x = rc.left; x <= rc.right; x++)
-				Put(x, y, c);
+		Fill(rc.x, rc.y, rc.width, rc.height, c);
 	}
 
-	//[[deprecated]]
 	void Fill( int x, int y, int width, int height, char c = ' ' )
 	{
-		Rectangle rc(x, y, width, height);
-		Fill(rc, c);
+		COORD coord = { (SHORT)x, (SHORT)y };
+		DWORD count;
+		while (width > 0 && --height >= 0) {
+			FillConsoleOutputCharacter(Cout, c, width, coord, &count);
+			coord.Y++;
+		}
 	}
 
 	void Fill( Rectangle &rc, Grade g )
 	{
-		const char *bkg = "\x20\xB0\xB1\xB2\xDB";
-		Fill(rc, bkg[g]);
+		Fill(rc.x, rc.y, rc.width, rc.height, g);
 	}
 
-	//[[deprecated]]
 	void Fill( int x, int y, int width, int height, Grade g )
 	{
-		Rectangle rc(x, y, width, height);
-		Fill(rc, g);
+		const char *bkg = "\x20\xB0\xB1\xB2\xDB";
+		Fill(x, y, width, height, bkg[g]);
 	}
 };
