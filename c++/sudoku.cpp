@@ -1545,8 +1545,8 @@ int main( int argc, char **argv )
 			          << std::endl
 			          << "Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved." << std::endl
 			          << "This software is distributed under the MIT License."               << std::endl
-                      << "You are free to modify and redistribute it."                       << std::endl
-                      << std::endl
+			          << "You are free to modify and redistribute it."                       << std::endl
+			          << std::endl
 			          << "Usage:"                                            << std::endl
 			          << "sudoku  -c [file] - check"                         << std::endl
 			          << "sudoku  -f [file] - find"                          << std::endl
