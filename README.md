@@ -1,5 +1,5 @@
 # Sudoku
-Sudoku game
+Sudoku game, solver and generator
 
 
 ### Difficulty level
