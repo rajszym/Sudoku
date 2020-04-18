@@ -1541,7 +1541,7 @@ int main( int argc, char **argv )
 		case '?': /* falls through */
 		case 'H': // help
 		{
-			std::cerr << "Sudoku game and generator" << std::endl
+			std::cerr << "Sudoku game, solver and generator" << std::endl
 			          << std::endl
 			          << "Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved." << std::endl
 			          << "This software is distributed under the MIT License."               << std::endl
