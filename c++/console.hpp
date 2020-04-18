@@ -40,7 +40,7 @@ class Timer
 	mutable std::atomic_flag flag_ = ATOMIC_FLAG_INIT;
 
 	static
-	void __stdcall Handler_(PVOID flag, BOOLEAN)
+	VOID CALLBACK Handler_(PVOID flag, BOOLEAN)
 	{
 		atomic_flag_clear(static_cast<std::atomic_flag *>(flag));
 	}
@@ -74,22 +74,22 @@ public:
 
 	enum Color: WORD
 	{
-		Black       = 0,
-		Blue        =                                                            FOREGROUND_BLUE,
-		Green       =                                         FOREGROUND_GREEN,
-		Cyan        =                                         FOREGROUND_GREEN | FOREGROUND_BLUE,
-		Red         =                        FOREGROUND_RED,
-		Purple      =                        FOREGROUND_RED |                    FOREGROUND_BLUE,
-		Orange      =                        FOREGROUND_RED | FOREGROUND_GREEN,
-		LightGrey   =                        FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-		Grey        = FOREGROUND_INTENSITY,
-		LightBlue   = FOREGROUND_INTENSITY |                                     FOREGROUND_BLUE,
-		LightGreen  = FOREGROUND_INTENSITY |                  FOREGROUND_GREEN,
-		LightCyan   = FOREGROUND_INTENSITY |                  FOREGROUND_GREEN | FOREGROUND_BLUE,
-		LightRed    = FOREGROUND_INTENSITY | FOREGROUND_RED,
-		LightPurple = FOREGROUND_INTENSITY | FOREGROUND_RED |                    FOREGROUND_BLUE,
-		Yellow      = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,
-		White       = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+		Black       = 0x0,
+		Blue        = 0x1,
+		Green       = 0x2,
+		Cyan        = 0x3,
+		Red         = 0x4,
+		Purple      = 0x5,
+		Orange      = 0x6,
+		LightGrey   = 0x7,
+		Grey        = 0x8,
+		LightBlue   = 0x9,
+		LightGreen  = 0xA,
+		LightCyan   = 0xB,
+		LightRed    = 0xC,
+		LightPurple = 0xD,
+		Yellow      = 0xE,
+		White       = 0xF,
 		Default     = LightGrey,
 	};
 
