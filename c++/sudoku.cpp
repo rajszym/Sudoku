@@ -7,7 +7,7 @@
 
 *******************************************************************************
 
-   Copyright (c) 2018 Rajmund Szymanski. All rights reserved.
+   Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -1434,6 +1434,33 @@ int main( int argc, char **argv )
 			break;
 		}
 
+		case 'F': // find
+		{
+			auto sudoku = Sudoku(1);
+			auto data   = std::vector<unsigned>();
+
+			if (--argc > 0)
+				file = *++argv;
+
+			std::cerr << title << " find" << std::endl;
+
+			INPUT_RECORD input;
+			while (!con.GetInput(&input) || input.EventType != KEY_EVENT || input.Event.KeyEvent.wVirtualKeyCode != VK_ESCAPE)
+			{
+				sudoku.generate();
+				if (sudoku.level == 2) sudoku.check();
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
+				{
+					data.push_back(sudoku.signature);
+					sudoku.put();
+					sudoku.save(file);
+				}
+			}
+
+			std::cerr << title << " find: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
+			break;
+		}
+
 		case 'S': // sort
 		{
 			auto sudoku = Sudoku(1);
@@ -1496,33 +1523,6 @@ int main( int argc, char **argv )
 			break;
 		}
 
-		case 'F': // find
-		{
-			auto sudoku = Sudoku(1);
-			auto data   = std::vector<unsigned>();
-
-			if (--argc > 0)
-				file = *++argv;
-
-			std::cerr << title << " find" << std::endl;
-
-			INPUT_RECORD input;
-			while (!con.GetInput(&input) || input.EventType != KEY_EVENT || input.Event.KeyEvent.wVirtualKeyCode != VK_ESCAPE)
-			{
-				sudoku.generate();
-				if (sudoku.level == 2) sudoku.check();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
-				{
-					data.push_back(sudoku.signature);
-					sudoku.put();
-					sudoku.save(file);
-				}
-			}
-
-			std::cerr << title << " find: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
-			break;
-		}
-
 		case 'G': // game
 		{
 			auto sudoku = Sudoku();
@@ -1541,15 +1541,23 @@ int main( int argc, char **argv )
 		case '?': /* falls through */
 		case 'H': // help
 		{
-			std::cerr << title << ": help"           << std::endl
-			          << "Usage:"                    << std::endl
-			          << "sudoku  /s [file] - sort by rating / len" << std::endl
-			          << "sudoku  /S [file] - sort by len / rating" << std::endl
-			          << "sudoku  /t [file] - test"  << std::endl
-			          << "sudoku  /f [file] - find"  << std::endl
-			          << "sudoku [/g]       - game"  << std::endl
-			          << "sudoku  /h        - help"  << std::endl
-			          << "sudoku  /?        - help"  << std::endl;
+			std::cerr << "Sudoku game and generator" << std::endl
+			          << std::endl
+			          << "Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved." << std::endl
+			          << "This software is distributed under the MIT License."               << std::endl
+                      << "You are free to modify and redistribute it."                       << std::endl
+                      << std::endl
+			          << "Usage:"                                            << std::endl
+			          << "sudoku  -c [file] - check"                         << std::endl
+			          << "sudoku  -f [file] - find"                          << std::endl
+			          << "sudoku  -F [file] - find and show all"             << std::endl
+			          << "sudoku  -s [file] - sort by rating / len"          << std::endl
+			          << "sudoku  -S [file] - sort by len / rating"          << std::endl
+			          << "sudoku  -t [file] - test and sort by rating / len" << std::endl
+			          << "sudoku  -T [file] - test and sort by len / rating" << std::endl
+			          << "sudoku [-g]       - game"                          << std::endl
+			          << "sudoku  -h        - help"                          << std::endl
+			          << "sudoku  -?        - help"                          << std::endl;
 			break;
 		}
 
