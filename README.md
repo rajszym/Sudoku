@@ -2,21 +2,19 @@
 Sudoku game, solver and generator
 
 
-### Difficulty level
-- easy
-- medium / hard
-- extreme
 ### Help level
 - view only current digit
 - view suggestions
 - view tips
-### Generate / solve features
-- silent
-- live
+### Difficulty level
+- easy
+- medium / hard
+- expert
+- extreme
 ### Features
 - next: generate or load new game
 - clear: clear sudoku board
 - confirm: save current layout
-- back: return to the confirmed layout
+- undo: undo last move or return to the confirmed layout
 - solve: solve current layout
 - exit: leave the game
