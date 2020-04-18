@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    17.04.2020
+   @date    18.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -36,40 +36,84 @@
 
 class Timer
 {
-	HANDLE timer = NULL;
-	mutable std::atomic_flag flag = ATOMIC_FLAG_INIT;
+	HANDLE timer_ = NULL;
+	mutable std::atomic_flag flag_ = ATOMIC_FLAG_INIT;
 
 	static
-	void __stdcall handler(PVOID f, BOOLEAN)
+	void __stdcall Handler_(PVOID flag, BOOLEAN)
 	{
-		atomic_flag_clear(static_cast<std::atomic_flag *>(f));
+		atomic_flag_clear(static_cast<std::atomic_flag *>(flag));
 	}
 
 public:
 
-	Timer( const DWORD freq = 0 )
+	Timer( const DWORD duration = 0 )
 	{
-		if (freq) {
-			CreateTimerQueueTimer(&timer, NULL, handler, &flag, freq, freq, WT_EXECUTEDEFAULT);
-		}
+		if (duration)
+			if (!CreateTimerQueueTimer(&timer_, NULL, Handler_, &flag_, duration, duration, WT_EXECUTEDEFAULT))
+				throw std::runtime_error("console timer construction error");
 	}
 
 	~Timer()
 	{
-		if (timer) {
-			DeleteTimerQueueTimer(NULL, timer, NULL);
-			CloseHandle(timer);
+		if (timer_) {
+			DeleteTimerQueueTimer(NULL, timer_, NULL);
+			CloseHandle(timer_);
 		}
 	}
 
-	bool wait() const
+	bool Wait() const
 	{
-		return atomic_flag_test_and_set(&flag);
+		return atomic_flag_test_and_set(&flag_);
 	}
 };
 
 class Console: public Timer
 {
+public:
+
+	enum Color: WORD
+	{
+		Black       = 0,
+		Blue        =                                                            FOREGROUND_BLUE,
+		Green       =                                         FOREGROUND_GREEN,
+		Cyan        =                                         FOREGROUND_GREEN | FOREGROUND_BLUE,
+		Red         =                        FOREGROUND_RED,
+		Purple      =                        FOREGROUND_RED |                    FOREGROUND_BLUE,
+		Orange      =                        FOREGROUND_RED | FOREGROUND_GREEN,
+		LightGrey   =                        FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+		Grey        = FOREGROUND_INTENSITY,
+		LightBlue   = FOREGROUND_INTENSITY |                                     FOREGROUND_BLUE,
+		LightGreen  = FOREGROUND_INTENSITY |                  FOREGROUND_GREEN,
+		LightCyan   = FOREGROUND_INTENSITY |                  FOREGROUND_GREEN | FOREGROUND_BLUE,
+		LightRed    = FOREGROUND_INTENSITY | FOREGROUND_RED,
+		LightPurple = FOREGROUND_INTENSITY | FOREGROUND_RED |                    FOREGROUND_BLUE,
+		Yellow      = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,
+		White       = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+		Default     = LightGrey,
+	};
+
+	enum Grade
+	{
+		NoGrade     = 0,
+		SmallGrade  = 1,
+		MediumGrade = 2,
+		LargeGrade  = 3,
+		FullGrade   = 4,
+	};
+
+	struct Rectangle
+	{
+		const int x, y, width, height;
+		const int left, top, right, bottom;
+
+		Rectangle(int _x, int _y, int _w, int _h):
+			x(_x), y(_y), width(_w), height(_h),
+			left(_x), top(_y), right(_x + _w - 1), bottom(_y + _h - 1) {}
+	};
+
+private:
+
 	HWND   hwnd_;
 	HANDLE cin_;
 	HANDLE cout_;
@@ -112,6 +156,7 @@ class Console: public Timer
 
 		mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
 		mode &= ~ENABLE_QUICK_EDIT_MODE;
+
 		if (!SetConsoleMode(Cin, mode))
 			return false;
 
@@ -127,58 +172,133 @@ class Console: public Timer
 		       Maximize();
 	}
 
+	template <typename T>
+	int Reset( T * const a, T * const b ) const
+	{
+		if (a) *a = static_cast<T>(0);
+		if (b) *b = static_cast<T>(0);
+		return 0;
+	}
+
+	WORD MakeAttribute( const Color fore, const Color back ) const
+	{
+		return static_cast<WORD>((back * 16) | fore);
+	}
+
+	Color GetForeColor( const WORD a ) const
+	{
+		return static_cast<Color>(a % 16);
+	}
+
+	Color GetBackColor( const WORD a ) const
+	{
+		return static_cast<Color>((a / 16) % 16);
+	}
+
+	bool ColorHLine( const Rectangle &rc, const int y, const Color fore, const Color back = Black ) const
+	{
+		if (y < rc.top || y > rc.bottom || rc.width < 1)
+			return false;
+
+		for (int x = rc.left; x <= rc.right; x++)
+			if (!Put(x, y, fore, back))
+				return false;
+
+		return true;
+	}
+
+	bool ColorVLine( const Rectangle &rc, const int x, const Color fore, const Color back = Black ) const
+	{
+		if (x < rc.left || x > rc.right || rc.height < 1)
+			return false;
+
+		for (int y = rc.top; y <= rc.bottom; y++)
+			if (!Put(x, y, fore, back))
+				return false;
+
+		return true;
+	}
+
+	bool DrawHLine( const Rectangle &rc, const int y, const char * const box, const Bar b = NoBar ) const
+	{
+		if (y < rc.top || y > rc.bottom || rc.width <= 1)
+			return false;
+
+		int x = rc.left;
+		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		if (!Put(x++, y, box[p | b | RightBar]))
+			return false;
+
+		while (x < rc.right) {
+			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+			if (!Put(x++, y, box[p | LeftBar | RightBar]))
+				return false;
+		}
+
+		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		if (!Put(x++, y, box[p | b | LeftBar]))
+			return false;
+
+		return true;
+	}
+
+	bool DrawVLine( const Rectangle &rc, const int x, const char * const box, const Bar b = NoBar ) const
+	{
+		if (x < rc.left || x > rc.right || rc.height <= 1)
+			return false;
+
+		int y = rc.top;
+		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		if (!Put(x, y++, box[p | b | DownBar]))
+			return false;
+
+		while (y < rc.bottom) {
+			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+			if (!Put(x, y++, box[p | UpBar | DownBar]))
+				return false;
+		}
+
+		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		if (!Put(x, y++, box[p | b | UpBar]))
+			return false;
+
+		return true;
+	}
+
+	bool DrawFrame( const Rectangle &rc, const char * const box ) const
+	{
+		if (rc.width < 1 || rc.height < 1)
+			return false;
+
+		if (rc.width > 1) {
+			if (rc.height > 1)
+				return DrawHLine(rc, rc.top, box, DownBar) &&
+				       DrawVLine(rc, rc.left, box, RightBar) &&
+				       DrawVLine(rc, rc.right, box, LeftBar) &&
+				       DrawHLine(rc, rc.bottom, box, UpBar);
+			else
+				return DrawHLine(rc, rc.y, box);
+		}
+		else {
+			if (rc.height > 1)
+				return DrawVLine(rc, rc.x, box);
+			else
+				return false;
+		}
+	}
+
+	bool DrawFrame( const int x, const int y, const int width, const int height, const char * const box ) const
+	{
+		const Rectangle rc(x, y, width, height);
+		return DrawFrame(rc, box);
+	}
+
 public:
 
 	const HWND   &Hwnd;
 	const HANDLE &Cin;
 	const HANDLE &Cout;
 	const HANDLE &Cerr;
-
-	struct Rectangle
-	{
-		Rectangle(): Rectangle(0, 0, 0, 0) {}
-		Rectangle(int _x, int _y, int _w, int _h):
-			x(_x), y(_y), width(_w), height(_h), left(_x), right(_x + _w - 1), top(_y), bottom(_y + _h - 1) {}
-
-		const int x;
-		const int y;
-		const int width;
-		const int height;
-		const int left;
-		const int right;
-		const int top;
-		const int bottom;
-	};
-
-	enum Color: WORD
-	{
-		Black       = 0,
-		Blue        =                                                            FOREGROUND_BLUE,
-		Green       =                                         FOREGROUND_GREEN,
-		Cyan        =                                         FOREGROUND_GREEN | FOREGROUND_BLUE,
-		Red         =                        FOREGROUND_RED,
-		Purple      =                        FOREGROUND_RED |                    FOREGROUND_BLUE,
-		Orange      =                        FOREGROUND_RED | FOREGROUND_GREEN,
-		LightGrey   =                        FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-		Grey        = FOREGROUND_INTENSITY,
-		LightBlue   = FOREGROUND_INTENSITY |                                     FOREGROUND_BLUE,
-		LightGreen  = FOREGROUND_INTENSITY |                  FOREGROUND_GREEN,
-		LightCyan   = FOREGROUND_INTENSITY |                  FOREGROUND_GREEN | FOREGROUND_BLUE,
-		LightRed    = FOREGROUND_INTENSITY | FOREGROUND_RED,
-		LightPurple = FOREGROUND_INTENSITY | FOREGROUND_RED |                    FOREGROUND_BLUE,
-		Yellow      = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,
-		White       = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-		Default     = LightGrey
-	};
-
-	enum Grade
-	{
-		NoGrade     = 0,
-		SmallGrade  = 1,
-		MediumGrade = 2,
-		LargeGrade  = 3,
-		FullGrade   = 4,
-	};
 
 	Console( LPCTSTR title = NULL, const DWORD freq = 0 ): Timer(freq), Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
 	{
@@ -243,19 +363,11 @@ public:
 		       Maximize();
 	}
 
-	template <typename T>
-	int GetNone( T * const a, T * const b ) const
-	{
-		if (a) *a = static_cast<T>(0);
-		if (b) *b = static_cast<T>(0);
-		return 0;
-	}
-
 	bool GetSize( int * const width, int * const height ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return GetNone(width, height);
+			return Reset(width, height);
 
 		if (width)  *width  = static_cast<int>(sbi.dwSize.X);
 		if (height) *height = static_cast<int>(sbi.dwSize.Y);
@@ -267,7 +379,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return GetNone(width, height);
+			return Reset(width, height);
 
 		if (width)  *width  = static_cast<int>(sbi.srWindow.Right - sbi.srWindow.Left + 1);
 		if (height) *height = static_cast<int>(sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
@@ -279,7 +391,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return GetNone(width, height);
+			return Reset(width, height);
 
 		if (width)  *width  = static_cast<int>(sbi.dwMaximumWindowSize.X);
 		if (height) *height = static_cast<int>(sbi.dwMaximumWindowSize.Y);
@@ -400,6 +512,24 @@ public:
 			return SetConsoleCursorInfo(Cout, &cci);
 	}
 
+	bool GetCursorPos( int * const x, int * const y ) const
+	{
+		CONSOLE_SCREEN_BUFFER_INFO sbi;
+		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
+			return Reset(x, y);
+
+		if (x) *x = sbi.dwCursorPosition.X;
+		if (y) *y = sbi.dwCursorPosition.Y;
+
+		return true;
+	}
+
+	bool SetCursorPos( const int x, const int y ) const
+	{
+		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
+		return SetConsoleCursorPosition(Cout, coord);
+	}
+
 	int GetFontSize() const
 	{
 		CONSOLE_FONT_INFOEX cfi = {};
@@ -426,44 +556,11 @@ public:
 		return SetCurrentConsoleFontEx(Cout, FALSE, &cfi);
 	}
 
-	bool GetCursorPos( int * const x, int * const y ) const
-	{
-		CONSOLE_SCREEN_BUFFER_INFO sbi;
-		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return GetNone(x, y);
-
-		if (x) *x = sbi.dwCursorPosition.X;
-		if (y) *y = sbi.dwCursorPosition.Y;
-
-		return true;
-	}
-
-	bool SetCursorPos( const int x, const int y ) const
-	{
-		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
-		return SetConsoleCursorPosition(Cout, coord);
-	}
-
-	WORD MakeAttribute( const Color fore, const Color back ) const
-	{
-		return static_cast<WORD>(fore) | static_cast<WORD>(back * 16);
-	}
-
-	Color GetForeColor( const WORD a ) const
-	{
-		return static_cast<Color>(a % 16);
-	}
-
-	Color GetBackColor( const WORD a ) const
-	{
-		return static_cast<Color>((a / 16) % 16);
-	}
-
 	bool GetTextColor( Color * const fore, Color * const back = NULL ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return GetNone(fore, back);
+			return Reset(fore, back);
 
 		if (fore) *fore = GetForeColor(sbi.wAttributes);
 		if (back) *back = GetBackColor(sbi.wAttributes);
@@ -499,7 +596,7 @@ public:
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		if (!ReadConsoleOutputAttribute(Cout, &a, 1, coord, &count))
-			return GetNone(fore, back);
+			return Reset(fore, back);
 
 		if (fore) *fore = GetForeColor(a);
 		if (back) *back = GetBackColor(a);
@@ -571,7 +668,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return GetNone(fore, back);
+			return Reset(fore, back);
 
 		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
@@ -594,30 +691,6 @@ public:
 		return Put(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
 
-	bool ColorHLine( const Rectangle &rc, const int y, const Color fore, const Color back = Black ) const
-	{
-		if (y < rc.top || y > rc.bottom || rc.width < 1)
-			return false;
-
-		for (int x = rc.left; x <= rc.right; x++)
-			if (!Put(x, y, fore, back))
-				return false;
-
-		return true;
-	}
-
-	bool ColorVLine( const Rectangle &rc, const int x, const Color fore, const Color back = Black ) const
-	{
-		if (x < rc.left || x > rc.right || rc.height < 1)
-			return false;
-
-		for (int y = rc.top; y <= rc.bottom; y++)
-			if (!Put(x, y, fore, back))
-				return false;
-
-		return true;
-	}
-
 	bool ColorFrame( const Rectangle &rc, const Color fore, const Color back = Black ) const
 	{
 		return ColorHLine(rc, rc.top, fore, back) &&
@@ -630,80 +703,6 @@ public:
 	{
 		const Rectangle rc(x, y, width, height);
 		return ColorFrame(rc, fore, back);
-	}
-
-	bool DrawHLine( const Rectangle &rc, const int y, const char * const box, const Bar b = NoBar ) const
-	{
-		if (y < rc.top || y > rc.bottom || rc.width <= 1)
-			return false;
-
-		int x = rc.left;
-		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		if (!Put(x++, y, box[p | b | RightBar]))
-			return false;
-
-		while (x < rc.right) {
-			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-			if (!Put(x++, y, box[p | LeftBar | RightBar]))
-				return false;
-		}
-
-		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		if (!Put(x++, y, box[p | b | LeftBar]))
-			return false;
-
-		return true;
-	}
-
-	bool DrawVLine( const Rectangle &rc, const int x, const char * const box, const Bar b = NoBar ) const
-	{
-		if (x < rc.left || x > rc.right || rc.height <= 1)
-			return false;
-
-		int y = rc.top;
-		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		if (!Put(x, y++, box[p | b | DownBar]))
-			return false;
-
-		while (y < rc.bottom) {
-			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-			if (!Put(x, y++, box[p | UpBar | DownBar]))
-				return false;
-		}
-
-		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
-		if (!Put(x, y++, box[p | b | UpBar]))
-			return false;
-
-		return true;
-	}
-
-	bool DrawFrame( const Rectangle &rc, const char * const box ) const
-	{
-		if (rc.width < 1 || rc.height < 1)
-			return false;
-
-		if (rc.width > 1) {
-			if (rc.height > 1)
-				return DrawHLine(rc, rc.top, box, DownBar) &&
-				       DrawVLine(rc, rc.left, box, RightBar) &&
-				       DrawVLine(rc, rc.right, box, LeftBar) &&
-				       DrawHLine(rc, rc.bottom, box, UpBar);
-			else
-				return DrawHLine(rc, rc.y, box);
-		}
-		else {
-			if (rc.height > 1)
-				return DrawVLine(rc, rc.x, box);
-			else
-				return false;
-		}
-	}
-
-	bool DrawFrame( const int x, const int y, const int width, const int height, const char * const box ) const
-	{
-		const Rectangle rc(x, y, width, height);
-		return DrawFrame(rc, box);
 	}
 
 	bool DrawSingle( const Rectangle &rc ) const
