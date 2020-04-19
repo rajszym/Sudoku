@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    18.04.2020
+   @date    19.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -131,7 +131,7 @@ private:
 		AllBars  = RightBar | DownBar | LeftBar | UpBar
 	};
 
-	bool Create( LPCTSTR title )
+	bool Open( LPCTSTR title )
 	{
 		hwnd_ = GetConsoleWindow();
 		if (!hwnd_)
@@ -143,41 +143,30 @@ private:
 		if (!cin_ || !cout_ || !cerr_)
 			return false;
 
-		if (!FlushConsoleInputBuffer(Cin))
+		if (!FlushConsoleInputBuffer(cin_))
 			return false;
 
 		cfi_.cbSize = sizeof(cfi_);
-		if (!GetCurrentConsoleFontEx(Cout, FALSE, &cfi_))
+		if (!GetCurrentConsoleFontEx(cout_, FALSE, &cfi_))
 			return false;
 
 		DWORD mode;
-		if (!GetConsoleMode(Cin, &mode))
+		if (!GetConsoleMode(cin_, &mode))
 			return false;
 
 		mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
 		mode &= ~ENABLE_QUICK_EDIT_MODE;
 
-		if (!SetConsoleMode(Cin, mode))
-			return false;
-
-		return SetTitle(title) &&
+		return SetConsoleMode(cin_, mode) &&
+		       SetTitle(title) &&
 		       Clear();
 	}
 
-	bool Delete()
-	{
-		return FlushConsoleInputBuffer(Cin) &&
-		       SetCurrentConsoleFontEx(Cout, FALSE, &cfi_) &&
-		       ShowCursor() &&
-		       Maximize();
-	}
-
 	template <typename T>
-	int Reset( T * const a, T * const b ) const
+	void Reset( T * const a, T * const b ) const
 	{
 		if (a) *a = static_cast<T>(0);
 		if (b) *b = static_cast<T>(0);
-		return 0;
 	}
 
 	WORD MakeAttribute( const Color fore, const Color back ) const
@@ -300,15 +289,27 @@ public:
 	const HANDLE &Cout;
 	const HANDLE &Cerr;
 
-	Console( LPCTSTR title = NULL, const DWORD freq = 0 ): Timer(freq), Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
+	Console( LPCTSTR title = NULL, const DWORD duration = 0 ): Timer(duration), Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
 	{
- 		if (!Create(title))
-			throw std::runtime_error("console construction error");
+		if (!Open(title)) {
+			cerr_ = cout_ = cin_ = NULL;
+			hwnd_ = NULL;
+ 		}
 	}
 
 	~Console()
 	{
-		(void) Delete();
+		if (hwnd_) {
+			FlushConsoleInputBuffer(cin_);
+			SetCurrentConsoleFontEx(cout_, FALSE, &cfi_);
+			ShowCursor();
+			Maximize();
+		}
+	}
+
+	bool operator!() const
+	{
+		return !hwnd_;
 	}
 
 	bool SetTitle( LPCTSTR title ) const
@@ -367,7 +368,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return Reset(width, height);
+			return Reset(width, height), false;
 
 		if (width)  *width  = static_cast<int>(sbi.dwSize.X);
 		if (height) *height = static_cast<int>(sbi.dwSize.Y);
@@ -379,7 +380,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return Reset(width, height);
+			return Reset(width, height), false;
 
 		if (width)  *width  = static_cast<int>(sbi.srWindow.Right - sbi.srWindow.Left + 1);
 		if (height) *height = static_cast<int>(sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
@@ -391,7 +392,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return Reset(width, height);
+			return Reset(width, height), false;
 
 		if (width)  *width  = static_cast<int>(sbi.dwMaximumWindowSize.X);
 		if (height) *height = static_cast<int>(sbi.dwMaximumWindowSize.Y);
@@ -448,13 +449,13 @@ public:
 		       Center();
 	}
 
-	bool GetInput( INPUT_RECORD * const ir = NULL, const DWORD len = 1 ) const
+	bool GetInput( INPUT_RECORD * const input = NULL, const DWORD len = 1 ) const
 	{
 		DWORD count;
 		if (!GetNumberOfConsoleInputEvents(Cin, &count) || count == 0)
 			return false;
 
-		return !ir || ReadConsoleInput(Cin, ir, len, &count);
+		return !input || ReadConsoleInput(Cin, input, len, &count);
 	}
 
 	bool Clear() const
@@ -516,7 +517,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return Reset(x, y);
+			return Reset(x, y), false;
 
 		if (x) *x = sbi.dwCursorPosition.X;
 		if (y) *y = sbi.dwCursorPosition.Y;
@@ -560,7 +561,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return Reset(fore, back);
+			return Reset(fore, back), false;
 
 		if (fore) *fore = GetForeColor(sbi.wAttributes);
 		if (back) *back = GetBackColor(sbi.wAttributes);
@@ -596,7 +597,7 @@ public:
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		if (!ReadConsoleOutputAttribute(Cout, &a, 1, coord, &count))
-			return Reset(fore, back);
+			return Reset(fore, back), 0;
 
 		if (fore) *fore = GetForeColor(a);
 		if (back) *back = GetBackColor(a);
@@ -668,7 +669,7 @@ public:
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
-			return Reset(fore, back);
+			return Reset(fore, back), 0;
 
 		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
