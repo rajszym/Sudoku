@@ -287,13 +287,13 @@ void Button::draw()
 
 void Button::update()
 {
-	int y = BARY + Button::num + (Button::num - 1) / 3;
+	int y = Button::num + (Button::num - 1) / 3;
 	if (Button::button == Button::num)
-		con.Put(BARX + 1, y, Console::Black, Console::White);
+		con.Put(BARX + 1, BARY + y, Console::Black, Console::White);
 	else if (Button::menu == y)
-		con.Put(BARX + 1, y, Console::White, Console::Grey);
+		con.Put(BARX + 1, BARY + y, Console::White, Console::Grey);
 	else
-		con.Put(BARX + 1, y, Console::LightGrey, Console::Black);
+		con.Put(BARX + 1, BARY + y, Console::LightGrey, Console::Black);
 }
 
 int  Menu::menu = 0;
@@ -1158,7 +1158,9 @@ void Sudoku::game()
 	con.DrawSingle(TABX + (TABW - 1) / 3, TABY, (TABW - 1) / 3 + 1, TABH);
 	con.DrawSingle(BARX, BARY, BARW, BARH);
 	con.DrawSingle(MNUX, MNUY, MNUW, MNUH);
-	con.Put(MNUX + 1,        MNUY + 1, Console::Purple);
+	con.Put(MNUX + 1, MNUY + 1, Console::Purple);
+	con.DrawSingle(MNUX + 2, MNUY, 2, 2);
+	con.DrawSingle(MNUX + MNUW - 4, MNUY, 2, 2);
 	con.Put(MNUX + MNUW - 2, MNUY + 1, Console::Orange);
 
 	for (Button b: Sudoku::btn)
@@ -1285,13 +1287,16 @@ void Sudoku::game()
 					}
 					else
 					if (x >= BARX && x < BARX + BARW && y >= BARY && y < BARY + BARH && !solved())
-						Button::menu = y - BARY;
+					{
+						x -= BARX; y -= BARY;
+						Button::menu = y;
+					}
 					else
 					if (x >= MNUX && x < MNUX + MNUW && y >= MNUY && y < MNUY + MNUH)
 					{
-
-						Menu::menu = y - MNUY;
-						Menu::back = x < MNUX + MNUW / 2;
+						x -= MNUX; y -= MNUY;
+						Menu::menu = y;
+						Menu::back = x < MNUW / 2;
 					}
 					break;
 
