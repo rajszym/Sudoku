@@ -1140,10 +1140,11 @@ void Sudoku::game()
 	con.DrawSingle(TAB.x + (TAB.width - 1) / 3, TAB.y, (TAB.width - 1) / 3 + 1, TAB.height);
 	con.DrawSingle(BAR);
 	con.DrawSingle(MNU);
-	con.Put(MNU.x + 1, MNU.y + 1, Console::Purple);
-	con.DrawSingle(MNU.x + 2, MNU.y, 2, 2);
-	con.DrawSingle(MNU.right - 3, MNU.y, 2, 2);
-	con.Put(MNU.right - 1, MNU.y + 1, Console::Orange);
+	
+	con.Put(MNU.left  + 1, MNU.top,     Console::UpperHalfBlock);
+	con.Put(MNU.right - 1, MNU.top,     Console::UpperHalfBlock);
+	con.Put(MNU.left  + 1, MNU.top + 1, Console::Purple);
+	con.Put(MNU.right - 1, MNU.top + 1, Console::Orange);
 
 	for (Button b: Sudoku::btn)
 		b.draw();
