@@ -31,28 +31,10 @@
 
 #include "console.hpp"
 
-#define TEST  true
-
-#define WINX  0
-#define WINY  0
-
-#define TABX (WINX)
-#define TABY (WINY + 1)
-#define TABW  25
-#define TABH  13
-
-#define BARX (TABX + TABW)
-#define BARY (TABY)
-#define BARW  3
-#define BARH (TABH)
-
-#define MNUX (BARX + BARW)
-#define MNUY (BARY)
-#define MNUW  14
-#define MNUH (BARH)
-
-#define WINW (MNUX + MNUW)
-#define WINH (TABY + TABH)
+const Console::Rectangle TAB(0,             1,           25,            13);
+const Console::Rectangle BAR(TAB.right + 1, TAB.top,      3,            TAB.height);
+const Console::Rectangle MNU(BAR.right + 1, TAB.top,     14,            TAB.height);
+const Console::Rectangle WIN(TAB.left,      TAB.top - 1, MNU.right + 1, TAB.bottom + 1);
 
 const char *title = "SUDOKU";
 
@@ -282,18 +264,18 @@ int Button::menu   = 0;
 
 void Button::draw()
 {
-	con.Put(BARX + 1, BARY + Button::num + (Button::num - 1) / 3, '0' + Button::num);
+	con.Put(BAR.x + 1, BAR.y + Button::num + (Button::num - 1) / 3, '0' + Button::num);
 }
 
 void Button::update()
 {
 	int y = Button::num + (Button::num - 1) / 3;
 	if (Button::button == Button::num)
-		con.Put(BARX + 1, BARY + y, Console::Black, Console::White);
+		con.Put(BAR.x + 1, BAR.y + y, Console::Black, Console::White);
 	else if (Button::menu == y)
-		con.Put(BARX + 1, BARY + y, Console::White, Console::Grey);
+		con.Put(BAR.x + 1, BAR.y + y, Console::White, Console::Grey);
 	else
-		con.Put(BARX + 1, BARY + y, Console::LightGrey, Console::Black);
+		con.Put(BAR.x + 1, BAR.y + y, Console::LightGrey);
 }
 
 int  Menu::menu = 0;
@@ -309,7 +291,7 @@ int Menu::next( bool prev )
 {
 	int max = Menu::size() - 1;
 
-	if (Menu::pos == 5)
+	if (Menu::pos == 3)
 	{
 		if (prev) Menu::idx = Menu::idx == 0 ? max : Menu::idx == max ? 1 : 0;
 		else      Menu::idx = Menu::idx == max ? 0 : Menu::idx == 0 ? 1 : max;
@@ -329,9 +311,9 @@ void Menu::draw()
 	if (Menu::size() > 0)
 	{
 		unsigned n = std::strlen(Menu::data()[Menu::idx]);
-		con.Put(MNUX + 1, MNUY + Menu::pos, Menu::key);
-		con.Put(MNUX + 4, MNUY + Menu::pos, Menu::data()[Menu::idx]);
-		con.Fill(MNUX + 4 + n, MNUY + Menu::pos, MNUW - 5 - n, 1);
+		con.Put (MNU.x + 1,     MNU.y + Menu::pos, Menu::key);
+		con.Put (MNU.x + 4,     MNU.y + Menu::pos, Menu::data()[Menu::idx]);
+		con.Fill(MNU.x + 4 + n, MNU.y + Menu::pos, MNU.width - 5 - n, 1);
 	}
 }
 
@@ -340,18 +322,18 @@ void Menu::update()
 	if (Menu::menu == Menu::pos)
 	{
 		if (Menu::size() == 1)
-			con.Fill(MNUX + 1, MNUY + Menu::pos, MNUW - 2, 1, Console::White, Console::Grey);
+			con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::White, Console::Grey);
 		else
 		{
-			con.Put(MNUX + 1, MNUY + Menu::pos, Menu::back ? "<<" : ">>");
-			con.Fill(MNUX + 1, MNUY + Menu::pos, MNUW - 2, 1, Console::White, Console::Grey);
+			con.Put (MNU.x + 1, MNU.y + Menu::pos, Menu::back ? "<<" : ">>");
+			con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::White, Console::Grey);
 		}
 	}
 	else
 	{
 		if (Menu::size() > 1)
-			con.Put(MNUX + 1, MNUY + Menu::pos, Menu::key);
-		con.Fill(MNUX + 1, MNUY + Menu::pos, MNUW - 2, 1, Console::LightGrey);
+			con.Put (MNU.x + 1, MNU.y + Menu::pos, Menu::key);
+		con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::LightGrey);
 	}
 }
 
@@ -528,16 +510,16 @@ void Cell::put( std::ostream &out )
 
 void Cell::draw()
 {
-	int x = TABX + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
-	int y = TABY + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
+	int x = TAB.x + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
+	int y = TAB.y + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
 
 	con.Put(x, y, "-123456789"[Cell::num]);
 }
 
 void Cell::update(int n, int h)
 {
-	int x = TABX + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
-	int y = TABY + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
+	int x = TAB.x + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
+	int y = TAB.y + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
 
 	if      (h >= 3 && Cell::sure(n))    con.Put(x, y, Console::White,                                         Console::Green);
 	else if (h >= 2 && Cell::allowed(n)) con.Put(x, y, Console::White,                                         Console::Yellow);
@@ -762,7 +744,7 @@ bool Sudoku::correct()
 
 	Sudoku::solve_next(*this);
 	for (Cell *c: *this)
-		if (Sudoku::generate_next(c, TEST) == c->immutable)
+		if (Sudoku::generate_next(c, true) == c->immutable)
 			return false;
 	return true;
 }
@@ -831,7 +813,7 @@ bool Sudoku::check_next( Cell *cell, bool strict )
 	cell->num = num;
 	Value val(cell);
 	for (int v: val)
-		if ((cell->num = v) != 0 && Sudoku::solve_next(cell->lst, TEST))
+		if ((cell->num = v) != 0 && Sudoku::solve_next(cell->lst, true))
 		{
 			cell->num = num;
 			return false;
@@ -907,7 +889,7 @@ bool Sudoku::generate_next( Cell *cell, bool check )
 
 	Value val(cell);
 	for (int v: val)
-		if ((cell->num = v) != 0 && Sudoku::solve_next(cell->lst, TEST))
+		if ((cell->num = v) != 0 && Sudoku::solve_next(cell->lst, true))
 		{
 			cell->num = num;
 			return false;
@@ -1106,10 +1088,10 @@ void Sudoku::draw()
 
 void Sudoku::update_info()
 {
-	con.Put(MNUX + 1, MNUY + 1, '0' + Sudoku::level);
-	con.SetText(MNUX + 4, MNUY + 1, Console::Cyan);
+	con.Put(MNU.x + 1, MNU.y + 1, '0' + Sudoku::level);
+	con.SetText(MNU.x + 4, MNU.y + 1, Console::Cyan);
 	printf("%3d/%2d", Sudoku::rating, Sudoku::len());
-	con.Put(MNUX + MNUW - 2, MNUY + 1, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
+	con.Put(MNU.right - 1, MNU.y + 1, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
 }
 
 void Sudoku::update_menu()
@@ -1120,7 +1102,7 @@ void Sudoku::update_menu()
 
 void Sudoku::update()
 {
-	con.Fill(WINX, WINY, WINW, 1, Console::White, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::LightBlue : Console::Green);
+	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::LightBlue : Console::Green);
 
 	for (Cell *c: *this)
 		c->update(Button::button, help);
@@ -1150,18 +1132,18 @@ void Sudoku::back()
 
 void Sudoku::game()
 {
-	con.Fill(WINX, WINY, WINW, 1, Console::White, Console::Green);
-	con.Put((WINW - strlen(title)) / 2, WINY, title);
+	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Console::Green);
+	con.Put(WIN.Center(strlen(title)), WIN.y, title);
 
-	con.DrawSingle(TABX, TABY, TABW, TABH);
-	con.DrawSingle(TABX, TABY + (TABH - 1) / 3, TABW, (TABH - 1) / 3 + 1);
-	con.DrawSingle(TABX + (TABW - 1) / 3, TABY, (TABW - 1) / 3 + 1, TABH);
-	con.DrawSingle(BARX, BARY, BARW, BARH);
-	con.DrawSingle(MNUX, MNUY, MNUW, MNUH);
-	con.Put(MNUX + 1, MNUY + 1, Console::Purple);
-	con.DrawSingle(MNUX + 2, MNUY, 2, 2);
-	con.DrawSingle(MNUX + MNUW - 4, MNUY, 2, 2);
-	con.Put(MNUX + MNUW - 2, MNUY + 1, Console::Orange);
+	con.DrawSingle(TAB);
+	con.DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
+	con.DrawSingle(TAB.x + (TAB.width - 1) / 3, TAB.y, (TAB.width - 1) / 3 + 1, TAB.height);
+	con.DrawSingle(BAR);
+	con.DrawSingle(MNU);
+	con.Put(MNU.x + 1, MNU.y + 1, Console::Purple);
+	con.DrawSingle(MNU.x + 2, MNU.y, 2, 2);
+	con.DrawSingle(MNU.right - 3, MNU.y, 2, 2);
+	con.Put(MNU.right - 1, MNU.y + 1, Console::Orange);
 
 	for (Button b: Sudoku::btn)
 		b.draw();
@@ -1193,9 +1175,9 @@ void Sudoku::game()
 				case 0:
 				case DOUBLE_CLICK:
 
-					if (x > TABX && x < TABX + TABW - 1 && y > TABY && y < TABY + TABH - 1)
+					if (x > TAB.left && x < TAB.right && y > TAB.top && y < TAB.bottom)
 					{
-						x -= TABX; y -= TABY;
+						x -= TAB.x; y -= TAB.y;
 						if (x % 2 != 0 || x % 8 == 0 || y % 4 == 0)
 							break;
 
@@ -1224,9 +1206,9 @@ void Sudoku::game()
 						Sudoku::update_info();
 					}
 					else
-					if (x >= BARX && x < BARX + BARW && y >= BARY && y < BARY + BARH && !solved())
+					if (x >= BAR.left && x <= BAR.right && y > BAR.top && y < BAR.bottom && !solved())
 					{
-						x -= BARX; y -= BARY;
+						x -= BAR.x; y -= BAR.y;
 
 						switch (input.Event.MouseEvent.dwButtonState)
 						{
@@ -1239,9 +1221,9 @@ void Sudoku::game()
 						}
 					}
 					else
-					if (x >= MNUX && x < MNUX + MNUW)
+					if (x >= MNU.left && x <= MNU.right && y > MNU.top && y < MNU.bottom)
 					{
-						x -= MNUX; y -= MNUY;
+						x -= MNU.x; y -= MNU.y;
 
 						if (input.Event.MouseEvent.dwButtonState != FROM_LEFT_1ST_BUTTON_PRESSED)
 							break;
@@ -1275,9 +1257,9 @@ void Sudoku::game()
 					Button::menu = 0;
 					Cell::focus = nullptr;
 
-					if (x > TABX && x < TABX + TABW - 1 && y > TABY && y < TABY + TABH - 1)
+					if (x > TAB.left && x < TAB.right && y > TAB.top && y < TAB.bottom)
 					{
-						x -= TABX; y -= TABY;
+						x -= TAB.x; y -= TAB.y;
 						if (x % 2 != 0 || x % 8 == 0 || y % 4 == 0)
 							break;
 
@@ -1286,23 +1268,23 @@ void Sudoku::game()
 						Cell::focus = Sudoku::data()[y * 9 + x];
 					}
 					else
-					if (x >= BARX && x < BARX + BARW && y >= BARY && y < BARY + BARH && !solved())
+					if (x >= BAR.left && x <= BAR.right && y > BAR.top && y < BAR.bottom && !solved())
 					{
-						x -= BARX; y -= BARY;
+						x -= BAR.x; y -= BAR.y;
 						Button::menu = y;
 					}
 					else
-					if (x >= MNUX && x < MNUX + MNUW && y >= MNUY && y < MNUY + MNUH)
+					if (x >= MNU.left && x <= MNU.right && y > MNU.top && y < MNU.bottom)
 					{
-						x -= MNUX; y -= MNUY;
+						x -= MNU.x; y -= MNU.y;
 						Menu::menu = y;
-						Menu::back = x < MNUW / 2;
+						Menu::back = x < MNU.width / 2;
 					}
 					break;
 
 				case MOUSE_WHEELED:
 
-					if (x >= TABX && x < BARX + BARW && y >= BARY && y < BARY + BARH && !solved())
+					if (x >= TAB.left && x <= BAR.right && y >= BAR.top && y <= BAR.right && !solved())
 					{
 						if ((int) input.Event.MouseEvent.dwButtonState < 0)
 							Button::button = (Button::button == 0) ? 1 : 1 + (Button::button + 0) % 9;
@@ -1544,7 +1526,7 @@ int main( int argc, char **argv )
 
 			if (!con) break;
 			con.SetFont(48, L"Consolas");
-			con.Center(WINW, WINH);
+			con.CenterUp(WIN.width, WIN.height);
 			con.HideCursor();
 			con.Clear();
 			sudoku.game();
