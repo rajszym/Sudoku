@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    19.04.2020
+   @date    20.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -36,8 +36,8 @@
 
 class Timer
 {
-	HANDLE timer_ = NULL;
-	mutable std::atomic_flag flag_ = ATOMIC_FLAG_INIT;
+	HANDLE timer_;
+	mutable std::atomic_flag flag_;
 
 	static
 	VOID CALLBACK Handler_(PVOID flag, BOOLEAN)
@@ -47,11 +47,10 @@ class Timer
 
 public:
 
-	Timer( const DWORD duration = 0 )
+	Timer( const DWORD duration = 0 ): flag_(ATOMIC_FLAG_INIT)
 	{
-		if (duration)
-			if (!CreateTimerQueueTimer(&timer_, NULL, Handler_, &flag_, duration, duration, WT_EXECUTEDEFAULT))
-				throw std::runtime_error("console timer construction error");
+		if (!duration || !CreateTimerQueueTimer(&timer_, NULL, Handler_, &flag_, duration, duration, WT_EXECUTEDEFAULT))
+			timer_ = NULL;
 	}
 
 	~Timer()
@@ -158,8 +157,7 @@ private:
 		mode &= ~ENABLE_QUICK_EDIT_MODE;
 
 		return SetConsoleMode(cin_, mode) &&
-		       SetTitle(title) &&
-		       Clear();
+		       SetTitle(title);
 	}
 
 	template <typename T>
