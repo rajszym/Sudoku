@@ -33,8 +33,11 @@
 
 #define TEST  true
 
-#define TABX  0
-#define TABY  0
+#define WINX  0
+#define WINY  0
+
+#define TABX (WINX)
+#define TABY (WINY + 1)
 #define TABW  25
 #define TABH  13
 
@@ -43,12 +46,12 @@
 #define BARW  3
 #define BARH (TABH)
 
-#define MNUX (BARX + BARW + 1)
+#define MNUX (BARX + BARW)
 #define MNUY (BARY)
-#define MNUW  12
+#define MNUW  14
 #define MNUH (BARH)
 
-#define WINW (MNUX + MNUW + 1)
+#define WINW (MNUX + MNUW)
 #define WINH (TABY + TABH)
 
 const char *title = "SUDOKU";
@@ -326,9 +329,9 @@ void Menu::draw()
 	if (Menu::size() > 0)
 	{
 		unsigned n = std::strlen(Menu::data()[Menu::idx]);
-		con.Put(MNUX + 0, MNUY + Menu::pos, Menu::key);
-		con.Put(MNUX + 3, MNUY + Menu::pos, Menu::data()[Menu::idx]);
-		con.Fill(MNUX + 3 + n, MNUY + Menu::pos, MNUW - 2 - n, 1);
+		con.Put(MNUX + 1, MNUY + Menu::pos, Menu::key);
+		con.Put(MNUX + 4, MNUY + Menu::pos, Menu::data()[Menu::idx]);
+		con.Fill(MNUX + 4 + n, MNUY + Menu::pos, MNUW - 5 - n, 1);
 	}
 }
 
@@ -337,18 +340,18 @@ void Menu::update()
 	if (Menu::menu == Menu::pos)
 	{
 		if (Menu::size() == 1)
-			con.Fill(MNUX, MNUY + Menu::pos, MNUW, 1, Console::White, Console::Grey);
+			con.Fill(MNUX + 1, MNUY + Menu::pos, MNUW - 2, 1, Console::White, Console::Grey);
 		else
 		{
-			con.Put(MNUX, MNUY + Menu::pos, Menu::back ? "<<" : ">>");
-			con.Fill(MNUX, MNUY + Menu::pos, MNUW, 1, Console::White, Console::Grey);
+			con.Put(MNUX + 1, MNUY + Menu::pos, Menu::back ? "<<" : ">>");
+			con.Fill(MNUX + 1, MNUY + Menu::pos, MNUW - 2, 1, Console::White, Console::Grey);
 		}
 	}
 	else
 	{
 		if (Menu::size() > 1)
-			con.Put(MNUX + 0, MNUY + Menu::pos, Menu::key);
-		con.Fill(MNUX, MNUY + Menu::pos, MNUW, 1, Console::LightGrey);
+			con.Put(MNUX + 1, MNUY + Menu::pos, Menu::key);
+		con.Fill(MNUX + 1, MNUY + Menu::pos, MNUW - 2, 1, Console::LightGrey);
 	}
 }
 
@@ -562,14 +565,16 @@ Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 	for (int i = 1; i < 10; i++)
 		Sudoku::btn.emplace_back(i);
 
-	Sudoku::mnu.emplace_back("H:",  4); Sudoku::mnu.back().add("NONE").add("CURRENT").add("AVAILABLE").add("SURE").idx = Sudoku::help;
-	Sudoku::mnu.emplace_back("L:",  5); Sudoku::mnu.back().add("EASY").add("MEDIUM").add("HARD").add("EXPERT").add("EXTREME").idx = Sudoku::level;
-	Sudoku::mnu.emplace_back("N:",  6); Sudoku::mnu.back().add("NEXT");
-	Sudoku::mnu.emplace_back("X:",  7); Sudoku::mnu.back().add("CLEAR");
-	Sudoku::mnu.emplace_back("F:",  8); Sudoku::mnu.back().add("CONFIRM");
-	Sudoku::mnu.emplace_back("U:",  9); Sudoku::mnu.back().add("UNDO");
-	Sudoku::mnu.emplace_back("V:", 10); Sudoku::mnu.back().add("SOLVE");
-	Sudoku::mnu.emplace_back("Q:", 11); Sudoku::mnu.back().add("EXIT");
+	Sudoku::mnu.emplace_back("H:",  2); Sudoku::mnu.back().add("none").add("current").add("available").add("sure").idx = Sudoku::help;
+	Sudoku::mnu.emplace_back("L:",  3); Sudoku::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
+	Sudoku::mnu.emplace_back("N:",  4); Sudoku::mnu.back().add("next");
+	Sudoku::mnu.emplace_back("C:",  5); Sudoku::mnu.back().add("check");
+	Sudoku::mnu.emplace_back("S:",  6); Sudoku::mnu.back().add("save");
+	Sudoku::mnu.emplace_back("X:",  7); Sudoku::mnu.back().add("clear");
+	Sudoku::mnu.emplace_back("F:",  8); Sudoku::mnu.back().add("confirm");
+	Sudoku::mnu.emplace_back("U:",  9); Sudoku::mnu.back().add("undo");
+	Sudoku::mnu.emplace_back("V:", 10); Sudoku::mnu.back().add("solve");
+	Sudoku::mnu.emplace_back("Q:", 11); Sudoku::mnu.back().add("quit");
 }
 
 int Sudoku::len()
@@ -1101,10 +1106,10 @@ void Sudoku::draw()
 
 void Sudoku::update_info()
 {
-	con.SetText(MNUX + MNUW - 11, MNUY + 3, Console::Cyan);
-	printf("%d  %3d  %2d", Sudoku::level, Sudoku::rating, Button::button != 0 ? Sudoku::len(Button::button) : Sudoku::len());
-	if (Button::button != 0)
-		con.Put(MNUX + MNUW - 2, MNUY + 3, Console::Yellow);
+	con.Put(MNUX + 1, MNUY + 1, '0' + Sudoku::level);
+	con.SetText(MNUX + 4, MNUY + 1, Console::Cyan);
+	printf("%3d/%2d", Sudoku::rating, Sudoku::len());
+	con.Put(MNUX + MNUW - 2, MNUY + 1, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
 }
 
 void Sudoku::update_menu()
@@ -1115,7 +1120,7 @@ void Sudoku::update_menu()
 
 void Sudoku::update()
 {
-	con.ColorFrame(MNUX, MNUY, MNUW, 3, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::LightBlue : Console::Green);
+	con.Fill(WINX, WINY, WINW, 1, Console::White, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::LightBlue : Console::Green);
 
 	for (Cell *c: *this)
 		c->update(Button::button, help);
@@ -1145,14 +1150,16 @@ void Sudoku::back()
 
 void Sudoku::game()
 {
+	con.Fill(WINX, WINY, WINW, 1, Console::White, Console::Green);
+	con.Put((WINW - strlen(title)) / 2, WINY, title);
+
 	con.DrawSingle(TABX, TABY, TABW, TABH);
 	con.DrawSingle(TABX, TABY + (TABH - 1) / 3, TABW, (TABH - 1) / 3 + 1);
 	con.DrawSingle(TABX + (TABW - 1) / 3, TABY, (TABW - 1) / 3 + 1, TABH);
-	con.DrawSingle(BARX, BARY,  BARW, BARH);
-
-	con.DrawBold(MNUX, MNUY, MNUW, 3);
-
-	con.Put(MNUX + (MNUW - strlen(title)) / 2,  MNUY + 1, title);
+	con.DrawSingle(BARX, BARY, BARW, BARH);
+	con.DrawSingle(MNUX, MNUY, MNUW, MNUH);
+	con.Put(MNUX + 1,        MNUY + 1, Console::Purple);
+	con.Put(MNUX + MNUW - 2, MNUY + 1, Console::Orange);
 
 	for (Button b: Sudoku::btn)
 		b.draw();
@@ -1242,10 +1249,11 @@ void Sudoku::game()
 
 						switch (y)
 						{
-						case  3: Sudoku::check();    Sudoku::draw(); break;
-						case  4: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
-						case  5: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
-						case  6: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
+						case  2: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
+						case  3: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
+						case  4: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
+						case  5: Sudoku::check();    Sudoku::draw(); break;
+						case  6: Sudoku::save("sudoku.board"); break;
 						case  7: Sudoku::clear();    Sudoku::draw(); Button::button = 0; break;
 						case  8: Sudoku::confirm();  break;
 						case  9: Sudoku::back();     Sudoku::draw(); break;
@@ -1530,8 +1538,7 @@ int main( int argc, char **argv )
 				::load(*++argv);
 
 			if (!con) break;
-//			con.SetFont(56, L"Lucida Console");
-			con.SetFont(56, L"Consolas");
+			con.SetFont(48, L"Consolas");
 			con.Center(WINW, WINH);
 			con.HideCursor();
 			con.Clear();
