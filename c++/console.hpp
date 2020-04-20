@@ -411,8 +411,8 @@ public:
 		w = std::min(w, width);
 		h = std::min(h, height);
 		const SMALL_RECT temp = { 0, 0, static_cast<SHORT>(w - 1),     static_cast<SHORT>(h - 1) };
-		const SMALL_RECT rect = { 0, 0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height - 1) };
 		const COORD      size = {       static_cast<SHORT>(width),     static_cast<SHORT>(height) };
+		const SMALL_RECT rect = { 0, 0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height - 1) };
 
 		return SetConsoleWindowInfo(Cout, TRUE, &temp) &&
 		       SetConsoleScreenBufferSize(Cout, size) &&
