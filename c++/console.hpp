@@ -39,8 +39,7 @@ class Timer
 	HANDLE timer_;
 	mutable std::atomic_flag flag_;
 
-	static
-	VOID CALLBACK Handler_(PVOID flag, BOOLEAN)
+	static VOID CALLBACK Handler_(PVOID flag, BOOLEAN)
 	{
 		atomic_flag_clear(static_cast<std::atomic_flag *>(flag));
 	}
@@ -71,6 +70,17 @@ class Console: public Timer
 {
 public:
 
+	enum: char
+	{
+		LightShade     = '\xB0',
+		MediumShade    = '\xB1',
+		DarkShade      = '\xB2',
+		FullBlock      = '\xDB',
+		LowerHalfBlock = '\xDC',
+		UpperHalfBlock = '\xDF',
+		BlackSquare    = '\xFE',
+	};
+
 	enum Color: WORD
 	{
 		Black       = 0x0,
@@ -90,15 +100,6 @@ public:
 		Yellow      = 0xE,
 		White       = 0xF,
 		Default     = LightGrey,
-	};
-
-	enum Grade
-	{
-		NoGrade     = 0,
-		SmallGrade  = 1,
-		MediumGrade = 2,
-		LargeGrade  = 3,
-		FullGrade   = 4,
 	};
 
 	struct Rectangle
@@ -833,16 +834,5 @@ public:
 	bool Fill( const Rectangle &rc, const char c = ' ' ) const
 	{
 		return Fill(rc.x, rc.y, rc.width, rc.height, c);
-	}
-
-	bool Fill( const int x, const int y, const int width, const int height, const Grade g )
-	{
-		const char *bkg = "\x20\xB0\xB1\xB2\xDB";
-		return Fill(x, y, width, height, bkg[g]);
-	}
-
-	bool Fill( const Rectangle &rc, const Grade g ) const
-	{
-		return Fill(rc.x, rc.y, rc.width, rc.height, g);
 	}
 };
