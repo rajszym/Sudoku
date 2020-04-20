@@ -109,6 +109,16 @@ public:
 		Rectangle(int _x, int _y, int _w, int _h):
 			x(_x), y(_y), width(_w), height(_h),
 			left(_x), top(_y), right(_x + _w - 1), bottom(_y + _h - 1) {}
+
+		int Center( const int w ) const
+		{
+			return x + (width - w) / 2;
+		}
+
+		int Middle( const int h ) const
+		{
+			return y + (height - h) / 2;
+		}
 	};
 
 private:
@@ -445,6 +455,31 @@ public:
 	{
 		return SetSize(width, height) &&
 		       Center();
+	}
+
+	bool CenterUp() const
+	{
+		while (!Windowed())
+			if (!Restore())
+				return false;
+
+		const int cx = GetSystemMetrics(SM_CXSCREEN);
+		if (cx == 0)
+			return false;
+
+		RECT rc;
+		if (!GetWindowRect(Hwnd, &rc))
+			return false;
+
+		const int x = (cx - (rc.right - rc.left + 1)) / 2;
+
+		return SetWindowPos(Hwnd, HWND_TOP, x, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+	}
+
+	bool CenterUp( const int width, const int height ) const
+	{
+		return SetSize(width, height) &&
+		       CenterUp();
 	}
 
 	bool GetInput( INPUT_RECORD * const input = NULL, const DWORD len = 1 ) const
