@@ -13,10 +13,10 @@ Sudoku game, solver and generator
 - view also sure moves
 ### Features
 - next:    generate or load new layout
-- solve:   solve current layout
+- solve:   solve the current layout
 - undo:    undo last move or return to the confirmed layout
 - clear:   clear the board
 - test:    test the current layout and start editing
 - confirm: confirm the current layout and finish editing
-- save:    save current layout to file "sudoku.board"
+- save:    save the current layout to file "sudoku.board"
 - quit:    quit game
