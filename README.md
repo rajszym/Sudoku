@@ -1,20 +1,22 @@
 # Sudoku
 Sudoku game, solver and generator
 
-
-### Help level
-- view only current digit
-- view suggestions
-- view tips
 ### Difficulty level
 - easy
 - medium / hard
 - expert
 - extreme
+### Help level
+- no help
+- view only the current digit
+- view also available moves
+- view also sure moves
 ### Features
-- next: generate or load new game
-- clear: clear sudoku board
-- confirm: save current layout
-- undo: undo last move or return to the confirmed layout
-- solve: solve current layout
-- exit: leave the game
+- next:    generate or load new layout
+- solve:   solve current layout
+- undo:    undo last move or return to the confirmed layout
+- clear:   clear the board
+- test:    test the current layout and start editing
+- confirm: confirm the current layout and finish editing
+- save:    save current layout to file "sudoku.board"
+- quit:    quit game
