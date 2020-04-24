@@ -293,7 +293,7 @@ int Menu::next( bool prev )
 {
 	int max = Menu::size() - 1;
 
-	if (Menu::pos == 3)
+	if (Menu::key[0] == 'l')
 	{
 		if (prev) Menu::idx = Menu::idx == 0 ? max : Menu::idx == max ? 1 : 0;
 		else      Menu::idx = Menu::idx == max ? 0 : Menu::idx == 0 ? 1 : max;
@@ -545,8 +545,8 @@ Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 	for (int i = 1; i < 10; i++)
 		Sudoku::btn.emplace_back(i);
 
-	Sudoku::mnu.emplace_back("h:",  2); Sudoku::mnu.back().add("none").add("current").add("available").add("sure").idx = Sudoku::help;
-	Sudoku::mnu.emplace_back("l:",  3); Sudoku::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
+	Sudoku::mnu.emplace_back("h:",  3); Sudoku::mnu.back().add("none").add("current").add("available").add("sure").idx = Sudoku::help;
+	Sudoku::mnu.emplace_back("l:",  2); Sudoku::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
 	Sudoku::mnu.emplace_back("n:",  4); Sudoku::mnu.back().add("next");
 	Sudoku::mnu.emplace_back("s:",  5); Sudoku::mnu.back().add("solve");
 	Sudoku::mnu.emplace_back("u:",  6); Sudoku::mnu.back().add("undo");
@@ -1099,10 +1099,10 @@ void Sudoku::draw()
 
 void Sudoku::update_info()
 {
-	con.Put(MNU.x + 1, MNU.y + 1, '0' + Sudoku::level);
-	con.SetText(MNU.x + 4, MNU.y + 1, Console::Cyan);
-	printf("%3d/%2d", Sudoku::rating, Sudoku::len());
-	con.Put(MNU.right - 1, MNU.y + 1, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
+	char nfo[16];
+	snprintf(nfo, sizeof(nfo), "%5d/%d", Sudoku::rating, Sudoku::len());
+	con.Put(MNU.x + 2, MNU.y + 1, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
+	con.Put(MNU.Right(strlen(nfo)) - 2, MNU.y + 1, nfo);
 }
 
 void Sudoku::update_menu()
@@ -1156,11 +1156,7 @@ void Sudoku::game()
 	con.DrawSingle(TAB.x + (TAB.width - 1) / 3, TAB.y, (TAB.width - 1) / 3 + 1, TAB.height);
 	con.DrawSingle(BAR);
 	con.DrawSingle(MNU);
-	
-//	con.Put(MNU.left  + 1, MNU.top,     Console::UpperHalfBlock);
-//	con.Put(MNU.right - 1, MNU.top,     Console::UpperHalfBlock);
-	con.Put(MNU.left  + 1, MNU.top + 1, Console::Purple);
-	con.Put(MNU.right - 1, MNU.top + 1, Console::Orange);
+	con.Fill(MNU.x + 1, MNU.y + 1, MNU.width - 2, 1, Console::Black, Console::LightGrey);
 
 	for (Button b: Sudoku::btn)
 		b.draw();
@@ -1247,8 +1243,8 @@ void Sudoku::game()
 
 						switch (y)
 						{
-						case  2: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
-						case  3: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
+						case  3: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
+						case  2: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
 						case  4: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
 						case  5: Sudoku::solve();    Sudoku::draw(); Button::button = 0; break;
 						case  6: Sudoku::back();     Sudoku::draw(); break;
