@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    20.04.2020
+   @date    24.04.2020
    @brief   console class
 
 *******************************************************************************
@@ -116,9 +116,19 @@ public:
 			return x + (width - w) / 2;
 		}
 
+		int Right( const int w ) const
+		{
+			return x + width - w;
+		}
+
 		int Middle( const int h ) const
 		{
 			return y + (height - h) / 2;
+		}
+
+		int Bottom( const int h ) const
+		{
+			return y + height - h;
 		}
 	};
 
@@ -492,8 +502,12 @@ public:
 		return !input || ReadConsoleInput(Cin, input, len, &count);
 	}
 
-	bool Clear() const
+	bool Clear( const Color fore = Default, const Color back = Black ) const
 	{
+		WORD a = MakeAttribute(fore, back);
+		if (!SetConsoleTextAttribute(Cout, a))
+			return false;
+
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
 			return false;
@@ -503,14 +517,8 @@ public:
 		DWORD count;
 
 		return FillConsoleOutputCharacter(Cout, ' ', size, home, &count) &&
-		       FillConsoleOutputAttribute(Cout, sbi.wAttributes, size, home, &count) &&
+		       FillConsoleOutputAttribute(Cout,  a , size, home, &count) &&
 		       Home();
-	}
-
-	bool Clear( const Color fore, const Color back = Black ) const
-	{
-		return SetTextColor(fore, back) &&
-		       Clear();
 	}
 
 	bool Home() const
