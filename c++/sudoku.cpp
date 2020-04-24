@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    22.04.2020
+   @date    24.04.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -323,13 +323,9 @@ void Menu::update()
 {
 	if (Menu::menu == Menu::pos)
 	{
-		if (Menu::size() == 1)
-			con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::White, Console::Grey);
-		else
-		{
+		if (Menu::size() > 1)
 			con.Put (MNU.x + 1, MNU.y + Menu::pos, Menu::back ? "<<" : ">>");
-			con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::White, Console::Grey);
-		}
+		con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::White, Console::Grey);
 	}
 	else
 	{
@@ -1161,8 +1157,8 @@ void Sudoku::game()
 	con.DrawSingle(BAR);
 	con.DrawSingle(MNU);
 	
-	con.Put(MNU.left  + 1, MNU.top,     Console::UpperHalfBlock);
-	con.Put(MNU.right - 1, MNU.top,     Console::UpperHalfBlock);
+//	con.Put(MNU.left  + 1, MNU.top,     Console::UpperHalfBlock);
+//	con.Put(MNU.right - 1, MNU.top,     Console::UpperHalfBlock);
 	con.Put(MNU.left  + 1, MNU.top + 1, Console::Purple);
 	con.Put(MNU.right - 1, MNU.top + 1, Console::Orange);
 
