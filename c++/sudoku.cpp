@@ -1296,7 +1296,7 @@ void Sudoku::game()
 						case  4: Sudoku::solve();    Sudoku::draw(); Button::button = 0; break;
 						case  5: Sudoku::back();     Sudoku::draw(); break;
 						case  6: Sudoku::clear();    Sudoku::draw(); Button::button = 0; break;
-						case  7: Sudoku::check();    Sudoku::draw(); break;
+						case  7: Sudoku::check();    Sudoku::draw(); Sudoku::discard();  break;
 						case  8: Sudoku::confirm();  break;
 						case  9: Sudoku::save();     break;
 						case 10: Sudoku::read();     Sudoku::draw(); Button::button = 0; break;
@@ -1378,7 +1378,7 @@ void Sudoku::game()
 					case VK_DELETE:               /* falls through */
 					case 'C': Sudoku::clear();    Sudoku::draw(); Button::button = 0; break;
 					case VK_HOME:                 /* falls through */
-					case 'T': Sudoku::check();    Sudoku::draw(); break;
+					case 'T': Sudoku::check();    Sudoku::draw(); Sudoku::discard();  break;
 					case VK_END:                  /* falls through */
 					case 'F': Sudoku::confirm();  break;
 					case VK_INSERT:               /* falls through */
