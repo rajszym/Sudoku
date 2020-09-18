@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    24.04.2020
+   @date    18.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -208,7 +208,8 @@ struct Sudoku: public std::vector<Cell *>
 	void level_calc   ();
 	void specify      ();
 	void put          ( std::ostream & = std::cout );
-	void save         ( std::string );
+	void save         ( std::string = "sudoku.board" );
+	void read         ( std::string = "sudoku.board" );
 	bool test         ( bool = false );
 	void draw         ();
 	void update_info  ();
@@ -503,7 +504,7 @@ bool Cell::changed()
 
 void Cell::put( std::ostream &out )
 {
-	out << ".123456789"[Cell::num];
+	out << (Cell::immutable ? ".123456789" : ".ABCDEFGHI")[Cell::num];
 }
 
 void Cell::draw()
@@ -519,11 +520,24 @@ void Cell::update(int n, int h)
 	int x = TAB.x + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
 	int y = TAB.y + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
 
-	if      (h >= 3 && Cell::sure(n))    con.Put(x, y, Console::White,                                         Console::Green);
-	else if (h >= 2 && Cell::allowed(n)) con.Put(x, y, Console::White,                                         Console::Yellow);
-	else if (h >= 1 && Cell::equal(n))   con.Put(x, y, Cell::immutable ? Console::White : Console::LightGreen, Console::LightRed);
-	else if (          Cell::num != 0)   con.Put(x, y, Cell::immutable ? Console::White : Console::LightGreen, Cell::focus == this ? Console::Grey : Console::Black);
-	else                                 con.Put(x, y, Console::LightGrey,                                     Cell::focus == this ? Console::Grey : Console::Black);
+	auto c = Console::LightGrey;
+	auto b = Console::Black;
+
+	if (h >= 1 && Cell::equal(n)) {
+		c = Cell::immutable     ? Console::White : Console::LightGreen;
+		b = Cell::focus == this ? Console::Grey  : Console::Red;
+	}
+	else if (Cell::num != 0) {
+		c = Cell::immutable     ? Console::White : Console::Green;
+		b = Cell::focus == this ? Console::Grey  : Console::Black;
+	}
+	else if (Cell::focus == this) {
+		if      (h >= 3 && Cell::sure(n))    b = Console::Red;
+		else if (h >= 2 && Cell::allowed(n)) b = Console::Orange;
+		else                                 b = Console::Grey;
+	}
+
+	con.Put(x, y, c, b);
 }
 
 bool select_cell( Cell *a, Cell *b )
@@ -545,15 +559,16 @@ Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 	for (int i = 1; i < 10; i++)
 		Sudoku::btn.emplace_back(i);
 
-	Sudoku::mnu.emplace_back("h:",  3); Sudoku::mnu.back().add("none").add("current").add("available").add("sure").idx = Sudoku::help;
-	Sudoku::mnu.emplace_back("l:",  2); Sudoku::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
-	Sudoku::mnu.emplace_back("n:",  4); Sudoku::mnu.back().add("next");
-	Sudoku::mnu.emplace_back("s:",  5); Sudoku::mnu.back().add("solve");
-	Sudoku::mnu.emplace_back("u:",  6); Sudoku::mnu.back().add("undo");
-	Sudoku::mnu.emplace_back("c:",  7); Sudoku::mnu.back().add("clear");
-	Sudoku::mnu.emplace_back("t:",  8); Sudoku::mnu.back().add("test");
-	Sudoku::mnu.emplace_back("f:",  9); Sudoku::mnu.back().add("confirm");
-	Sudoku::mnu.emplace_back("v:", 10); Sudoku::mnu.back().add("save");
+	Sudoku::mnu.emplace_back("h:",  2); Sudoku::mnu.back().add("none").add("current").add("available").add("sure").idx = Sudoku::help;
+	Sudoku::mnu.emplace_back("l:",  1); Sudoku::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
+	Sudoku::mnu.emplace_back("n:",  3); Sudoku::mnu.back().add("new");
+	Sudoku::mnu.emplace_back("s:",  4); Sudoku::mnu.back().add("solve");
+	Sudoku::mnu.emplace_back("u:",  5); Sudoku::mnu.back().add("undo");
+	Sudoku::mnu.emplace_back("c:",  6); Sudoku::mnu.back().add("clear");
+	Sudoku::mnu.emplace_back("t:",  7); Sudoku::mnu.back().add("test");
+	Sudoku::mnu.emplace_back("f:",  8); Sudoku::mnu.back().add("confirm");
+	Sudoku::mnu.emplace_back("v:",  9); Sudoku::mnu.back().add("save");
+	Sudoku::mnu.emplace_back("r:", 10); Sudoku::mnu.back().add("read");
 	Sudoku::mnu.emplace_back("q:", 11); Sudoku::mnu.back().add("quit");
 }
 
@@ -661,10 +676,17 @@ void Sudoku::init( std::string txt )
 		{
 			unsigned char x = txt[c->pos] - '0';
 			c->set(x <= 9 ? x : 0, false);
-//			c->num = x <= 9 ? x : 0;
 		}
 	}
 	Sudoku::confirm();
+	for (Cell *c: *this)
+	{
+		if (c->pos < txt.size())
+		{
+			unsigned char x = txt[c->pos] - '@';
+			c->set(x <= 9 ? x : 0, false);
+		}
+	}
 }
 
 void Sudoku::again()
@@ -833,10 +855,7 @@ void Sudoku::check()
 	Sudoku::confirm();
 
 	if (Sudoku::level == 1)
-	{
-		Sudoku::discard();
 		return;
-	}
 
 	if (Sudoku::level == 2)
 		Sudoku::simplify();
@@ -880,7 +899,6 @@ void Sudoku::check()
 	while (Sudoku::changed());
 
 	Sudoku::confirm();
-	Sudoku::discard();
 }
 
 bool Sudoku::generate_next( Cell *cell, bool check )
@@ -1048,8 +1066,44 @@ void Sudoku::put( std::ostream &out )
 	                    << std::setfill(' ') << std::dec << std::endl;
 }
 
+void Sudoku::save( std::string filename )
+{
+	auto file = std::ofstream(filename.c_str(), std::ios::out);
+	if (!file.is_open())
+		return;
+
+	Sudoku::put(file);
+
+	file.close();
+}
+
+void Sudoku::read( std::string filename )
+{
+	auto file = std::ifstream(filename.c_str());
+	if (!file.is_open())
+		return;
+
+	std::string line;
+	if (getline(file, line))
+	{
+		int l = line.find("\"", 1) - 1;
+
+		if (l >= 0 && l <= 81 && line.at(0) == '\"')
+		{
+			Sudoku::level = 1;
+			Sudoku::init(line.substr(1, l));
+		}
+	}
+
+	file.close();
+}
+
 void load( std::string filename )
 {
+	auto file = std::ifstream(filename.c_str());
+	if (!file.is_open())
+		return;
+
 	static
 	bool done = false;
 	if (!done)
@@ -1057,10 +1111,6 @@ void load( std::string filename )
 		extreme.clear();
 		done = true;
 	}
-
-	auto file = std::ifstream(filename.c_str());
-	if (!file.is_open())
-		return;
 
 	std::string line;
 	while (getline(file, line))
@@ -1079,17 +1129,6 @@ void load( std::string filename )
 	file.close();
 }
 
-void Sudoku::save( std::string filename )
-{
-	auto file = std::ofstream(filename.c_str(), std::ios::app);
-	if (!file.is_open())
-		return;
-
-	Sudoku::put(file);
-
-	file.close();
-}
-
 void Sudoku::draw()
 {
 	for (Cell *c: *this) c->draw();
@@ -1101,8 +1140,8 @@ void Sudoku::update_info()
 {
 	char nfo[16];
 	snprintf(nfo, sizeof(nfo), "%5d/%d", Sudoku::rating, Sudoku::len());
-	con.Put(MNU.x + 2, MNU.y + 1, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
-	con.Put(MNU.Right(strlen(nfo)) - 2, MNU.y + 1, nfo);
+	con.Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
+	con.Put(MNU.Right(strlen(nfo)) - 1, WIN.y, nfo);
 }
 
 void Sudoku::update_menu()
@@ -1113,7 +1152,16 @@ void Sudoku::update_menu()
 
 void Sudoku::update_banner()
 {
-	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::LightBlue : Console::Green);
+	static const Console::Color c[] =
+	{
+		Console::Blue,
+		Console::Green,
+		Console::Orange,
+		Console::Red,
+		Console::Red
+	};
+
+	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Sudoku::wait ? Console::LightRed : Sudoku::solved() ? Console::Black : c[Sudoku::level]);
 }
 
 void Sudoku::update()
@@ -1148,15 +1196,14 @@ void Sudoku::back()
 
 void Sudoku::game()
 {
-	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Console::Green);
-	con.Put(WIN.Center(strlen(title)), WIN.y, title);
+	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White);
+	con.Put(TAB.x + 1, WIN.y, title);
 
 	con.DrawSingle(TAB);
 	con.DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
 	con.DrawSingle(TAB.x + (TAB.width - 1) / 3, TAB.y, (TAB.width - 1) / 3 + 1, TAB.height);
 	con.DrawSingle(BAR);
 	con.DrawSingle(MNU);
-	con.Fill(MNU.x + 1, MNU.y + 1, MNU.width - 2, 1, Console::Black, Console::LightGrey);
 
 	for (Button b: Sudoku::btn)
 		b.draw();
@@ -1243,15 +1290,16 @@ void Sudoku::game()
 
 						switch (y)
 						{
-						case  3: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
-						case  2: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
-						case  4: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
-						case  5: Sudoku::solve();    Sudoku::draw(); Button::button = 0; break;
-						case  6: Sudoku::back();     Sudoku::draw(); break;
-						case  7: Sudoku::clear();    Sudoku::draw(); Button::button = 0; break;
-						case  8: Sudoku::check();    Sudoku::draw(); break;
-						case  9: Sudoku::confirm();  break;
-						case 10: Sudoku::save("sudoku.board"); break;
+						case  2: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
+						case  1: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
+						case  3: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
+						case  4: Sudoku::solve();    Sudoku::draw(); Button::button = 0; break;
+						case  5: Sudoku::back();     Sudoku::draw(); break;
+						case  6: Sudoku::clear();    Sudoku::draw(); Button::button = 0; break;
+						case  7: Sudoku::check();    Sudoku::draw(); break;
+						case  8: Sudoku::confirm();  break;
+						case  9: Sudoku::save();     break;
+						case 10: Sudoku::read();     Sudoku::draw(); Button::button = 0; break;
 						case 11: return;
 						}
 
@@ -1315,8 +1363,8 @@ void Sudoku::game()
 					bool prev = false; // input.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED;
 					switch (input.Event.KeyEvent.wVirtualKeyCode)
 					{
-					case VK_DOWN:  prev = true;   /* falls through */
-					case VK_UP:                   /* falls through */
+					case VK_LEFT:  prev = true;   /* falls through */
+					case VK_RIGHT:                /* falls through */
 					case 'H': Sudoku::help  =     Sudoku::mnu[0].next(prev); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
@@ -1334,7 +1382,8 @@ void Sudoku::game()
 					case VK_END:                  /* falls through */
 					case 'F': Sudoku::confirm();  break;
 					case VK_INSERT:               /* falls through */
-					case 'V': Sudoku::save("sudoku.board"); break;
+					case 'V': Sudoku::save();     break;
+					case 'R': Sudoku::read();     Sudoku::draw(); Button::button = 0; break;
 					case VK_ESCAPE:               /* falls through */
 					case 'Q': return;
 					}
