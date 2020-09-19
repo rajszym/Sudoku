@@ -178,7 +178,7 @@ struct Sudoku: public std::vector<Cell *>
 	int  len          ( int );
 	bool empty        ();
 	bool solved       ();
-	bool difficult    ();
+	bool expected     ();
 	bool tips         ();
 
 	void reload       ();
@@ -520,24 +520,29 @@ void Cell::update(int n, int h)
 	int x = TAB.x + 2 + (Cell::pos % 9 + Cell::pos % 9 / 3) * 2;
 	int y = TAB.y + 1 + (Cell::pos / 9 + Cell::pos / 9 / 3);
 
-	auto c = Console::LightGrey;
-	auto b = Console::Black;
+	auto fore = Console::LightGrey;
+	auto back = Console::Black;
 
-	if (h >= 1 && Cell::equal(n)) {
-		c = Cell::immutable     ? Console::White : Console::LightGreen;
-		b = Cell::focus == this ? Console::Grey  : Console::Red;
+	if (h >= 1 && Cell::equal(n))
+	{
+		fore = Cell::immutable     ? Console::White : Console::LightGreen;
+		back = Cell::focus == this ? Console::Grey  : Console::Red;
 	}
-	else if (Cell::num != 0) {
-		c = Cell::immutable     ? Console::White : Console::Green;
-		b = Cell::focus == this ? Console::Grey  : Console::Black;
+	else
+	if (Cell::num != 0)
+	{
+		fore = Cell::immutable     ? Console::White : Console::Green;
+		back = Cell::focus == this ? Console::Grey  : Console::Black;
 	}
-	else if (Cell::focus == this) {
-		if      (h >= 3 && Cell::sure(n))    b = Console::Red;
-		else if (h >= 2 && Cell::allowed(n)) b = Console::Orange;
-		else                                 b = Console::Grey;
+	else
+	if (Cell::focus == this)
+	{
+		if      (h >= 3 && Cell::sure(n))    back = Console::Green;
+		else if (h >= 2 && Cell::allowed(n)) back = Console::Orange;
+		else                                 back = Console::Grey;
 	}
 
-	con.Put(x, y, c, b);
+	con.Put(x, y, fore, back);
 }
 
 bool select_cell( Cell *a, Cell *b )
@@ -559,8 +564,8 @@ Sudoku::Sudoku( int l ): wait(false), help(0), level(l), rating(0), signature(0)
 	for (int i = 1; i < 10; i++)
 		Sudoku::btn.emplace_back(i);
 
-	Sudoku::mnu.emplace_back("h:",  2); Sudoku::mnu.back().add("none").add("current").add("available").add("sure").idx = Sudoku::help;
 	Sudoku::mnu.emplace_back("l:",  1); Sudoku::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
+	Sudoku::mnu.emplace_back("h:",  2); Sudoku::mnu.back().add("none").add("current").add("available").add("sure").idx = Sudoku::help;
 	Sudoku::mnu.emplace_back("n:",  3); Sudoku::mnu.back().add("new");
 	Sudoku::mnu.emplace_back("s:",  4); Sudoku::mnu.back().add("solve");
 	Sudoku::mnu.emplace_back("u:",  5); Sudoku::mnu.back().add("undo");
@@ -604,7 +609,7 @@ bool Sudoku::solved()
 	return true;
 }
 
-bool Sudoku::difficult()
+bool Sudoku::expected()
 {
 	return Sudoku::rating >= (Sudoku::len() - 2) * 25;
 }
@@ -1146,8 +1151,8 @@ void Sudoku::update_info()
 
 void Sudoku::update_menu()
 {
-	Sudoku::mnu[0].idx = Sudoku::help;  Sudoku::mnu[0].draw();
-	Sudoku::mnu[1].idx = Sudoku::level; Sudoku::mnu[1].draw();
+	Sudoku::mnu[0].idx = Sudoku::level; Sudoku::mnu[0].draw();
+	Sudoku::mnu[1].idx = Sudoku::help;  Sudoku::mnu[1].draw();
 }
 
 void Sudoku::update_banner()
@@ -1290,8 +1295,8 @@ void Sudoku::game()
 
 						switch (y)
 						{
-						case  2: Sudoku::help  =     Sudoku::mnu[0].next(Menu::back); break;
-						case  1: Sudoku::level =     Sudoku::mnu[1].next(Menu::back); /* falls through */
+						case  2: Sudoku::help  =     Sudoku::mnu[1].next(Menu::back); break;
+						case  1: Sudoku::level =     Sudoku::mnu[0].next(Menu::back); /* falls through */
 						case  3: Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
 						case  4: Sudoku::solve();    Sudoku::draw(); Button::button = 0; break;
 						case  5: Sudoku::back();     Sudoku::draw(); break;
@@ -1365,10 +1370,10 @@ void Sudoku::game()
 					{
 					case VK_LEFT:  prev = true;   /* falls through */
 					case VK_RIGHT:                /* falls through */
-					case 'H': Sudoku::help  =     Sudoku::mnu[0].next(prev); break;
+					case 'H': Sudoku::help  =     Sudoku::mnu[1].next(prev); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
-					case 'L': Sudoku::level =     Sudoku::mnu[1].next(prev); /* falls through */
+					case 'L': Sudoku::level =     Sudoku::mnu[0].next(prev); /* falls through */
 					case VK_TAB:                  /* falls through */
 					case 'N': Sudoku::generate(); Sudoku::draw(); Button::button = 0; break;
 					case VK_RETURN:               /* falls through */
@@ -1409,7 +1414,7 @@ bool Sudoku::test( bool all )
 	if (Sudoku::rating == -2) { std::cerr << "ERROR: unsolvable" << std::endl; return false; }
 	if (Sudoku::rating == -1) { std::cerr << "ERROR: ambiguous"  << std::endl; return false; }
 
-	return Sudoku::level == 0 || all || Sudoku::difficult();
+	return Sudoku::level == 0 || all || Sudoku::expected();
 }
 
 Base::Base( Sudoku &sudoku ): level    (sudoku.level),
@@ -1596,7 +1601,7 @@ int main( int argc, char **argv )
 
 			if (!con) break;
 			con.SetFont(48, L"Consolas");
-			con.CenterUp(WIN.width, WIN.height);
+			con.Center(WIN.width, WIN.height);
 			con.HideCursor();
 			con.Clear();
 			sudoku.game();
