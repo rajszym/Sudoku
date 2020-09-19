@@ -435,9 +435,24 @@ public:
 		const COORD      size = {       static_cast<SHORT>(width),     static_cast<SHORT>(height) };
 		const SMALL_RECT rect = { 0, 0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height - 1) };
 
+		CONSOLE_FONT_INFOEX cfi = {};
+		cfi.cbSize = sizeof(cfi);
+		if (!GetCurrentConsoleFontEx(Cout, FALSE, &cfi))
+			return false;
+
+		const int fx = GetSystemMetrics(SM_CXFRAME);
+		const int fy = GetSystemMetrics(SM_CYFRAME);
+		const int cy = GetSystemMetrics(SM_CYCAPTION);
+		if (fx == 0 || fy == 0 || cy == 0)
+			return false;
+
+		const int wx = width  * cfi.dwFontSize.X + fx * 2;
+		const int hx = height * cfi.dwFontSize.Y + fy * 2 + cy;
+
 		return SetConsoleWindowInfo(Cout, TRUE, &temp) &&
 		       SetConsoleScreenBufferSize(Cout, size) &&
 		       SetConsoleWindowInfo(Cout, TRUE, &rect) &&
+		       SetWindowPos(Hwnd, HWND_TOP, 0, 0, wx, hx, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW) &&
 		       Home();
 	}
 
