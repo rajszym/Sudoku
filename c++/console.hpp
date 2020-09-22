@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    24.04.2020
+   @date    20.09.2020
    @brief   console class
 
 *******************************************************************************
