@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    21.09.2020
+   @date    22.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -1632,7 +1632,7 @@ int main( int argc, char **argv )
 				::load(*++argv);
 
 			if (!con) break;
-			con.SetFont(64, L"Consolas");
+			con.SetFont(56, L"Consolas");
 			con.Center(WIN.width, WIN.height);
 			con.HideCursor();
 			con.Clear();
