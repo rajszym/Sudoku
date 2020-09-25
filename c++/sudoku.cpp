@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    24.09.2020
+   @date    25.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -161,12 +161,11 @@ struct Game: public Sudoku
 
 	void draw_cell    ( Cell * );
 	void update_cell  ( Cell * );
-	void draw         ();
-	void update_info  ();
-	void update_menu  ();
+	void draw_info  ();
+	void draw_menu  ();
 	void update_banner();
+	void draw         ();
 	void update       ();
-	void back         ();
 	void game         ();
 };
 
@@ -228,19 +227,9 @@ void Game::update_cell( Cell *cell )
 	}
 
 	con.Put(x, y, fore, back);
-	con.Put(x, y, "-123456789"[cell->num]);
 }
 
-void Game::draw()
-{
-	for (Cell *c: *this)
-		Game::draw_cell(c);
-
-	Game::update_info();
-	Game::update_menu();
-}
-
-void Game::update_info()
+void Game::draw_info()
 {
 	char nfo[16];
 	snprintf(nfo, sizeof(nfo), "%5d/%d", Sudoku::rating, Sudoku::len());
@@ -248,7 +237,7 @@ void Game::update_info()
 	con.Put(MNU.Right(strlen(nfo)) - 1, WIN.y, nfo);
 }
 
-void Game::update_menu()
+void Game::draw_menu()
 {
 	Game::mnu[0].idx = Sudoku::level; Game::mnu[0].draw();
 	Game::mnu[1].idx = Game::help;    Game::mnu[1].draw();
@@ -268,6 +257,15 @@ void Game::update_banner()
 	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Game::wait ? Console::LightRed : Sudoku::solved() ? Console::Black : c[Sudoku::level]);
 }
 
+void Game::draw()
+{
+	for (Cell *c: *this)
+		Game::draw_cell(c);
+
+	Game::draw_info();
+	Game::draw_menu();
+}
+
 void Game::update()
 {
 	Game::update_banner();
@@ -281,7 +279,7 @@ void Game::update()
 	for (Menu m: Game::mnu)
 		m.update();
 
-	Game::update_info();
+	Game::draw_info();
 }
 
 void Game::game()
@@ -350,7 +348,7 @@ void Game::game()
 							break;
 						}
 
-						Game::update_info();
+						Game::draw_info();
 					}
 					else
 					if (x >= BAR.left && x <= BAR.right && y > BAR.top && y < BAR.bottom && !Sudoku::solved())
@@ -393,8 +391,8 @@ void Game::game()
 						case 11: return;
 						}
 
-						Game::update_info();
-						Game::update_menu();
+						Game::draw_info();
+						Game::draw_menu();
 						Game::wait = false;
 					}
 					break;
@@ -455,7 +453,7 @@ void Game::game()
 					{
 					case VK_LEFT:  prev = true;   /* falls through */
 					case VK_RIGHT:                /* falls through */
-					case 'H': Game::help  =       Game::mnu[1].next(prev); break;
+					case 'H':   Game::help  =     Game::mnu[1].next(prev); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
 					case 'L': Sudoku::level =     Game::mnu[0].next(prev); /* falls through */
@@ -479,8 +477,8 @@ void Game::game()
 					}
 				}
 
-				Game::update_info();
-				Game::update_menu();
+				Game::draw_info();
+				Game::draw_menu();
 				Game::wait = false;
 
 				break;
