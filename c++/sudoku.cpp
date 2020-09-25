@@ -499,6 +499,66 @@ double elapsed( std::chrono::time_point<std::chrono::high_resolution_clock> &sta
 	return diff.count();
 }
 
+struct Table
+{
+	int level;
+	int len;
+	int rating;
+	unsigned signature;
+	int data[81];
+
+	Table( Sudoku & );
+
+	static
+	bool select_rating( Table &, Table & );
+
+	static
+	bool select_length( Table &, Table & );
+
+	friend
+	std::ostream &operator <<( std::ostream &, Table & );
+};
+
+Table::Table( Sudoku &sudoku ): level(sudoku.level), len(sudoku.len()), rating(sudoku.rating), signature(sudoku.signature)
+{
+	for (Cell *c: sudoku)
+		Table::data[c->pos] = c->num;
+}
+
+bool Table::select_rating( Table &a, Table &b )
+{
+	return a.rating  > b.rating ||
+	      (a.rating == b.rating && (a.len  < b.len ||
+	                               (a.len == b.len && (a.level  > b.level ||
+	                                                  (a.level == b.level && a.signature < b.signature)))));
+}
+
+bool Table::select_length( Table &a, Table &b )
+{
+	return a.len  < b.len ||
+	      (a.len == b.len && (a.rating  > b.rating ||
+	                         (a.rating == b.rating && (a.level  > b.level ||
+	                                                  (a.level == b.level && a.signature < b.signature)))));
+}
+
+std::ostream &operator <<( std::ostream &out, Table &tab )
+{
+	auto sudoku = Sudoku();
+
+	sudoku.level     = tab.level;
+	sudoku.rating    = tab.rating;
+	sudoku.signature = tab.signature;
+	for (Cell *c: sudoku)
+	{
+		c->num = tab.data[c->pos];
+		c->immutable = c->num != 0;
+	}
+
+	out << sudoku;
+
+	return out;
+}
+
 int main( int argc, char **argv )
 {
 	int  cnt  = 0;
@@ -518,7 +578,7 @@ int main( int argc, char **argv )
 		{
 			auto sudoku = Sudoku(1);
 			auto data   = std::vector<unsigned>();
-			auto coll   = std::vector<Sudoku>();
+			auto coll   = std::vector<Table>();
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
@@ -537,10 +597,10 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), Sudoku::select_rating);
+			std::sort(coll.begin(), coll.end(), Table::select_rating);
 
-			for (Sudoku &s: coll)
-				std::cout << s << std::endl;
+			for (Table &tab: coll)
+				std::cout << tab << std::endl;
 
 			std::cerr << title << " check: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
@@ -577,7 +637,7 @@ int main( int argc, char **argv )
 		{
 			auto sudoku = Sudoku(1);
 			auto data   = std::vector<unsigned>();
-			auto coll   = std::vector<Sudoku>();
+			auto coll   = std::vector<Table>();
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
@@ -595,10 +655,10 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Table::select_rating : Table::select_length);
 
-			for (Sudoku &s: coll)
-				std::cout << s << std::endl;
+			for (Table &tab: coll)
+				std::cout << tab << std::endl;
 
 			std::cerr << title << " sort: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
@@ -608,7 +668,7 @@ int main( int argc, char **argv )
 		{
 			auto sudoku = Sudoku(1);
 			auto data   = std::vector<unsigned>();
-			auto coll   = std::vector<Sudoku>();
+			auto coll   = std::vector<Table>();
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
@@ -626,10 +686,10 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Table::select_rating : Table::select_length);
 
-			for (Sudoku &s: coll)
-				std::cout << s << std::endl;
+			for (Table &tab: coll)
+				std::cout << tab << std::endl;
 
 			std::cerr << title << " test: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
