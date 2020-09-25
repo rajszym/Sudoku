@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    24.09.2020
+   @date    25.09.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -31,17 +31,7 @@
 
 #pragma once
 
-//#include <bits/stdc++.h>
-#include <list>
-#include <array>
-#include <vector>
-#include <numeric>
-#include <utility>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <random>
-#include <ctime>
+#include <bits/stdc++.h>
 
 struct Cell;
 struct Sudoku;
@@ -55,13 +45,13 @@ auto undo = std::list<std::pair<Cell *, int>>();
 struct CRC32
 {
 	template<class T>
-	unsigned operator()( const T  data, unsigned crc = 0 )
+	unsigned operator()( const T data, unsigned crc )
 	{
-		return CRC32::calc(&data, sizeof(T), crc);
+		return CRC32::calc(&data, sizeof(data), crc);
 	}
 
 	template<class T>
-	unsigned operator()( const T *data, size_t size, unsigned crc = 0 )
+	unsigned operator()( const T *data, size_t size, unsigned crc )
 	{
 		return CRC32::calc(data, size * sizeof(T), crc);
 	}
@@ -284,7 +274,7 @@ struct Cell
 	}
 
 	static
-	bool select_length( Cell *a, Cell *b )
+	bool select_cell( Cell *a, Cell *b )
 	{
 		return a->num == 0 && (b->num != 0          ||
 		                       a->len()  < b->len() ||
@@ -322,6 +312,15 @@ struct Sudoku: public std::vector<Cell *>
 			Cell *c = new Cell(i);
 			Sudoku::emplace_back(c);
 			c->link(*this);
+		}
+	}
+
+	~Sudoku()
+	{
+		for (int i = 0; i < 81; i++)
+		{
+			delete Sudoku::data()[i];
+			Sudoku::data()[i] = nullptr;
 		}
 	}
 
@@ -563,34 +562,10 @@ struct Sudoku: public std::vector<Cell *>
 		return result;
 	}
 
-	static
-	bool select_rating( Sudoku &a, Sudoku &b )
-	{
-		int a_len = a.len();
-		int b_len = b.len();
-
-		return a.rating  > b.rating ||
-		      (a.rating == b.rating && (a_len  < b_len ||
-		                               (a_len == b_len && (a.level  > b.level ||
-		                                                  (a.level == b.level && a.signature < b.signature)))));
-	}
-
-	static
-	bool select_length( Sudoku &a, Sudoku &b )
-	{
-		int a_len = a.len();
-		int b_len = b.len();
-
-		return a_len  < b_len ||
-		      (a_len == b_len && (a.rating  > b.rating ||
-		                         (a.rating == b.rating && (a.level  > b.level ||
-		                                                  (a.level == b.level && a.signature < b.signature)))));
-	}
-
 	bool solve_next( std::vector<Cell *> &lst, bool check = false )
 	{
-		              Cell *cell = *std::min_element(    lst.begin(),     lst.end(), Cell::select_length);
-		if (cell->num != 0) cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_length);
+		              Cell *cell = *std::min_element(    lst.begin(),     lst.end(), Cell::select_cell);
+		if (cell->num != 0) cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_cell);
 		if (cell->num != 0) return true;
 
 		Cell::Value val(cell); val.shuffle();
@@ -778,7 +753,7 @@ struct Sudoku: public std::vector<Cell *>
 			return result;
 		}
 			
-		Cell *cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_length);
+		Cell *cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_cell);
 		if (cell->num != 0) // solved!
 			return 1;
 
@@ -848,7 +823,7 @@ struct Sudoku: public std::vector<Cell *>
 		std::sort(t, t + 81);
 
 		CRC32 crc32;
-		Sudoku::signature = crc32(x, 10);
+		Sudoku::signature = crc32(x, 10, 0);
 		Sudoku::signature = crc32(t, 81, Sudoku::signature);
 	}
 
