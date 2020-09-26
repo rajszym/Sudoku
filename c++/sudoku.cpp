@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    25.09.2020
+   @date    26.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -149,7 +149,7 @@ void Menu::update()
 
 struct Game: public Sudoku
 {
-	static Cell *focus;
+	static int focus;
 
 	bool wait;
 	int  help;
@@ -159,17 +159,17 @@ struct Game: public Sudoku
 
 	Game( int = 0 );
 
-	void draw_cell    ( Cell * );
-	void update_cell  ( Cell * );
-	void draw_info  ();
-	void draw_menu  ();
+	void draw_cell    ( Cell & );
+	void update_cell  ( Cell & );
+	void draw_info    ();
+	void draw_menu    ();
 	void update_banner();
 	void draw         ();
 	void update       ();
 	void game         ();
 };
 
-Cell *Game::focus = nullptr;
+int Game::focus = -1;
 
 Game::Game( int l ): Sudoku(l), wait(false), help(0)
 {
@@ -189,41 +189,41 @@ Game::Game( int l ): Sudoku(l), wait(false), help(0)
 	Game::mnu.emplace_back("q:", 11); Game::mnu.back().add("quit");
 }
 
-void Game::draw_cell( Cell *cell )
+void Game::draw_cell( Cell &cell )
 {
-	int x = TAB.x + 2 + (cell->pos % 9 + cell->pos % 9 / 3) * 2;
-	int y = TAB.y + 1 + (cell->pos / 9 + cell->pos / 9 / 3);
+	int x = TAB.x + 2 + (cell.pos % 9 + cell.pos % 9 / 3) * 2;
+	int y = TAB.y + 1 + (cell.pos / 9 + cell.pos / 9 / 3);
 
-	con.Put(x, y, "-123456789"[cell->num]);
+	con.Put(x, y, "-123456789"[cell.num]);
 }
 
-void Game::update_cell( Cell *cell )
+void Game::update_cell( Cell &cell )
 {
 	int n = Button::button;
 	int h = Game::help;
-	int x = TAB.x + 2 + (cell->pos % 9 + cell->pos % 9 / 3) * 2;
-	int y = TAB.y + 1 + (cell->pos / 9 + cell->pos / 9 / 3);
+	int x = TAB.x + 2 + (cell.pos % 9 + cell.pos % 9 / 3) * 2;
+	int y = TAB.y + 1 + (cell.pos / 9 + cell.pos / 9 / 3);
 
 	auto fore = Console::LightGrey;
 	auto back = Console::Black;
 
-	if (h >= 1 && cell->equal(n))
+	if (h >= 1 && cell.equal(n))
 	{
-		fore = cell->immutable     ? Console::White : Console::LightGreen;
-		back = Game::focus == cell ? Console::Grey  : Console::Red;
+		fore = cell.immutable          ? Console::White : Console::LightGreen;
+		back = Game::focus == cell.pos ? Console::Grey  : Console::Red;
 	}
 	else
-	if (cell->num != 0)
+	if (cell.num != 0)
 	{
-		fore = cell->immutable     ? Console::White : Console::Green;
-		back = Game::focus == cell ? Console::Grey  : Console::Black;
+		fore = cell.immutable          ? Console::White : Console::Green;
+		back = Game::focus == cell.pos ? Console::Grey  : Console::Black;
 	}
 	else
-	if (Game::focus == cell)
+	if (Game::focus == cell.pos)
 	{
-		if      (h >= 3 && cell->sure(n))    back = Console::Green;
-		else if (h >= 2 && cell->allowed(n)) back = Console::Orange;
-		else                                 back = Console::Grey;
+		if      (h >= 3 && cell.sure(n))    back = Console::Green;
+		else if (h >= 2 && cell.allowed(n)) back = Console::Orange;
+		else                                back = Console::Grey;
 	}
 
 	con.Put(x, y, fore, back);
@@ -259,7 +259,7 @@ void Game::update_banner()
 
 void Game::draw()
 {
-	for (Cell *c: *this)
+	for (Cell &c: *this)
 		Game::draw_cell(c);
 
 	Game::draw_info();
@@ -270,7 +270,7 @@ void Game::update()
 {
 	Game::update_banner();
 
-	for (Cell *c: *this)
+	for (Cell &c: *this)
 		Game::update_cell(c);
 
 	for (Button b: Game::btn)
@@ -305,7 +305,7 @@ void Game::game()
 
 	for (;;)
 	{
-		int x, y;
+		int x, y, p;
 		INPUT_RECORD input;
 
 		while (con.GetInput(&input))
@@ -331,20 +331,21 @@ void Game::game()
 
 						x = (x / 2) - (x / 8) - 1;
 						y = y - (y / 4) - 1;
-						Cell *c = Sudoku::data()[y * 9 + x];
+						p = y * 9 + x;
+						Cell &c = Sudoku::data()[p];
 
 						switch (input.Event.MouseEvent.dwButtonState)
 						{
 						case FROM_LEFT_1ST_BUTTON_PRESSED:
-							if (c->num == 0)
-								c->set(Button::button, true), Game::draw_cell(c);
+							if (c.num == 0)
+								Sudoku::set(c, Button::button), Game::draw_cell(c);
 							else if (!solved())
-								Button::button = c->num;
+								Button::button = c.num;
 							break;
 						case RIGHTMOST_BUTTON_PRESSED:
-							if (!Sudoku::solved() || !c->immutable)
-								Button::button = c->num;
-							c->set(0, true), Game::draw_cell(c);
+							if (!Sudoku::solved() || !c.immutable)
+								Button::button = c.num;
+							Sudoku::set(c, 0), Game::draw_cell(c);
 							break;
 						}
 
@@ -399,9 +400,9 @@ void Game::game()
 
 				case MOUSE_MOVED:
 
-					Menu::menu = 0;
+					Menu::menu   = 0;
 					Button::menu = 0;
-					Game::focus = nullptr;
+					Game::focus = -1;
 
 					if (x > TAB.left && x < TAB.right && y > TAB.top && y < TAB.bottom)
 					{
@@ -411,7 +412,8 @@ void Game::game()
 
 						x = (x / 2) - (x / 8) - 1;
 						y = y - (y / 4) - 1;
-						Game::focus = Sudoku::data()[y * 9 + x];
+						p = y * 9 + x;
+						Game::focus = p;
 					}
 					else
 					if (x >= BAR.left && x <= BAR.right && y > BAR.top && y < BAR.bottom && !solved())
@@ -499,73 +501,11 @@ double elapsed( std::chrono::time_point<std::chrono::high_resolution_clock> &sta
 	return diff.count();
 }
 
-struct Table
-{
-	int level;
-	int len;
-	int rating;
-	unsigned signature;
-	int data[81];
-
-	Table( Sudoku & );
-
-	static
-	bool select_rating( Table &, Table & );
-
-	static
-	bool select_length( Table &, Table & );
-
-	friend
-	std::ostream &operator <<( std::ostream &, Table & );
-};
-
-Table::Table( Sudoku &sudoku ): level(sudoku.level), len(sudoku.len()), rating(sudoku.rating), signature(sudoku.signature)
-{
-	for (Cell *c: sudoku)
-		Table::data[c->pos] = c->num;
-}
-
-bool Table::select_rating( Table &a, Table &b )
-{
-	return a.rating  > b.rating ||
-	      (a.rating == b.rating && (a.len  < b.len ||
-	                               (a.len == b.len && (a.level  > b.level ||
-	                                                  (a.level == b.level && a.signature < b.signature)))));
-}
-
-bool Table::select_length( Table &a, Table &b )
-{
-	return a.len  < b.len ||
-	      (a.len == b.len && (a.rating  > b.rating ||
-	                         (a.rating == b.rating && (a.level  > b.level ||
-	                                                  (a.level == b.level && a.signature < b.signature)))));
-}
-
-std::ostream &operator <<( std::ostream &out, Table &tab )
-{
-	auto sudoku = Sudoku();
-
-	sudoku.level     = tab.level;
-	sudoku.rating    = tab.rating;
-	sudoku.signature = tab.signature;
-	for (Cell *c: sudoku)
-	{
-		c->num = tab.data[c->pos];
-		c->immutable = c->num != 0;
-	}
-
-	out << sudoku;
-
-	return out;
-}
-
 int main( int argc, char **argv )
 {
 	int  cnt  = 0;
 	char cmd  = 'g';
 	auto file = std::string(*argv) + ".board";
-
-	std::vector<std::string> lst;
 
 	if (--argc > 0 && (**++argv == '/' || **argv == '-'))
 		cmd = *++*argv;
@@ -578,7 +518,9 @@ int main( int argc, char **argv )
 		{
 			auto sudoku = Sudoku(1);
 			auto data   = std::vector<unsigned>();
-			auto coll   = std::vector<Table>();
+			auto coll   = std::vector<Sudoku>();
+			auto lst    = std::vector<std::string>();
+
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
@@ -597,9 +539,9 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), Table::select_rating);
+			std::sort(coll.begin(), coll.end(), Sudoku::select_rating);
 
-			for (Table &tab: coll)
+			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
 			std::cerr << title << " check: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
@@ -637,7 +579,8 @@ int main( int argc, char **argv )
 		{
 			auto sudoku = Sudoku(1);
 			auto data   = std::vector<unsigned>();
-			auto coll   = std::vector<Table>();
+			auto coll   = std::vector<Sudoku>();
+			auto lst    = std::vector<std::string>();
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
@@ -655,9 +598,9 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Table::select_rating : Table::select_length);
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
 
-			for (Table &tab: coll)
+			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
 			std::cerr << title << " sort: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
@@ -668,7 +611,8 @@ int main( int argc, char **argv )
 		{
 			auto sudoku = Sudoku(1);
 			auto data   = std::vector<unsigned>();
-			auto coll   = std::vector<Table>();
+			auto coll   = std::vector<Sudoku>();
+			auto lst    = std::vector<std::string>();
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
@@ -686,9 +630,9 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Table::select_rating : Table::select_length);
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
 
-			for (Table &tab: coll)
+			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
 			std::cerr << title << " test: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
