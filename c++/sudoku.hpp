@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    25.09.2020
+   @date    26.09.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -39,9 +39,6 @@ struct Sudoku;
 static
 auto rnd = std::mt19937_64(std::time(nullptr));
 
-static
-auto undo = std::list<std::pair<Cell *, int>>();
-
 struct CRC32
 {
 	template<class T>
@@ -77,10 +74,15 @@ struct CRC32
 
 struct Cell
 {
-	unsigned pos;
-	int      num;
-	bool     immutable;
+	int  pos;
+	int  num;
+	bool immutable;
 	std::pair<int, bool> tmp;
+
+	std::vector<Cell *> lst;
+	std::vector<Cell *> row;
+	std::vector<Cell *> col;
+	std::vector<Cell *> seg;
 
 	struct Value: public std::array<int, 10>
 	{
@@ -89,7 +91,6 @@ struct Cell
 		 	std::iota(Value::begin(), Value::end(), 0);
 
 			Value::data()[cell->num] = 0;
-
 			for (Cell *c: cell->lst)
 				Value::data()[c->num] = 0;
 		}
@@ -111,23 +112,18 @@ struct Cell
 		}
 	};
 
-	Cell( int p, int n = 0 ): pos(p), num(n), immutable(false), tmp(std::pair<int, bool>{ 0, false }) {}
+	Cell() = default;
 
-	std::vector<Cell *> lst;
-	std::vector<Cell *> row;
-	std::vector<Cell *> col;
-	std::vector<Cell *> seg;
-
-	void link( std::vector<Cell *> &tab )
+	void link( std::vector<Cell *> &table )
 	{
+		Cell::pos = table.size();
+
 		int tr = Cell::pos / 9;
 		int tc = Cell::pos % 9;
 		int ts = (tr / 3) * 3 + (tc / 3);
 
-		for (Cell *c: tab)
+		for (Cell *c: table)
 		{
-			if (c == this) continue;
-
 			int cr = c->pos / 9;
 			int cc = c->pos % 9;
 			int cs = (cr / 3) * 3 + (cc / 3);
@@ -137,6 +133,8 @@ struct Cell
 			if             (cc == tc)             { Cell::col.push_back(c); c->col.push_back(this); }
 			if                         (cs == ts) { Cell::seg.push_back(c); c->seg.push_back(this); }
 		}
+
+		table.emplace_back(this);
 	}
 
 	int len()
@@ -144,8 +142,7 @@ struct Cell
 		if (Cell::num != 0)
 			return 0;
 
-		Value val(this);
-		return val.len();
+		return Value(this).len();
 	}
 
 	int range()
@@ -171,10 +168,9 @@ struct Cell
 		return Cell::num == 0 && Cell::len() == 0;
 	}
 
-	static
-	bool convergent( std::vector<Cell *> &lst )
+	bool convergent()
 	{
-		for (Cell *c: lst)
+		for (Cell *c: Cell::lst)
 			if (c->dummy())
 				return false;
 
@@ -191,7 +187,7 @@ struct Cell
 				return false;
 
 		Cell::num = n;
-		bool result = Cell::convergent(Cell::lst);
+		bool result = Cell::convergent();
 		Cell::num = 0;
 
 		return result;
@@ -235,13 +231,10 @@ struct Cell
 		Cell::immutable = false;
 	}
 
-	bool set( int n, bool real = false )
+	bool set( int n )
 	{
 		if (!Cell::allowed(n) && (n != 0 || Cell::immutable))
 			return false;
-
-		if (real)
-			::undo.emplace_back(this, Cell::num);
 
 		Cell::num = n;
 		return true;
@@ -249,7 +242,7 @@ struct Cell
 
 	void reload()
 	{
-		Cell::tmp = std::pair<int, bool>{ Cell::num, Cell::immutable };
+		Cell::tmp = { Cell::num, Cell::immutable };
 	}
 
 	void restore()
@@ -274,11 +267,19 @@ struct Cell
 	}
 
 	static
-	bool select_cell( Cell *a, Cell *b )
+	bool select_ptr( Cell *a, Cell *b )
 	{
 		return a->num == 0 && (b->num != 0          ||
 		                       a->len()  < b->len() ||
 		                      (a->len() == b->len() && a->range() < b->range()));
+	}
+
+	static
+	bool select_ref( Cell &a, Cell &b )
+	{
+		return a.num == 0 && (b.num != 0         ||
+		                      a.len()  < b.len() ||
+		                     (a.len() == b.len() && a.range() < b.range()));
 	}
 
 	friend
@@ -289,13 +290,18 @@ struct Cell
 	}
 };
 
-struct Sudoku: public std::vector<Cell *>
+struct Sudoku: std::array<Cell, 81>
 {
-	static const std::vector<std::string> extreme;
-
 	int      level;
 	int      rating;
 	unsigned signature;
+
+	std::vector<Cell *> table;
+
+	std::list<std::pair<Cell *, int>> memory;
+
+	static const
+	std::vector<std::string> extreme;
 
 	struct Temp
 	{
@@ -305,31 +311,18 @@ struct Sudoku: public std::vector<Cell *>
 		~Temp()                             { tmp->restore(); }
 	};
 
-	Sudoku( int l = 0 ): level(l), rating(0), signature(0)
+	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}
 	{
-		for (int i = 0; i < 81; i++)
-		{
-			Cell *c = new Cell(i);
-			Sudoku::emplace_back(c);
-			c->link(*this);
-		}
-	}
-
-	~Sudoku()
-	{
-		for (int i = 0; i < 81; i++)
-		{
-			delete Sudoku::data()[i];
-			Sudoku::data()[i] = nullptr;
-		}
+		for (Cell &c: *this)
+			c.link(Sudoku::table);
 	}
 
 	int len()
 	{
 		int result = 0;
 
-		for (Cell *c: *this)
-			if (c->num != 0)
+		for (Cell &c: *this)
+			if (c.num != 0)
 				result++;
 
 		return result;
@@ -339,8 +332,8 @@ struct Sudoku: public std::vector<Cell *>
 	{
 		int result = 0;
 
-		for (Cell *c: *this)
-			if (c->num == num)
+		for (Cell &c: *this)
+			if (c.num == num)
 				result++;
 
 		return result;
@@ -348,8 +341,8 @@ struct Sudoku: public std::vector<Cell *>
 
 	bool empty()
 	{
-		for (Cell *c: *this)
-			if (c->num != 0)
+		for (Cell &c: *this)
+			if (c.num != 0)
 				return false;
 
 		return true;
@@ -357,8 +350,17 @@ struct Sudoku: public std::vector<Cell *>
 
 	bool solved()
 	{
-		for (Cell *c: *this)
-			if (c->num == 0)
+		for (Cell &c: *this)
+			if (c.num == 0)
+				return false;
+
+		return true;
+	}
+
+	bool convergent()
+	{
+		for (Cell &c: *this)
+			if (c.dummy())
 				return false;
 
 		return true;
@@ -371,8 +373,8 @@ struct Sudoku: public std::vector<Cell *>
 
 	bool tips()
 	{
-		for (Cell *c: *this)
-			if (c->sure(0) != 0)
+		for (Cell &c: *this)
+			if (c.sure(0) != 0)
 				return true;
 
 		return false;
@@ -380,29 +382,37 @@ struct Sudoku: public std::vector<Cell *>
 
 	void reload()
 	{
-		for (Cell *c: *this)
-			c->reload();
+		for (Cell &c: *this)
+			c.reload();
 	}
 
 	void restore()
 	{
-		for (Cell *c: *this)
-			c->restore();
+		for (Cell &c: *this)
+			c.restore();
 	}
 
 	bool changed()
 	{
-		for (Cell *c: *this)
-			if (c->changed())
+		for (Cell &c: *this)
+			if (c.changed())
 				return true;
 
 		return false;
 	}
 
+	void set( Cell &cell, int n )
+	{
+		int t = cell.num;
+
+		if (cell.set(n))
+			Sudoku::memory.emplace_back(&cell, t);
+	}
+
 	void clear( bool deep = true )
 	{
-		for (Cell *c: *this)
-			c->clear();
+		for (Cell &c: *this)
+			c.clear();
 
 		if (deep)
 		{
@@ -414,58 +424,58 @@ struct Sudoku: public std::vector<Cell *>
 
 	void discard()
 	{
-		for (Cell *c: *this)
-			c->immutable = false;
+		for (Cell &c: *this)
+			c.immutable = false;
 	}
 
 	void confirm()
 	{
-		for (Cell *c: *this)
-			c->immutable = c->num != 0;
+		for (Cell &c: *this)
+			c.immutable = c.num != 0;
 
 		Sudoku::specify();
 
-		::undo.clear();
+		Sudoku::memory.clear();
 	}
 
 	void init( std::string txt )
 	{
 		Sudoku::clear();
 
-		for (Cell *c: *this)
+		for (int i = 0; i < 81; i++)
 		{
-			if (c->pos < txt.size())
+			if (i < static_cast<int>(txt.size()))
 			{
-				unsigned char x = txt[c->pos] - '0';
-				c->set(x <= 9 ? x : 0);
+				unsigned char x = txt[i] - '0';
+				Sudoku::data()[i].set(x <= 9 ? x : 0);
 			}
 		}
 
 		Sudoku::confirm();
 
-		for (Cell *c: *this)
+		for (int i = 0; i < 81; i++)
 		{
-			if (c->pos < txt.size())
+			if (i < static_cast<int>(txt.size()))
 			{
-				unsigned char x = txt[c->pos] - '@';
-				c->set(x <= 9 ? x : 0);
+				unsigned char x = txt[i] - '@';
+				Sudoku::data()[i].set(x <= 9 ? x : 0);
 			}
 		}
 	}
 
 	void again()
 	{
-		for (Cell *c: *this)
-			if (!c->immutable)
-				c->num = 0;
+		for (Cell &c: *this)
+			if (!c.immutable)
+				c.num = 0;
 
-		::undo.clear();
+		Sudoku::memory.clear();
 	}
 
 	void swap_cells( int p1, int p2 )
 	{
-		std::swap(Sudoku::data()[p1]->num,       Sudoku::data()[p2]->num);
-		std::swap(Sudoku::data()[p1]->immutable, Sudoku::data()[p2]->immutable);
+		std::swap(Sudoku::data()[p1].num,       Sudoku::data()[p2].num);
+		std::swap(Sudoku::data()[p1].immutable, Sudoku::data()[p2].immutable);
 	}
 
 	void swap_rows( int r1, int r2 )
@@ -487,8 +497,8 @@ struct Sudoku: public std::vector<Cell *>
 	 	std::iota(v, v + 10, 0);
 		std::shuffle(v + 1, v + 10, ::rnd);
 
-		for (Cell *c: *this)
-			c->num = v[c->num];
+		for (Cell &c: *this)
+			c.num = v[c.num];
 
 		for (int i = 0; i < 81; i++)
 		{
@@ -516,15 +526,15 @@ struct Sudoku: public std::vector<Cell *>
 
 	bool solvable()
 	{
-		if (!Cell::convergent(*this))
+		if (!Sudoku::convergent())
 			return false;
 
 		auto tmp = Temp(this);
 
 		Sudoku::clear(false);
 
-		for (Cell *c: *this)
-			if (!c->reset())
+		for (Cell &c: *this)
+			if (!c.reset())
 				return false;
 
 		return true;
@@ -537,9 +547,9 @@ struct Sudoku: public std::vector<Cell *>
 
 		auto tmp = Temp(this);
 
-		Sudoku::solve_next(*this);
-		for (Cell *c: *this)
-			if (Sudoku::generate_next(c, true) == c->immutable)
+		Sudoku::solve_next(Sudoku::table);
+		for (Cell &c: *this)
+			if (Sudoku::generate_next(&c, true) == c.immutable)
 				return false;
 
 		return true;
@@ -553,8 +563,8 @@ struct Sudoku: public std::vector<Cell *>
 		do
 		{
 			simplified = false;
-			for (Cell *c: *this)
-				if (c->num == 0 && (c->num = c->sure(0)) != 0)
+			for (Cell &c: *this)
+				if (c.num == 0 && (c.num = c.sure(0)) != 0)
 					simplified = result = true;
 		}
 		while (simplified);
@@ -564,8 +574,8 @@ struct Sudoku: public std::vector<Cell *>
 
 	bool solve_next( std::vector<Cell *> &lst, bool check = false )
 	{
-		              Cell *cell = *std::min_element(    lst.begin(),     lst.end(), Cell::select_cell);
-		if (cell->num != 0) cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_cell);
+		              Cell *cell = *std::min_element(    lst.begin(),     lst.end(), Cell::select_ptr);
+		if (cell->num != 0) cell =  std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
 		if (cell->num != 0) return true;
 
 		Cell::Value val(cell); val.shuffle();
@@ -587,9 +597,9 @@ struct Sudoku: public std::vector<Cell *>
 	{
 		if (Sudoku::solvable())
 		{
-			Sudoku::solve_next(*this);
+			Sudoku::solve_next(Sudoku::table);
 
-			::undo.clear();
+			Sudoku::memory.clear();
 		}
 	}
 
@@ -636,8 +646,6 @@ struct Sudoku: public std::vector<Cell *>
 
 		int len = Sudoku::len();
 
-		std::vector<Cell *> tab(*this);
-
 		do
 		{
 			if (Sudoku::len() > len)
@@ -652,8 +660,8 @@ struct Sudoku: public std::vector<Cell *>
 			do
 			{
 				changed = false;
-				std::shuffle(tab.begin(), tab.end(), ::rnd);
-				for (Cell *c: tab)
+				std::shuffle(Sudoku::table.begin(), Sudoku::table.end(), ::rnd);
+				for (Cell *c: Sudoku::table)
 				{
 					c->immutable = false;
 					if (Sudoku::check_next(c, true))
@@ -665,8 +673,8 @@ struct Sudoku: public std::vector<Cell *>
 			do
 			{
 				changed = false;
-				std::shuffle(tab.begin(), tab.end(), ::rnd);
-				for (Cell *c: tab)
+				std::shuffle(Sudoku::table.begin(), Sudoku::table.end(), ::rnd);
+				for (Cell *c: Sudoku::table)
 					if (Sudoku::check_next(c, false))
 						changed = true;
 			}
@@ -716,10 +724,9 @@ struct Sudoku: public std::vector<Cell *>
 		else
 		{
 			Sudoku::clear();
-			Sudoku::solve_next(*this);
-			std::vector<Cell *> tab(*this);
-			std::shuffle(tab.begin(), tab.end(), rnd);
-			for (Cell *c: tab)
+			Sudoku::solve_next(Sudoku::table);
+			std::shuffle(Sudoku::table.begin(), Sudoku::table.end(), rnd);
+			for (Cell *c: Sudoku::table)
 				Sudoku::generate_next(c);
 			Sudoku::confirm();
 		}
@@ -728,7 +735,7 @@ struct Sudoku: public std::vector<Cell *>
 	int rating_next()
 	{
 		std::vector<std::pair<Cell *, int>> sure;
-		for (Cell *c: *this)
+		for (Cell *c: Sudoku::table)
 			if (c->num == 0)
 			{
 				int n = c->sure();
@@ -753,14 +760,14 @@ struct Sudoku: public std::vector<Cell *>
 			return result;
 		}
 			
-		Cell *cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_cell);
+		Cell *cell = std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
 		if (cell->num != 0) // solved!
 			return 1;
 
 		int len    = cell->len();
 		int range  = cell->range();
 		int result = 0;
-		for (Cell *c: *this)
+		for (Cell *c: Sudoku::table)
 			if (c->num == 0 && c->len() == len && c->range() == range)
 			{
 				Cell::Value val(c);
@@ -783,7 +790,7 @@ struct Sudoku: public std::vector<Cell *>
 		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
 		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
 
-		Sudoku::solve_next(*this);
+		Sudoku::solve_next(Sudoku::table);
 		Sudoku::reload();
 		Sudoku::again();
 
@@ -813,10 +820,11 @@ struct Sudoku: public std::vector<Cell *>
 		unsigned x[10] = { 0 };
 		unsigned t[81];
 
-		for (Cell *c: *this)
+		for (int i = 0; i < 81; i++)
 		{
-			x[c->num]++;
-			t[c->pos] = static_cast<unsigned>(c->range());
+			Cell &c = Sudoku::data()[i];
+			x[c.num]++;
+			t[i] = static_cast<unsigned>(c.range());
 		}
 
 		std::sort(x, x + 10);
@@ -836,10 +844,10 @@ struct Sudoku: public std::vector<Cell *>
 
 	void undo()
 	{
-		if (!::undo.empty())
+		if (!Sudoku::memory.empty())
 		{
-			std::get<Cell *>(::undo.back())->num = std::get<int>(::undo.back());
-			::undo.pop_back();
+			std::get<Cell *>(Sudoku::memory.back())->num = std::get<int>(Sudoku::memory.back());
+			Sudoku::memory.pop_back();
 		}
 		else
 		{
@@ -863,6 +871,30 @@ struct Sudoku: public std::vector<Cell *>
 		}
 
 		return Sudoku::level == 0 || all || Sudoku::expected();
+	}
+
+	static
+	bool select_rating( Sudoku &a, Sudoku &b )
+	{
+		int a_len = a.len();
+		int b_len = b.len();
+
+		return a.rating  > b.rating ||
+		      (a.rating == b.rating && (a_len  < b_len ||
+		                               (a_len == b_len && (a.level  > b.level ||
+		                                                  (a.level == b.level && a.signature < b.signature)))));
+	}
+
+	static
+	bool select_length( Sudoku &a, Sudoku &b )
+	{
+		int a_len = a.len();
+		int b_len = b.len();
+
+		return a_len  < b_len ||
+		      (a_len == b_len && (a.rating  > b.rating ||
+		                         (a.rating == b.rating && (a.level  > b.level ||
+		                                                  (a.level == b.level && a.signature < b.signature)))));
 	}
 
 	friend
@@ -889,8 +921,8 @@ struct Sudoku: public std::vector<Cell *>
 	std::ostream &operator <<( std::ostream &out, Sudoku &sudoku )
 	{
 		out << "\"";
-		for (Cell *c: sudoku)
-			out << *c;
+		for (Cell &c: sudoku)
+			out << c;
 		out << "\",//"      << sudoku.level      << ':'
 		    << std::setw(2) << sudoku.len()      << ':'
 		    << std::setw(3) << sudoku.rating     << ':'
