@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    26.09.2020
+   @date    28.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -48,14 +48,14 @@ struct Button
 
 	int num;
 
-	Button( int n ): num(n) {}
+	Button( int n ): num{n} {}
 
 	void draw();
 	void update();
 };
 
-int Button::button = 0;
-int Button::menu   = 0;
+int Button::button{0};
+int Button::menu{0};
 
 void Button::draw()
 {
@@ -84,7 +84,7 @@ struct Menu: std::vector<const char *>
 	int pos;
 	int idx;
 
-	Menu( const char *k, const int p ): key(k), pos(p), idx(0) {}
+	Menu( const char *k, const int p ): key{k}, pos{p}, idx{0} {}
 
 	Menu &add  ( const char * );
 	int  next  ( bool );
@@ -92,8 +92,8 @@ struct Menu: std::vector<const char *>
 	void update();
 };
 
-int  Menu::menu = 0;
-bool Menu::back = false;
+int  Menu::menu{0};
+bool Menu::back{false};
 
 Menu &Menu::add( const char *item )
 {
@@ -171,7 +171,7 @@ struct Game: public Sudoku
 
 int Game::focus = -1;
 
-Game::Game( int l ): Sudoku(l), wait(false), help(0)
+Game::Game( int l ): Sudoku{l}, wait{false}, help{0}, btn{}, mnu{}
 {
 	for (int i = 1; i < 10; i++)
 		Game::btn.emplace_back(i);
