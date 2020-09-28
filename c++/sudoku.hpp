@@ -39,60 +39,28 @@ struct Sudoku;
 static
 auto rnd = std::mt19937_64(std::time(nullptr));
 
-struct CRC32
-{
-	template<class T>
-	unsigned operator()( const T data, unsigned crc )
-	{
-		return CRC32::calc(&data, sizeof(data), crc);
-	}
-
-	template<class T>
-	unsigned operator()( const T *data, size_t size, unsigned crc )
-	{
-		return CRC32::calc(data, size * sizeof(T), crc);
-	}
-
-	private:
-	unsigned calc( const void *data, size_t size, unsigned crc )
-	{
-		#define POLY 0xEDB88320
-		const unsigned char *buffer = reinterpret_cast<const unsigned char *>(data);
-
-		crc = ~crc;
-		while (size--)
-		{
-			crc ^= *buffer++;
-			for (int i = 8; i > 0; i--)
-				crc = (crc & 1) ? (crc >> 1) ^ (POLY) : (crc >> 1);
-		}
-		crc = ~crc;
-
-		return crc;
-	}
-};
-
 struct Cell
 {
-	int  pos;
-	int  num;
-	bool immutable;
-	std::pair<int, bool> tmp;
+	int  pos{0};
+	int  num{0};
+	bool immutable{false};
+	std::pair<int, bool> tmp{0, false};
 
-	std::vector<Cell *> lst;
-	std::vector<Cell *> row;
-	std::vector<Cell *> col;
-	std::vector<Cell *> seg;
+	std::vector<Cell *> lst{};
+	std::vector<Cell *> row{};
+	std::vector<Cell *> col{};
+	std::vector<Cell *> seg{};
 
-	struct Value: public std::array<int, 10>
+	struct Values: public std::array<int, 10>
 	{
-		Value( Cell *cell )
+		Values( Cell *cell )
 		{
-		 	std::iota(Value::begin(), Value::end(), 0);
+		 	std::iota(begin(), end(), 0);
 
-			Value::data()[cell->num] = 0;
+			data()[cell->num] = 0;
+
 			for (Cell *c: cell->lst)
-				Value::data()[c->num] = 0;
+				data()[c->num] = 0;
 		}
 
 		int len()
@@ -106,13 +74,13 @@ struct Cell
 			return result;
 		}
 
-		void shuffle()
+		Values &shuffled()
 		{
-			std::shuffle(Value::begin(), Value::end(), ::rnd);
+			std::shuffle(begin(), end(), ::rnd);
+
+			return *this;
 		}
 	};
-
-	Cell() = default;
 
 	void init( std::vector<Cell *> &table )
 	{
@@ -142,7 +110,7 @@ struct Cell
 		if (Cell::num != 0)
 			return 0;
 
-		return Value(this).len();
+		return Cell::Values(this).len();
 	}
 
 	int range()
@@ -207,9 +175,7 @@ struct Cell
 	{
 		if (Cell::num == 0 && n == 0)
 		{
-			Value val(this);
-
-			for (int v: val)
+			for (int v: Cell::Values(this))
 				if (v != 0 && Cell::sure(v))
 					return v;
 
@@ -307,11 +273,29 @@ struct Sudoku: std::array<Cell, 81>
 	{
 		Sudoku *tmp;
 
-		Temp( Sudoku *sudoku ): tmp(sudoku) { tmp->reload();  }
+		Temp( Sudoku *sudoku ): tmp{sudoku} { tmp->reload();  }
 		~Temp()                             { tmp->restore(); }
 	};
 
-	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}
+	template<size_t N>
+	struct CRC32: std::array<unsigned, N>
+	{
+		unsigned calc( unsigned crc = 0 )
+		{
+			#define POLY 0xEDB88320
+			crc = ~crc;
+			for (unsigned x: *this)
+			{
+				crc ^= x;
+				for (size_t i = 0; i < sizeof(x) * CHAR_BIT; i++)
+					crc = (crc & 1) ? (crc >> 1) ^ POLY : (crc >> 1);
+			}
+			crc = ~crc;
+			return crc;
+		}
+	};
+
+	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}, table{}, memory{}
 	{
 		for (Cell &c: *this)
 			c.init(Sudoku::table);
@@ -578,9 +562,7 @@ struct Sudoku: std::array<Cell, 81>
 		if (cell->num != 0) cell =  std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
 		if (cell->num != 0) return true;
 
-		Cell::Value val(cell); val.shuffle();
-
-		for (int v: val)
+		for (int v: Cell::Values(cell).shuffled())
 			if ((cell->num = v) != 0 && Sudoku::solve_next(cell->lst, check))
 			{
 				if (check)
@@ -621,8 +603,7 @@ struct Sudoku: std::array<Cell, 81>
 		}
 
 		cell->num = num;
-		Cell::Value val(cell);
-		for (int v: val)
+		for (int v: Cell::Values(cell))
 			if ((cell->num = v) != 0 && Sudoku::solve_next(cell->lst, true))
 			{
 				cell->num = num;
@@ -702,8 +683,7 @@ struct Sudoku: std::array<Cell, 81>
 		if (Sudoku::level == 0 && !check)
 			return false;
 
-		Cell::Value val(cell);
-		for (int v: val)
+		for (int v: Cell::Values(cell))
 			if ((cell->num = v) != 0 && Sudoku::solve_next(cell->lst, true))
 			{
 				cell->num = num;
@@ -771,9 +751,8 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			if (c->num == 0 && c->len() == len && c->range() == range)
 			{
-				Cell::Value val(c);
 				int r = 0;
-				for (int v: val)
+				for (int v: Cell::Values(c))
 				{
 					if (v != 0 && c->set(v))
 					{
@@ -821,8 +800,8 @@ struct Sudoku: std::array<Cell, 81>
 
 	void signature_calc()
 	{
-		unsigned x[10] = { 0 };
-		unsigned t[81];
+		Sudoku::CRC32<10> x = { 0 };
+		Sudoku::CRC32<81> t;
 
 		for (Cell &c: *this)
 		{
@@ -830,12 +809,11 @@ struct Sudoku: std::array<Cell, 81>
 			t[c.pos] = static_cast<unsigned>(c.range());
 		}
 
-		std::sort(x, x + 10);
-		std::sort(t, t + 81);
+		std::sort(x.begin(), x.end());
+		std::sort(t.begin(), t.end());
 
-		CRC32 crc32;
-		Sudoku::signature = crc32(x, 10, 0);
-		Sudoku::signature = crc32(t, 81, Sudoku::signature);
+		Sudoku::signature = x.calc();
+		Sudoku::signature = t.calc(Sudoku::signature);
 	}
 
 	void specify()
@@ -986,7 +964,8 @@ struct Sudoku: std::array<Cell, 81>
 	}
 };
 
-const std::vector<std::string> Sudoku::extreme =
+const
+std::vector<std::string> Sudoku::extreme =
 {
 ".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..",//3:21:702:9cd895a7
 "4.....8.5.3..........7......2.....6.....8.4...4..1.......6.3.7.5.32.1...1.4......",//3:20:666:37bf7303
