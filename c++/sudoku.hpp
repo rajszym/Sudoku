@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    26.09.2020
+   @date    28.09.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -114,7 +114,7 @@ struct Cell
 
 	Cell() = default;
 
-	void link( std::vector<Cell *> &table )
+	void init( std::vector<Cell *> &table )
 	{
 		Cell::pos = table.size();
 
@@ -194,13 +194,13 @@ struct Cell
 	}
 
 	static
-	bool allowed( std::vector<Cell *> &lst, int n )
+	bool evident( std::vector<Cell *> &lst, int n )
 	{
 		for (Cell *c: lst)
 			if (c->allowed(n))
-				return true;
+				return false;
 
-		return false;
+		return true;
 	}
 
 	int sure( int n = 0 )
@@ -218,9 +218,9 @@ struct Cell
 
 		if (!Cell::allowed(n))      return 0;
 		if ( Cell::len() == 1)      return n;
-		if (!Cell::allowed(row, n)) return n;
-		if (!Cell::allowed(col, n)) return n;
-		if (!Cell::allowed(seg, n)) return n;
+		if ( Cell::evident(row, n)) return n;
+		if ( Cell::evident(col, n)) return n;
+		if ( Cell::evident(seg, n)) return n;
 
 		return 0;
 	}
@@ -314,7 +314,7 @@ struct Sudoku: std::array<Cell, 81>
 	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}
 	{
 		for (Cell &c: *this)
-			c.link(Sudoku::table);
+			c.init(Sudoku::table);
 	}
 
 	int len()
@@ -442,23 +442,23 @@ struct Sudoku: std::array<Cell, 81>
 	{
 		Sudoku::clear();
 
-		for (int i = 0; i < 81; i++)
+		for (Cell &c: *this)
 		{
-			if (i < static_cast<int>(txt.size()))
+			if (c.pos < static_cast<int>(txt.size()))
 			{
-				unsigned char x = txt[i] - '0';
-				Sudoku::data()[i].set(x <= 9 ? x : 0);
+				unsigned char x = txt[c.pos] - '0';
+				c.set(x <= 9 ? x : 0);
 			}
 		}
 
 		Sudoku::confirm();
 
-		for (int i = 0; i < 81; i++)
+		for (Cell &c: *this)
 		{
-			if (i < static_cast<int>(txt.size()))
+			if (c.pos < static_cast<int>(txt.size()))
 			{
-				unsigned char x = txt[i] - '@';
-				Sudoku::data()[i].set(x <= 9 ? x : 0);
+				unsigned char x = txt[c.pos] - '@';
+				c.set(x <= 9 ? x : 0);
 			}
 		}
 	}
@@ -820,11 +820,10 @@ struct Sudoku: std::array<Cell, 81>
 		unsigned x[10] = { 0 };
 		unsigned t[81];
 
-		for (int i = 0; i < 81; i++)
+		for (Cell &c: *this)
 		{
-			Cell &c = Sudoku::data()[i];
 			x[c.num]++;
-			t[i] = static_cast<unsigned>(c.range());
+			t[c.pos] = static_cast<unsigned>(c.range());
 		}
 
 		std::sort(x, x + 10);
@@ -944,7 +943,7 @@ struct Sudoku: std::array<Cell, 81>
 
 	void save( std::string filename = "sudoku.board" )
 	{
-		auto file = std::ofstream(filename);
+		auto file = std::ofstream(filename, filename == "sudoku.board" ? std::ios::out : std::ios::app);
 		if (!file.is_open())
 			return;
 
