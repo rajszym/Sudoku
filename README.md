@@ -2,7 +2,7 @@
 Sudoku game, solver and generator
 
 ### Features
-- difficulty level: easy, medium / hard, expert, extreme
+- difficulty level: easy, medium / hard / expert, extreme
 - help level: no help, view only the current digit, view also available moves, view also sure moves
 - new: generate or load new layout
 - solve: solve the current layout
