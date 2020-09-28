@@ -643,7 +643,7 @@ int main( int argc, char **argv )
 		{
 			if (!con) break;
 
-			auto sudoku = Game();
+			auto sudoku = Game(std::islower(cmd) ? 0 : 1);
 
 			con.SetFont(56, L"Consolas");
 			con.Center(WIN.width, WIN.height);
@@ -671,9 +671,11 @@ int main( int argc, char **argv )
 			          << "sudoku  -S [file] - sort by len / rating"          << std::endl
 			          << "sudoku  -t [file] - test and sort by rating / len" << std::endl
 			          << "sudoku  -T [file] - test and sort by len / rating" << std::endl
-			          << "sudoku  -g        - game (default)"                << std::endl
+			          << "sudoku  -g        - game (default, easy)"          << std::endl
+			          << "sudoku  -G        - game (medium / hard)"          << std::endl
 			          << "sudoku  -h        - help"                          << std::endl
-			          << "sudoku  -?        - help"                          << std::endl;
+			          << "sudoku  -?        - help"                          << std::endl
+			          << std::endl;
 			break;
 		}
 
