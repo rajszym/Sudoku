@@ -768,19 +768,23 @@ struct Sudoku: std::array<Cell, 81>
 		int range  = cell->range();
 		int result = 0;
 		for (Cell *c: Sudoku::table)
+		{
 			if (c->num == 0 && c->len() == len && c->range() == range)
 			{
 				Cell::Value val(c);
 				int r = 0;
 				for (int v: val)
+				{
 					if (v != 0 && c->set(v))
 					{
 						r += Sudoku::rating_next();
 						c->num = 0;
 					}
+				}
 				if (result == 0 || r < result)
 					result = r;
 			}
+		}
 
 		return result + 1;
 	}
