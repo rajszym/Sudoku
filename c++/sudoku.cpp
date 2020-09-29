@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    28.09.2020
+   @date    29.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -562,7 +562,8 @@ int main( int argc, char **argv )
 			while (!GetAsyncKeyState(VK_ESCAPE))
 			{
 				sudoku.generate();
-				if (sudoku.level == 2) sudoku.check();
+				if (sudoku.level > 1)
+					sudoku.check();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
 					data.push_back(sudoku.signature);
