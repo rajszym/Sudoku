@@ -255,7 +255,7 @@ struct Sudoku: std::array<Cell, 81>
 {
 	int      level;
 	int      rating;
-	unsigned signature;
+	uint32_t signature;
 
 	std::vector<Cell *> table;
 
@@ -377,7 +377,8 @@ struct Sudoku: std::array<Cell, 81>
 
 		if (deep)
 		{
-			Sudoku::rating = Sudoku::signature = 0;
+			Sudoku::rating = 0;
+			Sudoku::signature = 0;
 			if (Sudoku::level > 0 && Sudoku::level < 4)
 				Sudoku::level = 1;
 		}
@@ -776,12 +777,12 @@ struct Sudoku: std::array<Cell, 81>
 	}
 
 	template <size_t N>
-	unsigned crc32( const std::array<unsigned, N> &data, unsigned crc = 0 )
+	uint32_t crc32( const std::array<uint32_t, N> &data, uint32_t crc = 0 )
 	{
 		#define POLY 0xEDB88320
 
 		crc = ~crc;
-		for (unsigned x: data)
+		for (uint32_t x: data)
 		{
 			crc ^= x;
 			for (size_t i = 0; i < sizeof(x) * CHAR_BIT; i++)
@@ -794,13 +795,13 @@ struct Sudoku: std::array<Cell, 81>
 
 	void signature_calc()
 	{
-		std::array<unsigned, 10> x = { 0 };
-		std::array<unsigned, 81> t;
+		std::array<uint32_t, 10> x = { 0 };
+		std::array<uint32_t, 81> t;
 
 		for (Cell &c: *this)
 		{
 			x[c.num]++;
-			t[c.pos] = static_cast<unsigned>(c.range());
+			t[c.pos] = static_cast<uint32_t>(c.range());
 		}
 
 		std::sort(x.begin(), x.end());
