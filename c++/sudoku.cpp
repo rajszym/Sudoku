@@ -517,7 +517,7 @@ int main( int argc, char **argv )
 		case 'C': //check
 		{
 			auto sudoku = Sudoku(1);
-			auto data   = std::vector<unsigned>();
+			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
 
@@ -553,7 +553,7 @@ int main( int argc, char **argv )
 		case 'F': // find
 		{
 			auto sudoku = Sudoku(1);
-			auto data   = std::vector<unsigned>();
+			auto data   = std::vector<uint32_t>();
 
 			if (--argc > 0)
 				file = *++argv;
@@ -581,7 +581,7 @@ int main( int argc, char **argv )
 		case 'S': // sort
 		{
 			auto sudoku = Sudoku(1);
-			auto data   = std::vector<unsigned>();
+			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
 
@@ -615,7 +615,7 @@ int main( int argc, char **argv )
 		case 'T': // test
 		{
 			auto sudoku = Sudoku(1);
-			auto data   = std::vector<unsigned>();
+			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
 
