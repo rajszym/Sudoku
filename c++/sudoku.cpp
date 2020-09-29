@@ -524,6 +524,8 @@ int main( int argc, char **argv )
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
+			if (lst.size() == 0)
+				Sudoku::load(lst, file);
 
 			std::cerr << title << " check: " << lst.size() << " boards loaded" << std::endl;
 
@@ -585,6 +587,8 @@ int main( int argc, char **argv )
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
+			if (lst.size() == 0)
+				Sudoku::load(lst, file);
 
 			std::cerr << title << " sort: " << lst.size() << " boards loaded" << std::endl;
 
@@ -617,6 +621,8 @@ int main( int argc, char **argv )
 
 			while (--argc > 0)
 				Sudoku::load(lst, *++argv);
+			if (lst.size() == 0)
+				Sudoku::load(lst, file);
 
 			std::cerr << title << " test: " << lst.size() << " boards loaded" << std::endl;
 
