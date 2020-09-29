@@ -272,24 +272,6 @@ struct Sudoku: std::array<Cell, 81>
 		~Temp()                             { tmp->restore(); }
 	};
 
-	template<size_t N>
-	struct CRC32: std::array<unsigned, N>
-	{
-		unsigned calc( unsigned crc = 0 )
-		{
-			#define POLY 0xEDB88320
-			crc = ~crc;
-			for (unsigned x: *this)
-			{
-				crc ^= x;
-				for (size_t i = 0; i < sizeof(x) * CHAR_BIT; i++)
-					crc = (crc & 1) ? (crc >> 1) ^ POLY : (crc >> 1);
-			}
-			crc = ~crc;
-			return crc;
-		}
-	};
-
 	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}, table{}, memory{}
 	{
 		for (Cell &c: *this)
@@ -793,10 +775,27 @@ struct Sudoku: std::array<Cell, 81>
 		Sudoku::again();
 	}
 
+	template <size_t N>
+	unsigned crc32( const std::array<unsigned, N> &data, unsigned crc = 0 )
+	{
+		#define POLY 0xEDB88320
+
+		crc = ~crc;
+		for (unsigned x: data)
+		{
+			crc ^= x;
+			for (size_t i = 0; i < sizeof(x) * CHAR_BIT; i++)
+				crc = (crc & 1) ? (crc >> 1) ^ POLY : (crc >> 1);
+		}
+		crc = ~crc;
+
+		return crc;
+	}
+
 	void signature_calc()
 	{
-		Sudoku::CRC32<10> x = { 0 };
-		Sudoku::CRC32<81> t;
+		std::array<unsigned, 10> x = { 0 };
+		std::array<unsigned, 81> t;
 
 		for (Cell &c: *this)
 		{
@@ -807,8 +806,8 @@ struct Sudoku: std::array<Cell, 81>
 		std::sort(x.begin(), x.end());
 		std::sort(t.begin(), t.end());
 
-		Sudoku::signature = x.calc();
-		Sudoku::signature = t.calc(Sudoku::signature);
+		Sudoku::signature = Sudoku::crc32(x);
+		Sudoku::signature = Sudoku::crc32(t, Sudoku::signature);
 	}
 
 	void specify()
