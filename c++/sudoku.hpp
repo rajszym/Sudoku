@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    28.09.2020
+   @date    29.09.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -352,7 +352,7 @@ struct Sudoku: std::array<Cell, 81>
 
 	bool expected()
 	{
-		return Sudoku::rating >= (Sudoku::len() - 2) * 25;
+		return Sudoku::rating >= Sudoku::len() * 20;
 	}
 
 	bool tips()
