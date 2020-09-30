@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    29.09.2020
+   @date    30.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -171,10 +171,9 @@ struct Game: public Sudoku
 
 int Game::focus = -1;
 
-Game::Game( int l ): Sudoku{l}, wait{false}, help{0}, btn{}, mnu{}
+Game::Game( int l ): Sudoku{l}, wait{false}, help{0}
 {
-	for (int i = 1; i < 10; i++)
-		Game::btn.emplace_back(i);
+	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
 	Game::mnu.emplace_back("l:",  1); Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
 	Game::mnu.emplace_back("h:",  2); Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
