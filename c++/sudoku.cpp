@@ -535,7 +535,7 @@ int main( int argc, char **argv )
 				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				sudoku.check();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false, THRESHOLD))
 				{
 					data.push_back(sudoku.signature);
 					coll.emplace_back(sudoku);
