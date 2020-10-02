@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    30.09.2020
+   @date    02.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -44,7 +44,6 @@ struct Cell
 	int  pos{0};
 	int  num{0};
 	bool immutable{false};
-	std::pair<int, bool> tmp{0, false};
 
 	std::vector<Cell *> lst{};
 	std::vector<Cell *> row{};
@@ -201,27 +200,6 @@ struct Cell
 		return true;
 	}
 
-	void reload()
-	{
-		Cell::tmp = { Cell::num, Cell::immutable };
-	}
-
-	void restore()
-	{
-		Cell::num = std::get<int>(Cell::tmp);
-		Cell::immutable = std::get<bool>(Cell::tmp);
-	}
-
-	bool reset()
-	{
-		return Cell::set(std::get<int>(Cell::tmp));
-	}
-
-	bool changed()
-	{
-		return Cell::num != std::get<int>(Cell::tmp);
-	}
-
 	static
 	bool select_ptr( Cell *a, Cell *b )
 	{
@@ -258,12 +236,65 @@ struct Sudoku: std::array<Cell, 81>
 	static const
 	std::vector<std::string> extreme;
 
-	struct Temp
+	struct Temp: std::array<std::pair<int, bool>, 81>
 	{
 		Sudoku *tmp;
 
-		Temp( Sudoku *sudoku ): tmp{sudoku} { tmp->reload();  }
-		~Temp()                             { tmp->restore(); }
+		Temp( Sudoku *sudoku ): tmp{sudoku} { Temp::reload();  }
+		~Temp()                             { Temp::restore(); }
+
+		void reload()
+		{
+			for (Cell &c: *tmp)
+			{
+				std::pair<int, bool> &t = Temp::data()[c.pos];
+				t = { c.num, c.immutable };
+			}
+		}
+
+		void restore()
+		{
+			for (Cell &c: *tmp)
+			{
+				std::pair<int, bool> &t = Temp::data()[c.pos];
+				c.num = std::get<int>(t);
+				c.immutable = std::get<bool>(t);
+			}
+		}
+
+		bool reset()
+		{
+			for (Cell &c: *tmp)
+			{
+				std::pair<int, bool> &t = Temp::data()[c.pos];
+				if (!c.set(std::get<int>(t)))
+					return false;
+			}
+
+			return true;
+		}
+
+		bool changed()
+		{
+			for (Cell &c: *tmp)
+			{
+				std::pair<int, bool> &t = Temp::data()[c.pos];
+				if (c.num != std::get<int>(t))
+					return true;
+			}
+
+			return false;
+		}
+
+		int len()
+		{
+			int result = 0;
+			for (std::pair<int, bool> &t: *this)
+				if (std::get<int>(t) != 0)
+					result++;
+
+			return result;
+		}
 	};
 
 	struct Shadow: std::array<Cell *, 81>
@@ -301,7 +332,7 @@ struct Sudoku: std::array<Cell, 81>
 		return result;
 	}
 
-	int len( int num )
+	int count( int num )
 	{
 		int result = 0;
 
@@ -339,36 +370,15 @@ struct Sudoku: std::array<Cell, 81>
 		return true;
 	}
 
-	bool expected()
+	bool expected( int threshold )
 	{
-		return Sudoku::rating >= (Sudoku::len() - 2) * 25;
+		return Sudoku::rating - Sudoku::len() * 20 >= threshold;
 	}
 
 	bool tips()
 	{
 		for (Cell &c: *this)
 			if (c.sure(0) != 0)
-				return true;
-
-		return false;
-	}
-
-	void reload()
-	{
-		for (Cell &c: *this)
-			c.reload();
-	}
-
-	void restore()
-	{
-		for (Cell &c: *this)
-			c.restore();
-	}
-
-	bool changed()
-	{
-		for (Cell &c: *this)
-			if (c.changed())
 				return true;
 
 		return false;
@@ -503,13 +513,11 @@ struct Sudoku: std::array<Cell, 81>
 		if (!Sudoku::convergent())
 			return false;
 
-		auto tmp = Temp(this);
+		auto tmp = Sudoku::Temp(this);
 
 		Sudoku::clear(false);
-
-		for (Cell &c: *this)
-			if (!c.reset())
-				return false;
+		if (!tmp.reset())
+			return false;
 
 		return true;
 	}
@@ -519,7 +527,7 @@ struct Sudoku: std::array<Cell, 81>
 		if (Sudoku::len() < 17)
 			return false;
 
-		auto tmp = Temp(this);
+		auto tmp = Sudoku::Temp(this);
 
 		Sudoku::solve_next();
 		for (Cell &c: *this)
@@ -598,11 +606,13 @@ struct Sudoku: std::array<Cell, 81>
 
 		cell->num = num;
 		for (int v: Cell::Values(cell))
+		{
 			if ((cell->num = v) != 0 && Sudoku::solve_next(cell, true))
 			{
 				cell->num = num;
 				return false;
 			}
+		}
 
 		cell->num = 0;
 		return true;
@@ -613,37 +623,26 @@ struct Sudoku: std::array<Cell, 81>
 		Sudoku::level = 1;
 		Sudoku::confirm();
 
-		if (Sudoku::level == 1)
+		if (Sudoku::level <= 1)
 			return;
 
 		if (Sudoku::level == 2)
 			Sudoku::simplify();
 
-		int len = Sudoku::len();
-
 		Sudoku::Shadow tab(*this);
+		Sudoku::discard();
 
+		Sudoku::Temp tmp(this);
 		do
 		{
-			if (Sudoku::len() > len)
-				Sudoku::restore();
-			else
-			{
-				Sudoku::reload();
-				len = Sudoku::len();
-			}
-
 			bool changed;
 			do
 			{
 				tab.shuffle();
 				changed = false;
 				for (Cell *c: tab)
-				{
-					c->immutable = false;
 					if (Sudoku::check_next(c, true))
 						changed = true;
-				}
 			}
 			while (changed);
 
@@ -652,16 +651,19 @@ struct Sudoku: std::array<Cell, 81>
 				tab.shuffle();
 				changed = false;
 				for (Cell *c: tab)
-				{
 					if (Sudoku::check_next(c, false))
 						changed = true;
-				}
 			}
 			while (changed);
 
 			Sudoku::simplify();
+
+			if (Sudoku::len() > tmp.len())
+				tmp.restore();
+			else
+				tmp.reload();
 		}
-		while (Sudoku::changed());
+		while (tmp.changed());
 
 		Sudoku::confirm();
 	}
@@ -731,12 +733,12 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			int  result  = 0;
 			bool success = true;
-			for (std::pair<Cell *, int> p: sure)
+			for (std::pair<Cell *, int> &p: sure)
 				if (!std::get<Cell *>(p)->set(std::get<int>(p)))
 					success = false;
 			if (success)
 				result = Sudoku::rating_next() + 1;
-			for (std::pair<Cell *, int> p: sure)
+			for (std::pair<Cell *, int> &p: sure)
 				std::get<Cell *>(p)->num = 0;
 			return result;
 		}
@@ -774,14 +776,10 @@ struct Sudoku: std::array<Cell, 81>
 		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
 		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
 
-		Sudoku::solve_next();
-		Sudoku::reload();
-		Sudoku::again();
-
 		Sudoku::rating = 0;
 		int msb = 0;
 		int result = Sudoku::rating_next();
-		for (int i = Sudoku::len(0); result > 0; Sudoku::rating += i--, result >>= 1)
+		for (int i = Sudoku::count(0); result > 0; Sudoku::rating += i--, result >>= 1)
 			msb = (result & 1) ? msb + 1 : 0;
 		Sudoku::rating += msb - 1;
 //		Sudoku::rating = Sudoku::rating_next();
@@ -855,7 +853,7 @@ struct Sudoku: std::array<Cell, 81>
 		}
 	}
 
-	bool test( bool all = false )
+	bool test( bool all, int threshold = 0 )
 	{
 		if (Sudoku::rating == -2)
 		{
@@ -869,7 +867,21 @@ struct Sudoku: std::array<Cell, 81>
 			return false;
 		}
 
-		return Sudoku::level == 0 || all || Sudoku::expected();
+		return Sudoku::level == 0 || all || Sudoku::expected(threshold);
+	}
+
+	static
+	bool select_threshold( Sudoku &a, Sudoku &b )
+	{
+		int a_len = a.len();
+		int b_len = b.len();
+		int a_thr = a.rating - a_len * 25;
+		int b_thr = b.rating - b_len * 25;
+
+		return a_thr  > b_thr ||
+		      (a_thr == b_thr && (a_len  < b_len ||
+		                         (a_len == b_len && (a.level  > b.level ||
+		                                            (a.level == b.level && a.signature < b.signature)))));
 	}
 
 	static
@@ -970,6 +982,9 @@ struct Sudoku: std::array<Cell, 81>
 		std::string line;
 		while (std::getline(file, line))
 		{
+			if (line.size() == 0)
+				continue;
+
 			int l = line.find("\"", 1) - 1;
 
 			if (l < 0 || l > 81 || line.at(0) != '\"')
