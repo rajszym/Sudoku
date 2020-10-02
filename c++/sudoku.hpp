@@ -236,17 +236,17 @@ struct Sudoku: std::array<Cell, 81>
 	static const
 	std::vector<std::string> extreme;
 
-	struct Image: std::array<std::pair<int, bool>, 81>
+	struct Backup: std::array<std::pair<int, bool>, 81>
 	{
 		Sudoku *tmp;
 
-		Image( Sudoku *sudoku ): tmp{sudoku} { Image::reload(); }
+		Backup( Sudoku *sudoku ): tmp{sudoku} { Backup::reload(); }
 
 		void reload()
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Image::data()[c.pos];
+				std::pair<int, bool> &t = Backup::data()[c.pos];
 				t = { c.num, c.immutable };
 			}
 		}
@@ -255,7 +255,7 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Image::data()[c.pos];
+				std::pair<int, bool> &t = Backup::data()[c.pos];
 				c.num = std::get<int>(t);
 				c.immutable = std::get<bool>(t);
 			}
@@ -265,7 +265,7 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Image::data()[c.pos];
+				std::pair<int, bool> &t = Backup::data()[c.pos];
 				if (!c.set(std::get<int>(t)))
 					return false;
 			}
@@ -277,7 +277,7 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Image::data()[c.pos];
+				std::pair<int, bool> &t = Backup::data()[c.pos];
 				if (c.num != std::get<int>(t))
 					return true;
 			}
@@ -296,10 +296,10 @@ struct Sudoku: std::array<Cell, 81>
 		}
 	};
 
-	struct Temp: public Sudoku::Image
+	struct Temp: public Sudoku::Backup
 	{
-		Temp( Sudoku *sudoku ): Sudoku::Image(sudoku) {}
-		~Temp() { Sudoku::Image::restore(); }
+		Temp( Sudoku *sudoku ): Sudoku::Backup(sudoku) {}
+		~Temp() { Sudoku::Backup::restore(); }
 	};
 
 	struct Shadow: std::array<Cell *, 81>
@@ -630,7 +630,7 @@ struct Sudoku: std::array<Cell, 81>
 			Sudoku::simplify();
 
 		Sudoku::discard();
-		Sudoku::Image  tmp(this);
+		Sudoku::Backup tmp(this);
 		Sudoku::Shadow tab(this);
 
 		do
