@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    02.10.2020
+   @date    29.09.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -31,8 +31,6 @@
 
 #include "sudoku.hpp"
 #include "console.hpp"
-
-#define   THRESHOLD  50
 
 const char *title = "SUDOKU";
 
@@ -173,9 +171,10 @@ struct Game: public Sudoku
 
 int Game::focus = -1;
 
-Game::Game( int l ): Sudoku{l}, wait{false}, help{0}
+Game::Game( int l ): Sudoku{l}, wait{false}, help{0}, btn{}, mnu{}
 {
-	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	for (int i = 1; i < 10; i++)
+		Game::btn.emplace_back(i);
 
 	Game::mnu.emplace_back("l:",  1); Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
 	Game::mnu.emplace_back("h:",  2); Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
@@ -234,7 +233,7 @@ void Game::draw_info()
 {
 	char nfo[16];
 	snprintf(nfo, sizeof(nfo), "%5d/%d", Sudoku::rating, Sudoku::len());
-	con.Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::count(Button::button) : ' ');
+	con.Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::len(Button::button) : ' ');
 	con.Put(MNU.Right(strlen(nfo)) - 1, WIN.y, nfo);
 }
 
@@ -532,7 +531,7 @@ int main( int argc, char **argv )
 
 			for (std::string i: lst)
 			{
-				std::cerr << ' ' << ++cnt << '\r';
+				std::cerr << ++cnt << '\r';
 				sudoku.init(i);
 				sudoku.check();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
@@ -567,7 +566,7 @@ int main( int argc, char **argv )
 				sudoku.generate();
 				if (sudoku.level > 1)
 					sudoku.check();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd), THRESHOLD))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
 					data.push_back(sudoku.signature);
 					std::cout << sudoku << std::endl;
@@ -595,7 +594,7 @@ int main( int argc, char **argv )
 
 			for (std::string i: lst)
 			{
-				std::cerr << ' ' << ++cnt << '\r';
+				std::cerr << ++cnt << '\r';
 				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
 				{
@@ -629,16 +628,16 @@ int main( int argc, char **argv )
 
 			for (std::string i: lst)
 			{
-				std::cerr << ' ' << ++cnt << '\r';
+				std::cerr << ++cnt << '\r';
 				sudoku.init(i);
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false, THRESHOLD))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
 					data.push_back(sudoku.signature);
 					coll.emplace_back(sudoku);
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_threshold);
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
 
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
@@ -675,12 +674,12 @@ int main( int argc, char **argv )
 			          << "sudoku  -c [file] - check"                         << std::endl
 			          << "sudoku  -f [file] - find"                          << std::endl
 			          << "sudoku  -F [file] - find and show all"             << std::endl
-			          << "sudoku  -s [file] - sort by rating / length"       << std::endl
-			          << "sudoku  -S [file] - sort by length / rating"       << std::endl
-			          << "sudoku  -t [file] - test and sort by rating"       << std::endl
-			          << "sudoku  -T [file] - test and sort by threshold"    << std::endl
-			          << "sudoku  -g        - game (easy by default)"        << std::endl
-			          << "sudoku  -G        - game (medium / hard / expert)" << std::endl
+			          << "sudoku  -s [file] - sort by rating / len"          << std::endl
+			          << "sudoku  -S [file] - sort by len / rating"          << std::endl
+			          << "sudoku  -t [file] - test and sort by rating / len" << std::endl
+			          << "sudoku  -T [file] - test and sort by len / rating" << std::endl
+			          << "sudoku  -g        - game (default, easy)"          << std::endl
+			          << "sudoku  -G        - game (medium / hard)"          << std::endl
 			          << "sudoku  -h        - help"                          << std::endl
 			          << "sudoku  -?        - help"                          << std::endl
 			          << std::endl;
