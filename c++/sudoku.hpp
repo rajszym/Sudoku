@@ -236,18 +236,17 @@ struct Sudoku: std::array<Cell, 81>
 	static const
 	std::vector<std::string> extreme;
 
-	struct Temp: std::array<std::pair<int, bool>, 81>
+	struct Image: std::array<std::pair<int, bool>, 81>
 	{
 		Sudoku *tmp;
 
-		Temp( Sudoku *sudoku ): tmp{sudoku} { Temp::reload();  }
-		~Temp()                             { Temp::restore(); }
+		Image( Sudoku *sudoku ): tmp{sudoku} { Image::reload(); }
 
 		void reload()
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Temp::data()[c.pos];
+				std::pair<int, bool> &t = Image::data()[c.pos];
 				t = { c.num, c.immutable };
 			}
 		}
@@ -256,7 +255,7 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Temp::data()[c.pos];
+				std::pair<int, bool> &t = Image::data()[c.pos];
 				c.num = std::get<int>(t);
 				c.immutable = std::get<bool>(t);
 			}
@@ -266,7 +265,7 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Temp::data()[c.pos];
+				std::pair<int, bool> &t = Image::data()[c.pos];
 				if (!c.set(std::get<int>(t)))
 					return false;
 			}
@@ -278,7 +277,7 @@ struct Sudoku: std::array<Cell, 81>
 		{
 			for (Cell &c: *tmp)
 			{
-				std::pair<int, bool> &t = Temp::data()[c.pos];
+				std::pair<int, bool> &t = Image::data()[c.pos];
 				if (c.num != std::get<int>(t))
 					return true;
 			}
@@ -297,11 +296,17 @@ struct Sudoku: std::array<Cell, 81>
 		}
 	};
 
+	struct Temp: public Sudoku::Image
+	{
+		Temp( Sudoku *sudoku ): Sudoku::Image(sudoku) {}
+		~Temp() { Sudoku::Image::restore(); }
+	};
+
 	struct Shadow: std::array<Cell *, 81>
 	{
-		Shadow( Sudoku &sudoku )
+		Shadow( Sudoku *sudoku )
 		{
-			for (Cell &c: sudoku)
+			for (Cell &c: *sudoku)
 				Shadow::data()[c.pos] = &c;
 		}
 
@@ -618,18 +623,23 @@ struct Sudoku: std::array<Cell, 81>
 		Sudoku::level = 1;
 		Sudoku::confirm();
 
-		if (Sudoku::level <= 1)
+		if (Sudoku::level == 1)
 			return;
 
 		if (Sudoku::level == 2)
 			Sudoku::simplify();
 
-		Sudoku::Shadow tab(*this);
 		Sudoku::discard();
+		Sudoku::Image  tmp(this);
+		Sudoku::Shadow tab(this);
 
-		Sudoku::Temp tmp(this);
 		do
 		{
+			if (Sudoku::len() > tmp.len())
+				tmp.restore();
+			else
+				tmp.reload();
+
 			bool changed;
 			do
 			{
@@ -652,11 +662,6 @@ struct Sudoku: std::array<Cell, 81>
 			while (changed);
 
 			Sudoku::simplify();
-
-			if (Sudoku::len() > tmp.len())
-				tmp.restore();
-			else
-				tmp.reload();
 		}
 		while (tmp.changed());
 
@@ -698,7 +703,7 @@ struct Sudoku: std::array<Cell, 81>
 		}
 		else
 		{
-			Sudoku::Shadow tab(*this);
+			Sudoku::Shadow tab(this);
 			tab.shuffle();
 			Sudoku::clear();
 			Sudoku::solve_next();
