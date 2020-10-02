@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    20.09.2020
+   @date    02.10.2020
    @brief   console class
 
 *******************************************************************************
@@ -31,8 +31,9 @@
 
 #pragma once
 
+#include <atomic>
+#include <algorithm>
 #include <windows.h>
-#include <bits/stdc++.h>
 
 class Timer
 {
