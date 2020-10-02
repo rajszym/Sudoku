@@ -370,11 +370,6 @@ struct Sudoku: std::array<Cell, 81>
 		return true;
 	}
 
-	bool expected( int threshold )
-	{
-		return Sudoku::rating - Sudoku::len() * 20 >= threshold;
-	}
-
 	bool tips()
 	{
 		for (Cell &c: *this)
@@ -870,13 +865,18 @@ struct Sudoku: std::array<Cell, 81>
 		return Sudoku::level == 0 || all || Sudoku::expected(threshold);
 	}
 
+	bool expected( int threshold )
+	{
+		return Sudoku::rating - Sudoku::len() * 20 >= threshold;
+	}
+
 	static
 	bool select_threshold( Sudoku &a, Sudoku &b )
 	{
 		int a_len = a.len();
 		int b_len = b.len();
-		int a_thr = a.rating - a_len * 25;
-		int b_thr = b.rating - b_len * 25;
+		int a_thr = a.rating - a_len * 20;
+		int b_thr = b.rating - b_len * 20;
 
 		return a_thr  > b_thr ||
 		      (a_thr == b_thr && (a_len  < b_len ||
