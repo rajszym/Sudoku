@@ -31,6 +31,8 @@
 
 #include "sudoku.hpp"
 #include "console.hpp"
+#include <chrono>
+#include <cstring> // strlen
 
 #define   THRESHOLD  50
 
