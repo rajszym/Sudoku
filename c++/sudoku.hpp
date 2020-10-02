@@ -31,10 +31,11 @@
 
 #pragma once
 
-#include <algorithm>
 #include <list>
 #include <array>
 #include <vector>
+#include <utility>
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -71,7 +72,7 @@ struct Cell
 
 		int len()
 		{
-			return std::count_if(Values::begin(), Values::end(), [](const int v){ return v != 0; });
+			return std::count_if(Values::begin(), Values::end(), []( int v ){ return v != 0; });
 		}
 
 		Values &shuffled()
@@ -247,11 +248,7 @@ struct Sudoku: std::array<Cell, 81>
 
 		void reload()
 		{
-			for (Cell &c: *tmp)
-			{
-				std::pair<int, bool> &t = Backup::data()[c.pos];
-				t = { c.num, c.immutable };
-			}
+			std::transform(std::begin(*tmp), std::end(*tmp), Backup::begin(), []( Cell &c ){ return std::make_pair(c.num, c.immutable); });
 		}
 
 		void restore()
@@ -290,7 +287,7 @@ struct Sudoku: std::array<Cell, 81>
 
 		int len()
 		{
-			return std::count_if(Backup::begin(), Backup::end(), [](const std::pair<int, bool> &t){ return std::get<int>(t) != 0; });
+			return std::count_if(Backup::begin(), Backup::end(), []( std::pair<int, bool> &t ){ return std::get<int>(t) != 0; });
 		}
 	};
 
@@ -304,8 +301,7 @@ struct Sudoku: std::array<Cell, 81>
 	{
 		Shadow( Sudoku *sudoku )
 		{
-			for (Cell &c: *sudoku)
-				Shadow::data()[c.pos] = &c;
+			std::transform(std::begin(*sudoku), std::end(*sudoku), Shadow::begin(), []( Cell &c ){ return &c; });
 		}
 
 		void shuffle()
@@ -326,12 +322,12 @@ struct Sudoku: std::array<Cell, 81>
 
 	int len()
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), [](const Cell &c){ return c.num != 0; });
+		return std::count_if(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
 	}
 
 	int count( int num )
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), [=](const Cell &c){ return c.num == num; });
+		return std::count_if(Sudoku::begin(), Sudoku::end(), [=]( Cell &c ){ return c.num == num; });
 	}
 
 	bool empty()
