@@ -31,7 +31,15 @@
 
 #pragma once
 
-#include <bits/stdc++.h>
+#include <algorithm>
+#include <list>
+#include <array>
+#include <vector>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <random>
+#include <ctime> // time
 
 struct Cell;
 struct Sudoku;
@@ -63,12 +71,7 @@ struct Cell
 
 		int len()
 		{
-			int result = 0;
-			for (int v: *this)
-				if (v != 0)
-					result++;
-
-			return result;
+			return std::count_if(Values::begin(), Values::end(), [](const int v){ return v != 0; });
 		}
 
 		Values &shuffled()
@@ -287,12 +290,7 @@ struct Sudoku: std::array<Cell, 81>
 
 		int len()
 		{
-			int result = 0;
-			for (std::pair<int, bool> &t: *this)
-				if (std::get<int>(t) != 0)
-					result++;
-
-			return result;
+			return std::count_if(Backup::begin(), Backup::end(), [](const std::pair<int, bool> &t){ return std::get<int>(t) != 0; });
 		}
 	};
 
@@ -328,24 +326,12 @@ struct Sudoku: std::array<Cell, 81>
 
 	int len()
 	{
-		int result = 0;
-
-		for (Cell &c: *this)
-			if (c.num != 0)
-				result++;
-
-		return result;
+		return std::count_if(Sudoku::begin(), Sudoku::end(), [](const Cell &c){ return c.num != 0; });
 	}
 
 	int count( int num )
 	{
-		int result = 0;
-
-		for (Cell &c: *this)
-			if (c.num == num)
-				result++;
-
-		return result;
+		return std::count_if(Sudoku::begin(), Sudoku::end(), [=](const Cell &c){ return c.num == num; });
 	}
 
 	bool empty()
