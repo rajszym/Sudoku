@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    02.10.2020
+   @date    03.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -40,13 +40,12 @@
 #include <iomanip>
 #include <fstream>
 #include <random>
-#include <ctime> // time
 
 struct Cell;
 struct Sudoku;
 
 static
-auto rnd = std::mt19937_64(std::time(nullptr));
+auto rnd = std::mt19937_64{std::random_device{}()};
 
 struct Cell
 {
@@ -78,7 +77,6 @@ struct Cell
 		Values &shuffled()
 		{
 			std::shuffle(Values::begin(), Values::end(), ::rnd);
-
 			return *this;
 		}
 	};
@@ -89,9 +87,10 @@ struct Cell
 		int tc = Cell::pos % 9;
 		int ts = (tr / 3) * 3 + (tc / 3);
 
-		for (int i = 0; i < Cell::pos; i++)
+		for (Cell &c: sudoku)
 		{
-			Cell &c = sudoku[i];
+			if (&c == this)
+				break;
 
 			int cr = c.pos / 9;
 			int cc = c.pos % 9;
@@ -117,11 +116,7 @@ struct Cell
 		if (Cell::num != 0)
 			return 0;
 
-		int result = Cell::len();
-		for (Cell *c: Cell::lst)
-			result += c->len();
-
-		return result;
+		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), Cell::len(), []( int r, Cell *c ){ return r + c->len(); });
 	}
 
 	bool equal( int n )
@@ -136,11 +131,7 @@ struct Cell
 
 	bool convergent()
 	{
-		for (Cell *c: Cell::lst)
-			if (c->dummy())
-				return false;
-
-		return true;
+		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell *c ){ return c->dummy(); });
 	}
 
 	bool allowed( int n )
@@ -148,9 +139,8 @@ struct Cell
 		if (Cell::num != 0 || n == 0)
 			return false;
 
-		for (Cell *c: Cell::lst)
-			if (c->num == n)
-				return false;
+		if (std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [=]( Cell *c ){ return c->num == n; }))
+			return false;
 
 		Cell::num = n;
 		bool result = Cell::convergent();
@@ -162,11 +152,7 @@ struct Cell
 	static
 	bool evident( std::vector<Cell *> &lst, int n )
 	{
-		for (Cell *c: lst)
-			if (c->allowed(n))
-				return false;
-
-		return true;
+		return std::none_of(std::begin(lst), std::end(lst), [=]( Cell *c ){ return c->allowed(n); });
 	}
 
 	int sure( int n = 0 )
@@ -263,26 +249,12 @@ struct Sudoku: std::array<Cell, 81>
 
 		bool reset()
 		{
-			for (Cell &c: *tmp)
-			{
-				std::pair<int, bool> &t = Backup::data()[c.pos];
-				if (!c.set(std::get<int>(t)))
-					return false;
-			}
-
-			return true;
+			return std::all_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.set(std::get<int>(Backup::data()[c.pos])); });
 		}
 
 		bool changed()
 		{
-			for (Cell &c: *tmp)
-			{
-				std::pair<int, bool> &t = Backup::data()[c.pos];
-				if (c.num != std::get<int>(t))
-					return true;
-			}
-
-			return false;
+			return std::any_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.num != std::get<int>(Backup::data()[c.pos]); });
 		}
 
 		int len()
@@ -325,45 +297,29 @@ struct Sudoku: std::array<Cell, 81>
 		return std::count_if(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
 	}
 
-	int count( int num )
+	int count( int n )
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), [=]( Cell &c ){ return c.num == num; });
+		return std::count_if(Sudoku::begin(), Sudoku::end(), [=]( Cell &c ){ return c.num == n; });
 	}
 
 	bool empty()
 	{
-		for (Cell &c: *this)
-			if (c.num != 0)
-				return false;
-
-		return true;
+		return std::all_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num == 0; });
 	}
 
 	bool solved()
 	{
-		for (Cell &c: *this)
-			if (c.num == 0)
-				return false;
-
-		return true;
+		return std::all_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
 	}
 
 	bool convergent()
 	{
-		for (Cell &c: *this)
-			if (c.dummy())
-				return false;
-
-		return true;
+		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.dummy(); });
 	}
 
 	bool tips()
 	{
-		for (Cell &c: *this)
-			if (c.sure(0) != 0)
-				return true;
-
-		return false;
+		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.sure(0) != 0; });
 	}
 
 	void set( Cell &cell, int n )
@@ -512,11 +468,7 @@ struct Sudoku: std::array<Cell, 81>
 		auto tmp = Sudoku::Temp(this);
 
 		Sudoku::solve_next();
-		for (Cell &c: *this)
-			if (Sudoku::generate_next(&c, true) == c.immutable)
-				return false;
-
-		return true;
+		return std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return Sudoku::generate_next(&c, true) != c.immutable; });
 	}
 
 	bool simplify()
@@ -539,7 +491,8 @@ struct Sudoku: std::array<Cell, 81>
 	bool solve_next( Cell *cell = nullptr, bool check = false )
 	{
 		if (cell != nullptr)
-			cell = *std::min_element(cell->lst.begin(), cell->lst.end(), Cell::select_ptr);
+			cell = *std::min_element(std::begin(cell->lst), std::end(cell->lst), Cell::select_ptr);
+		else
 		if (cell == nullptr || cell->num != 0)
 			cell =  std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
 		if (cell->num != 0)
@@ -807,8 +760,8 @@ struct Sudoku: std::array<Cell, 81>
 			t[c.pos] = static_cast<uint32_t>(c.range());
 		}
 
-		std::sort(x.begin(), x.end());
-		std::sort(t.begin(), t.end());
+		std::sort(std::begin(x), std::end(x));
+		std::sort(std::begin(t), std::end(t));
 
 		Sudoku::signature = Sudoku::crc32(x);
 		Sudoku::signature = Sudoku::crc32(t, Sudoku::signature);
