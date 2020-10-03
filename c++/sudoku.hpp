@@ -190,6 +190,86 @@ struct Cell
 		return true;
 	}
 
+	bool solve( bool check = false )
+	{
+		Cell *cell = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select_ptr);
+		if (cell->num != 0)
+			return true;
+
+		for (int v: Cell::Values(cell).shuffled())
+		{
+			if ((cell->num = v) != 0 && cell->solve(check))
+			{
+				if (check)
+					cell->num = 0;
+
+				return true;
+			}
+		}
+
+		cell->num = 0;
+		return false;
+	}
+
+	bool generate( int level, bool check = false )
+	{
+		if (Cell::num == 0 || Cell::immutable)
+			return false;
+
+		int n = Cell::num;
+
+		Cell::num = 0;
+		if (Cell::sure(n))
+			return true;
+
+		Cell::num = n;
+		if (level == 0 && !check)
+			return false;
+
+		for (int v: Cell::Values(this))
+		{
+			if ((Cell::num = v) != 0 && Cell::solve(true))
+			{
+				Cell::num = n;
+				return false;
+			}
+		}
+
+		Cell::num = 0;
+		return true;
+	}
+
+	bool check( bool strict )
+	{
+		if (Cell::num == 0)
+			return false;
+
+		int n = Cell::num;
+
+		Cell::num = 0;
+		if (Cell::sure(n))
+		{
+			if (!strict)
+				return true;
+
+			Cell::num = n;
+			return false;
+		}
+
+		Cell::num = n;
+		for (int v: Cell::Values(this))
+		{
+			if ((Cell::num = v) != 0 && Cell::solve(true))
+			{
+				Cell::num = n;
+				return false;
+			}
+		}
+
+		Cell::num = 0;
+		return true;
+	}
+
 	static
 	bool select_ptr( Cell *a, Cell *b )
 	{
@@ -356,7 +436,6 @@ struct Sudoku: std::array<Cell, 81>
 			c.immutable = c.num != 0;
 
 		Sudoku::specify();
-
 		Sudoku::mem.clear();
 	}
 
@@ -467,8 +546,9 @@ struct Sudoku: std::array<Cell, 81>
 
 		auto tmp = Sudoku::Temp(this);
 
-		Sudoku::solve_next();
-		return std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return Sudoku::generate_next(&c, true) != c.immutable; });
+		std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref)->solve();
+
+		return std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; });
 	}
 
 	bool simplify()
@@ -488,69 +568,13 @@ struct Sudoku: std::array<Cell, 81>
 		return result;
 	}
 
-	bool solve_next( Cell *cell = nullptr, bool check = false )
-	{
-		if (cell != nullptr)
-			cell = *std::min_element(std::begin(cell->lst), std::end(cell->lst), Cell::select_ptr);
-		else
-		if (cell == nullptr || cell->num != 0)
-			cell =  std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
-		if (cell->num != 0)
-			return true;
-
-		for (int v: Cell::Values(cell).shuffled())
-		{
-			if ((cell->num = v) != 0 && Sudoku::solve_next(cell, check))
-			{
-				if (check)
-					cell->num = 0;
-
-				return true;
-			}
-		}
-
-		cell->num = 0;
-		return false;
-	}
-
 	void solve()
 	{
 		if (Sudoku::solvable())
 		{
-			Sudoku::solve_next();
+			std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref)->solve();
 			Sudoku::mem.clear();
 		}
-	}
-
-	bool check_next( Cell *cell, bool strict )
-	{
-		if (cell->num == 0)
-			return false;
-
-		int num = cell->num;
-
-		cell->num = 0;
-		if (cell->sure(num))
-		{
-			if (!strict)
-				return true;
-
-			cell->num = num;
-			return false;
-		}
-
-		cell->num = num;
-		for (int v: Cell::Values(cell))
-		{
-			if ((cell->num = v) != 0 && Sudoku::solve_next(cell, true))
-			{
-				cell->num = num;
-				return false;
-			}
-		}
-
-		cell->num = 0;
-		return true;
 	}
 
 	void check()
@@ -581,7 +605,7 @@ struct Sudoku: std::array<Cell, 81>
 				tab.shuffle();
 				changed = false;
 				for (Cell *c: tab)
-					if (Sudoku::check_next(c, true))
+					if (c->check(true))
 						changed = true;
 			}
 			while (changed);
@@ -591,7 +615,7 @@ struct Sudoku: std::array<Cell, 81>
 				tab.shuffle();
 				changed = false;
 				for (Cell *c: tab)
-					if (Sudoku::check_next(c, false))
+					if (c->check(false))
 						changed = true;
 			}
 			while (changed);
@@ -601,32 +625,6 @@ struct Sudoku: std::array<Cell, 81>
 		while (tmp.changed());
 
 		Sudoku::confirm();
-	}
-
-	bool generate_next( Cell *cell, bool check = false )
-	{
-		if (cell->num == 0 || cell->immutable)
-			return false;
-
-		int num = cell->num;
-
-		cell->num = 0;
-		if (cell->sure(num))
-			return true;
-
-		cell->num = num;
-		if (Sudoku::level == 0 && !check)
-			return false;
-
-		for (int v: Cell::Values(cell))
-			if ((cell->num = v) != 0 && Sudoku::solve_next(cell, true))
-			{
-				cell->num = num;
-				return false;
-			}
-
-		cell->num = 0;
-		return true;
 	}
 
 	void generate()
@@ -641,9 +639,9 @@ struct Sudoku: std::array<Cell, 81>
 			Sudoku::Shadow tab(this);
 			tab.shuffle();
 			Sudoku::clear();
-			Sudoku::solve_next();
+			Sudoku::solve();
 			for (Cell *c: tab)
-				Sudoku::generate_next(c);
+				c->generate(Sudoku::level);
 			Sudoku::confirm();
 		}
 	}
@@ -678,12 +676,12 @@ struct Sudoku: std::array<Cell, 81>
 			return result;
 		}
 			
-		Cell *cell = std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
-		if (cell->num != 0) // solved!
+		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
+		if (cell.num != 0) // solved!
 			return 1;
 
-		int len    = cell->len();
-		int range  = cell->range();
+		int len    = cell.len();
+		int range  = cell.range();
 		int result = 0;
 		for (Cell &c: *this)
 		{
