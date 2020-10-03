@@ -33,6 +33,7 @@
 #include "console.hpp"
 #include <chrono>
 #include <cstring> // strlen
+#include <windows.h>
 
 #define   THRESHOLD  50
 
