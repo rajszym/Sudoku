@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    03.10.2020
+   @date    04.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -139,7 +139,7 @@ struct Cell
 		if (Cell::num != 0 || n == 0)
 			return false;
 
-		if (std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [=]( Cell *c ){ return c->num == n; }))
+		if (std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell *c ){ return c->num == n; }))
 			return false;
 
 		Cell::num = n;
@@ -152,7 +152,7 @@ struct Cell
 	static
 	bool evident( std::vector<Cell *> &lst, int n )
 	{
-		return std::none_of(std::begin(lst), std::end(lst), [=]( Cell *c ){ return c->allowed(n); });
+		return std::none_of(std::begin(lst), std::end(lst), [n]( Cell *c ){ return c->allowed(n); });
 	}
 
 	int sure( int n = 0 )
@@ -349,16 +349,11 @@ struct Sudoku: std::array<Cell, 81>
 		~Temp() { Sudoku::Backup::restore(); }
 	};
 
-	struct Shadow: std::array<Cell *, 81>
+	struct Random: std::vector<std::reference_wrapper<Cell>>
 	{
-		Shadow( Sudoku *sudoku )
+		Random( Sudoku *sudoku ): std::vector<std::reference_wrapper<Cell>>(std::begin(*sudoku), std::end(*sudoku))
 		{
-			std::transform(std::begin(*sudoku), std::end(*sudoku), Shadow::begin(), []( Cell &c ){ return &c; });
-		}
-
-		void shuffle()
-		{
-			std::shuffle(Shadow::begin(), Shadow::end(), ::rnd);
+			std::shuffle(Random::begin(), Random::end(), ::rnd);
 		}
 	};
 
@@ -379,7 +374,7 @@ struct Sudoku: std::array<Cell, 81>
 
 	int count( int n )
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), [=]( Cell &c ){ return c.num == n; });
+		return std::count_if(Sudoku::begin(), Sudoku::end(), [n]( Cell &c ){ return c.num == n; });
 	}
 
 	bool empty()
@@ -590,7 +585,6 @@ struct Sudoku: std::array<Cell, 81>
 
 		Sudoku::discard();
 		Sudoku::Backup tmp(this);
-		Sudoku::Shadow tab(this);
 
 		do
 		{
@@ -602,20 +596,18 @@ struct Sudoku: std::array<Cell, 81>
 			bool changed;
 			do
 			{
-				tab.shuffle();
 				changed = false;
-				for (Cell *c: tab)
-					if (c->check(true))
+				for (Cell &c: Sudoku::Random(this))
+					if (c.check(true))
 						changed = true;
 			}
 			while (changed);
 
 			do
 			{
-				tab.shuffle();
 				changed = false;
-				for (Cell *c: tab)
-					if (c->check(false))
+				for (Cell &c: Sudoku::Random(this))
+					if (c.check(false))
 						changed = true;
 			}
 			while (changed);
@@ -636,12 +628,10 @@ struct Sudoku: std::array<Cell, 81>
 		}
 		else
 		{
-			Sudoku::Shadow tab(this);
-			tab.shuffle();
 			Sudoku::clear();
 			Sudoku::solve();
-			for (Cell *c: tab)
-				c->generate(Sudoku::level);
+			for (Cell &c: Sudoku::Random(this))
+				c.generate(Sudoku::level);
 			Sudoku::confirm();
 		}
 	}
