@@ -44,9 +44,6 @@
 struct Cell;
 struct Sudoku;
 
-static
-auto rnd = std::mt19937_64{std::random_device{}()};
-
 struct Cell
 {
 	int  pos{0};
@@ -76,7 +73,7 @@ struct Cell
 
 		Values &shuffled()
 		{
-			std::shuffle(Values::begin(), Values::end(), ::rnd);
+			std::shuffle(Values::begin(), Values::end(), std::mt19937{std::random_device{}()});
 			return *this;
 		}
 	};
@@ -353,7 +350,7 @@ struct Sudoku: std::array<Cell, 81>
 	{
 		Random( Sudoku *sudoku ): std::vector<std::reference_wrapper<Cell>>(std::begin(*sudoku), std::end(*sudoku))
 		{
-			std::shuffle(Random::begin(), Random::end(), ::rnd);
+			std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
 		}
 	};
 
@@ -489,30 +486,32 @@ struct Sudoku: std::array<Cell, 81>
 
 	void shuffle()
 	{
+		auto rnd = std::mt19937{std::random_device{}()};
+
 		int v[10];
 	 	std::iota(v, v + 10, 0);
-		std::shuffle(v + 1, v + 10, ::rnd);
+		std::shuffle(v + 1, v + 10, rnd);
 
 		for (Cell &c: *this)
 			c.num = v[c.num];
 
 		for (int i = 0; i < 81; i++)
 		{
-			int c1 = ::rnd() % 9;
+			int c1 = rnd() % 9;
 			int c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
 			Sudoku::swap_cols(c1, c2);
 
-			int r1 = ::rnd() % 9;
+			int r1 = rnd() % 9;
 			int r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
 			Sudoku::swap_rows(r1, r2);
 
-			c1 = ::rnd() % 3;
+			c1 = rnd() % 3;
 			c2 = (c1 + 1) % 3;
 			c1 *= 3; c2 *= 3;
 			for (int j = 0; j < 3; j++)
 				Sudoku::swap_cols(c1 + j, c2 + j);
 
-			r1 = ::rnd() % 3;
+			r1 = rnd() % 3;
 			r2 = (r1 + 1) % 3;
 			r1 *= 3; r2 *= 3;
 			for (int j = 0; j < 3; j++)
@@ -623,6 +622,8 @@ struct Sudoku: std::array<Cell, 81>
 	{
 		if (Sudoku::level == 4)
 		{
+			auto rnd = std::mt19937{std::random_device{}()};
+
 			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()]);
 			Sudoku::shuffle();
 		}
