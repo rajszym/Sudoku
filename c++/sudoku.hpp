@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    04.10.2020
+   @date    05.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -44,26 +44,29 @@
 struct Cell;
 struct Sudoku;
 
+using  CellRef = std::reference_wrapper<Cell>;
+using  CellTab = std::array<Cell, 81>;
+
 struct Cell
 {
 	int  pos{0};
 	int  num{0};
 	bool immutable{false};
 
-	std::vector<Cell *> lst{};
-	std::vector<Cell *> row{};
-	std::vector<Cell *> col{};
-	std::vector<Cell *> seg{};
+	std::vector<CellRef> lst{};
+	std::vector<CellRef> row{};
+	std::vector<CellRef> col{};
+	std::vector<CellRef> seg{};
 
-	struct Values: public std::array<int, 10>
+	struct Values: std::array<int, 10>
 	{
-		Values( Cell *cell )
+		Values( Cell &cell )
 		{
 		 	std::iota(Values::begin(), Values::end(), 0);
 
-			Values::data()[cell->num] = 0;
-			for (Cell *c: cell->lst)
-				Values::data()[c->num] = 0;
+			Values::data()[cell.num] = 0;
+			for (Cell &c: cell.lst)
+				Values::data()[c.num] = 0;
 		}
 
 		int len()
@@ -78,13 +81,13 @@ struct Cell
 		}
 	};
 
-	void init( std::array<Cell, 81> &sudoku )
+	void init( CellTab *sudoku )
 	{
 		int tr = Cell::pos / 9;
 		int tc = Cell::pos % 9;
 		int ts = (tr / 3) * 3 + (tc / 3);
 
-		for (Cell &c: sudoku)
+		for (Cell &c: *sudoku)
 		{
 			if (&c == this)
 				break;
@@ -93,10 +96,10 @@ struct Cell
 			int cc = c.pos % 9;
 			int cs = (cr / 3) * 3 + (cc / 3);
 
-			if (cr == tr || cc == tc || cs == ts) { Cell::lst.push_back(&c); c.lst.push_back(this); }
-			if (cr == tr)                         { Cell::row.push_back(&c); c.row.push_back(this); }
-			if             (cc == tc)             { Cell::col.push_back(&c); c.col.push_back(this); }
-			if                         (cs == ts) { Cell::seg.push_back(&c); c.seg.push_back(this); }
+			if (cr == tr || cc == tc || cs == ts) { Cell::lst.push_back(std::ref(c)); c.lst.push_back(std::ref(*this)); }
+			if (cr == tr)                         { Cell::row.push_back(std::ref(c)); c.row.push_back(std::ref(*this)); }
+			if             (cc == tc)             { Cell::col.push_back(std::ref(c)); c.col.push_back(std::ref(*this)); }
+			if                         (cs == ts) { Cell::seg.push_back(std::ref(c)); c.seg.push_back(std::ref(*this)); }
 		}
 	}
 
@@ -105,7 +108,7 @@ struct Cell
 		if (Cell::num != 0)
 			return 0;
 
-		return Cell::Values(this).len();
+		return Cell::Values(*this).len();
 	}
 
 	int range()
@@ -113,7 +116,7 @@ struct Cell
 		if (Cell::num != 0)
 			return 0;
 
-		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), Cell::len(), []( int r, Cell *c ){ return r + c->len(); });
+		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), Cell::len(), []( int r, Cell &c ){ return r + c.len(); });
 	}
 
 	bool equal( int n )
@@ -128,7 +131,7 @@ struct Cell
 
 	bool convergent()
 	{
-		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell *c ){ return c->dummy(); });
+		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.dummy(); });
 	}
 
 	bool allowed( int n )
@@ -136,7 +139,7 @@ struct Cell
 		if (Cell::num != 0 || n == 0)
 			return false;
 
-		if (std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell *c ){ return c->num == n; }))
+		if (std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell &c ){ return c.num == n; }))
 			return false;
 
 		Cell::num = n;
@@ -147,16 +150,16 @@ struct Cell
 	}
 
 	static
-	bool evident( std::vector<Cell *> &lst, int n )
+	bool evident( std::vector<CellRef> &lst, int n )
 	{
-		return std::none_of(std::begin(lst), std::end(lst), [n]( Cell *c ){ return c->allowed(n); });
+		return std::none_of(std::begin(lst), std::end(lst), [n]( Cell &c ){ return c.allowed(n); });
 	}
 
 	int sure( int n = 0 )
 	{
 		if (Cell::num == 0 && n == 0)
 		{
-			for (int v: Cell::Values(this))
+			for (int v: Cell::Values(*this))
 				if (v != 0 && Cell::sure(v))
 					return v;
 
@@ -189,22 +192,22 @@ struct Cell
 
 	bool solve( bool check = false )
 	{
-		Cell *cell = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select_ptr);
-		if (cell->num != 0)
+		Cell &cell = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
+		if (cell.num != 0)
 			return true;
 
 		for (int v: Cell::Values(cell).shuffled())
 		{
-			if ((cell->num = v) != 0 && cell->solve(check))
+			if ((cell.num = v) != 0 && cell.solve(check))
 			{
 				if (check)
-					cell->num = 0;
+					cell.num = 0;
 
 				return true;
 			}
 		}
 
-		cell->num = 0;
+		cell.num = 0;
 		return false;
 	}
 
@@ -223,7 +226,7 @@ struct Cell
 		if (level == 0 && !check)
 			return false;
 
-		for (int v: Cell::Values(this))
+		for (int v: Cell::Values(*this))
 		{
 			if ((Cell::num = v) != 0 && Cell::solve(true))
 			{
@@ -254,7 +257,7 @@ struct Cell
 		}
 
 		Cell::num = n;
-		for (int v: Cell::Values(this))
+		for (int v: Cell::Values(*this))
 		{
 			if ((Cell::num = v) != 0 && Cell::solve(true))
 			{
@@ -268,19 +271,14 @@ struct Cell
 	}
 
 	static
-	bool select_ptr( Cell *a, Cell *b )
+	bool select( Cell &a, Cell &b )
 	{
-		return a->num == 0 && (b->num != 0          ||
-		                       a->len()  < b->len() ||
-		                      (a->len() == b->len() && a->range() < b->range()));
-	}
+		int a_len = a.len();
+		int b_len = b.len();
 
-	static
-	bool select_ref( Cell &a, Cell &b )
-	{
-		return a.num == 0 && (b.num != 0         ||
-		                      a.len()  < b.len() ||
-		                     (a.len() == b.len() && a.range() < b.range()));
+		return a.num == 0 && (b.num != 0     ||
+		                      a_len <  b_len ||
+		                     (a_len == b_len && a.range() < b.range()));
 	}
 
 	friend
@@ -292,7 +290,7 @@ struct Cell
 	}
 };
 
-struct Sudoku: std::array<Cell, 81>
+struct Sudoku: CellTab
 {
 	int      level;
 	int      rating;
@@ -340,15 +338,15 @@ struct Sudoku: std::array<Cell, 81>
 		}
 	};
 
-	struct Temp: public Sudoku::Backup
+	struct Temp: Sudoku::Backup
 	{
 		Temp( Sudoku *sudoku ): Sudoku::Backup(sudoku) {}
 		~Temp() { Sudoku::Backup::restore(); }
 	};
 
-	struct Random: std::vector<std::reference_wrapper<Cell>>
+	struct Random: std::vector<CellRef>
 	{
-		Random( Sudoku *sudoku ): std::vector<std::reference_wrapper<Cell>>(std::begin(*sudoku), std::end(*sudoku))
+		Random( Sudoku *sudoku ): std::vector<CellRef>(std::begin(*sudoku), std::end(*sudoku))
 		{
 			std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
 		}
@@ -356,11 +354,11 @@ struct Sudoku: std::array<Cell, 81>
 
 	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}, mem{}
 	{
-		for (int i = 0; i < 81; i++)
+		int i = 0;
+		for (Cell &c: *this)
 		{
-			Cell &c = Sudoku::data()[i];
-			c.pos = i;
-			c.init(*this);
+			c.pos = i++;
+			c.init(this);
 		}
 	}
 
@@ -540,7 +538,7 @@ struct Sudoku: std::array<Cell, 81>
 
 		auto tmp = Sudoku::Temp(this);
 
-		std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref)->solve();
+		std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
 
 		return std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; });
 	}
@@ -566,7 +564,7 @@ struct Sudoku: std::array<Cell, 81>
 	{
 		if (Sudoku::solvable())
 		{
-			std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref)->solve();
+			std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
 			Sudoku::mem.clear();
 		}
 	}
@@ -667,7 +665,7 @@ struct Sudoku: std::array<Cell, 81>
 			return result;
 		}
 			
-		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_ref);
+		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select);
 		if (cell.num != 0) // solved!
 			return 1;
 
@@ -679,7 +677,7 @@ struct Sudoku: std::array<Cell, 81>
 			if (c.num == 0 && c.len() == len && c.range() == range)
 			{
 				int r = 0;
-				for (int v: Cell::Values(&c))
+				for (int v: Cell::Values(c))
 				{
 					if (v != 0 && c.set(v))
 					{
