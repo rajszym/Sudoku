@@ -584,7 +584,7 @@ int main( int argc, char **argv )
 				{
 					data.push_back(sudoku.signature);
 					std::cout << sudoku << std::endl;
-					sudoku.save(file);
+					sudoku.append(file);
 				}
 			}
 
