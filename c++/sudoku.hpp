@@ -882,7 +882,18 @@ struct Sudoku: CellTab
 
 	void save( std::string filename = "sudoku.board" )
 	{
-		auto file = std::ofstream(filename, filename == "sudoku.board" ? std::ios::out : std::ios::app);
+		auto file = std::ofstream(filename, std::ios::out);
+		if (!file.is_open())
+			return;
+
+		file << *this << std::endl;
+
+		file.close();
+	}
+
+	void append( std::string filename )
+	{
+		auto file = std::ofstream(filename, std::ios::app);
 		if (!file.is_open())
 			return;
 
