@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    02.10.2020
+   @date    05.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -457,6 +457,16 @@ void Game::game()
 					bool prev = false; // input.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED;
 					switch (input.Event.KeyEvent.wVirtualKeyCode)
 					{
+					case '0': /* falls through */
+					case '1': /* falls through */
+					case '2': /* falls through */
+					case '3': /* falls through */
+					case '4': /* falls through */
+					case '5': /* falls through */
+					case '6': /* falls through */
+					case '7': /* falls through */
+					case '8': /* falls through */
+					case '9': Button::button = input.Event.KeyEvent.wVirtualKeyCode - '0'; break;
 					case VK_LEFT:  prev = true;   /* falls through */
 					case VK_RIGHT:                /* falls through */
 					case 'H':   Game::help  =     Game::mnu[1].next(prev); break;
