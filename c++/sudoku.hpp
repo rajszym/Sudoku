@@ -898,14 +898,6 @@ struct Sudoku: CellTab
 		if (!file.is_open())
 			return;
 
-		static
-		bool done = false;
-		if (!done)
-		{
-			lst.clear();
-			done = true;
-		}
-
 		std::string line;
 		while (std::getline(file, line))
 		{
