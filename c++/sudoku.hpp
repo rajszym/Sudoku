@@ -197,9 +197,11 @@ struct Cell
 	{
 		CellRef c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
 		if (c.get().num != 0)
+		{
 			c = std::ref(*std::min_element(std::begin(*Cell::tab), std::end(*Cell::tab), Cell::select));
-		if (c.get().num != 0)
-			return true;
+			if (c.get().num != 0)
+				return true;
+		}
 
 		Cell &cell = c.get();
 		for (int v: Cell::Values(cell).shuffled())
