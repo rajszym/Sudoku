@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    05.10.2020
+   @date    06.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -52,6 +52,7 @@ struct Cell
 	int  pos{0};
 	int  num{0};
 	bool immutable{false};
+	CellTab *tab{nullptr};
 
 	std::vector<CellRef> lst{};
 	std::vector<CellRef> row{};
@@ -83,6 +84,8 @@ struct Cell
 
 	void init( CellTab *sudoku )
 	{
+		Cell::tab = sudoku;
+
 		int tr = Cell::pos / 9;
 		int tc = Cell::pos % 9;
 		int ts = (tr / 3) * 3 + (tc / 3);
@@ -192,10 +195,13 @@ struct Cell
 
 	bool solve( bool check = false )
 	{
-		Cell &cell = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
-		if (cell.num != 0)
+		CellRef c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
+		if (c.get().num != 0)
+			c = std::ref(*std::min_element(std::begin(*Cell::tab), std::end(*Cell::tab), Cell::select));
+		if (c.get().num != 0)
 			return true;
 
+		Cell &cell = c.get();
 		for (int v: Cell::Values(cell).shuffled())
 		{
 			if ((cell.num = v) != 0 && cell.solve(check))
@@ -538,7 +544,7 @@ struct Sudoku: CellTab
 
 		auto tmp = Sudoku::Temp(this);
 
-		std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
+		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
 
 		return std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; });
 	}
@@ -564,7 +570,7 @@ struct Sudoku: CellTab
 	{
 		if (Sudoku::solvable())
 		{
-			std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
+			std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
 			Sudoku::mem.clear();
 		}
 	}
