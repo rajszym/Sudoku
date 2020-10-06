@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    05.10.2020
+   @date    06.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -34,8 +34,6 @@
 #include <chrono>
 #include <cstring> // strlen
 #include <windows.h>
-
-#define   THRESHOLD  50
 
 const char *title = "SUDOKU";
 
@@ -548,7 +546,7 @@ int main( int argc, char **argv )
 				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				sudoku.check();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false, THRESHOLD))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
 					data.push_back(sudoku.signature);
 					coll.emplace_back(sudoku);
@@ -578,9 +576,9 @@ int main( int argc, char **argv )
 			while (!GetAsyncKeyState(VK_ESCAPE))
 			{
 				sudoku.generate();
-				if (sudoku.level > 1)
+				if (sudoku.level > 1 && sudoku.len() > 17)
 					sudoku.check();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd), THRESHOLD))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
 					data.push_back(sudoku.signature);
 					std::cout << sudoku << std::endl;
@@ -644,7 +642,7 @@ int main( int argc, char **argv )
 			{
 				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false, THRESHOLD))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
 					data.push_back(sudoku.signature);
 					coll.emplace_back(sudoku);
