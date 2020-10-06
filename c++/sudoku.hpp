@@ -54,10 +54,10 @@ struct Cell
 	bool immutable{false};
 	CellTab *tab{nullptr};
 
-	std::vector<CellRef> lst{};
 	std::vector<CellRef> row{};
 	std::vector<CellRef> col{};
 	std::vector<CellRef> seg{};
+	std::vector<CellRef> lst{};
 
 	struct Values: std::array<int, 10>
 	{
@@ -82,28 +82,41 @@ struct Cell
 		}
 	};
 
-	void init( CellTab *sudoku )
+	static
+	bool in_row( const Cell &a, const Cell &b )
 	{
-		Cell::tab = sudoku;
+		int r1 = a.pos / 9;
+		int r2 = b.pos / 9;
 
-		int tr = Cell::pos / 9;
-		int tc = Cell::pos % 9;
-		int ts = (tr / 3) * 3 + (tc / 3);
+		return a.pos != b.pos && r1 == r2;
+	}
 
-		for (Cell &c: *sudoku)
-		{
-			if (&c == this)
-				break;
+	static
+	bool in_col( const Cell &a, const Cell &b )
+	{
+		int c1 = a.pos % 9;
+		int c2 = b.pos % 9;
 
-			int cr = c.pos / 9;
-			int cc = c.pos % 9;
-			int cs = (cr / 3) * 3 + (cc / 3);
+		return a.pos != b.pos && c1 == c2;
+	}
 
-			if (cr == tr || cc == tc || cs == ts) { Cell::lst.push_back(std::ref(c)); c.lst.push_back(std::ref(*this)); }
-			if (cr == tr)                         { Cell::row.push_back(std::ref(c)); c.row.push_back(std::ref(*this)); }
-			if             (cc == tc)             { Cell::col.push_back(std::ref(c)); c.col.push_back(std::ref(*this)); }
-			if                         (cs == ts) { Cell::seg.push_back(std::ref(c)); c.seg.push_back(std::ref(*this)); }
-		}
+	static
+	bool in_seg( const Cell &a, const Cell &b )
+	{
+		int r1 = a.pos / 9;
+		int r2 = b.pos / 9;
+		int c1 = a.pos % 9;
+		int c2 = b.pos % 9;
+		int s1 = (r1 / 3) * 3 + (c1 / 3);
+		int s2 = (r2 / 3) * 3 + (c2 / 3);
+
+		return a.pos != b.pos && s1 == s2;
+	}
+	
+	static
+	bool in_lst( const Cell &a, const Cell &b )
+	{
+		return Cell::in_row(a, b) || Cell::in_col(a, b) || Cell::in_seg(a, b);
 	}
 
 	int len()
@@ -290,7 +303,7 @@ struct Cell
 	}
 
 	friend
-	std::ostream &operator <<( std::ostream &out, Cell &cell )
+	std::ostream &operator <<( std::ostream &out, const Cell &cell )
 	{
 		out << (cell.immutable ? ".123456789" : ".ABCDEFGHI")[cell.num];
 
@@ -363,10 +376,18 @@ struct Sudoku: CellTab
 	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}, mem{}
 	{
 		int i = 0;
-		for (Cell &c: *this)
+		for (Cell &cell: *this)
 		{
-			c.pos = i++;
-			c.init(this);
+			cell.pos = i++;
+			cell.tab = this;
+		}
+
+		for (Cell &cell: *this)
+		{
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.row), [cell](Cell &c){ return Cell::in_row(cell, c); });
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.col), [cell](Cell &c){ return Cell::in_col(cell, c); });
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.seg), [cell](Cell &c){ return Cell::in_seg(cell, c); });
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.lst), [cell](Cell &c){ return Cell::in_lst(cell, c); });
 		}
 	}
 
