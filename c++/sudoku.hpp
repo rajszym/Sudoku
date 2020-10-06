@@ -804,7 +804,12 @@ struct Sudoku: CellTab
 		}
 	}
 
-	bool test( bool all, int threshold = 0 )
+	bool acceptable()
+	{
+		return Sudoku::rating >= Sudoku::len() * 20;
+	}
+
+	bool test( bool all )
 	{
 		if (Sudoku::rating == -2)
 		{
@@ -818,12 +823,7 @@ struct Sudoku: CellTab
 			return false;
 		}
 
-		return Sudoku::level == 0 || all || Sudoku::expected(threshold);
-	}
-
-	bool expected( int threshold )
-	{
-		return Sudoku::rating - Sudoku::len() * 20 >= threshold;
+		return Sudoku::level == 0 || all || Sudoku::acceptable();
 	}
 
 	static
