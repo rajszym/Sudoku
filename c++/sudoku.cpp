@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    06.10.2020
+   @date    07.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -184,7 +184,7 @@ Game::Game( int l ): Sudoku{l}, wait{false}, help{0}
 	Game::mnu.emplace_back("s:",  4); Game::mnu.back().add("solve");
 	Game::mnu.emplace_back("u:",  5); Game::mnu.back().add("undo");
 	Game::mnu.emplace_back("c:",  6); Game::mnu.back().add("clear");
-	Game::mnu.emplace_back("t:",  7); Game::mnu.back().add("test");
+	Game::mnu.emplace_back("e:",  7); Game::mnu.back().add("edit");
 	Game::mnu.emplace_back("f:",  8); Game::mnu.back().add("confirm");
 	Game::mnu.emplace_back("v:",  9); Game::mnu.back().add("save");
 	Game::mnu.emplace_back("r:", 10); Game::mnu.back().add("read");
@@ -387,7 +387,7 @@ void Game::game()
 						case  4: Sudoku::solve();    Game::draw(); Button::button = 0; break;
 						case  5: Sudoku::undo();     Game::draw(); break;
 						case  6: Sudoku::clear();    Game::draw(); Button::button = 0; break;
-						case  7: Sudoku::check();    Game::draw(); Sudoku::discard();  break;
+						case  7: Sudoku::discard();  break;
 						case  8: Sudoku::confirm();  break;
 						case  9: Sudoku::save();     break;
 						case 10: Sudoku::load();     Game::draw(); Button::button = 0; break;
@@ -480,12 +480,13 @@ void Game::game()
 					case VK_DELETE:               /* falls through */
 					case 'C': Sudoku::clear();    Game::draw(); Button::button = 0; break;
 					case VK_HOME:                 /* falls through */
-					case 'T': Sudoku::check();    Game::draw(); Sudoku::discard();  break;
+					case 'E': Sudoku::discard();  break;
 					case VK_END:                  /* falls through */
 					case 'F': Sudoku::confirm();  break;
 					case VK_INSERT:               /* falls through */
 					case 'V': Sudoku::save();     break;
 					case 'R': Sudoku::load();     Game::draw(); Button::button = 0; break;
+					case 'T': Sudoku::check();    Game::draw(); break;
 					case VK_ESCAPE:               /* falls through */
 					case 'Q': return;
 					}
