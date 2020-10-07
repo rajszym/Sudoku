@@ -547,7 +547,7 @@ int main( int argc, char **argv )
 				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				sudoku.check();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
 					data.push_back(sudoku.signature);
 					coll.emplace_back(sudoku);
@@ -685,6 +685,7 @@ int main( int argc, char **argv )
 			          << std::endl
 			          << "Usage:"                                            << std::endl
 			          << "sudoku  -c [file] - check"                         << std::endl
+			          << "sudoku  -C [file] - check and show all"            << std::endl
 			          << "sudoku  -f [file] - find"                          << std::endl
 			          << "sudoku  -F [file] - find and show all"             << std::endl
 			          << "sudoku  -s [file] - sort by rating / length"       << std::endl
