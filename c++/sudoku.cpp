@@ -317,7 +317,7 @@ void Game::game()
 {
 	::con->Fill(WIN.x, WIN.y, WIN.width, 1, Console::White);
 	::con->Put(TAB.x + 1, WIN.y, Game::title);
-	::con->Fill(WIN.x, WIN.bottom, WIN.width, 1, Console::LightGrey, Console::Grey);
+	::con->Fill(WIN.x, WIN.bottom, WIN.width, 1, Console::Black, Console::Grey);
 
 	::con->DrawSingle(TAB);
 	::con->DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
