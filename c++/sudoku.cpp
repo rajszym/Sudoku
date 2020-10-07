@@ -161,7 +161,7 @@ struct Game: public Sudoku
 	std::vector<Button> btn;
 	std::vector<Menu>   mnu;
 
-	Game( const char *, int = 0 );
+	Game( const char *, Difficulty = Difficulty::Easy );
 	~Game();
 
 	void draw_cell    ( Cell & );
@@ -176,7 +176,7 @@ struct Game: public Sudoku
 
 int Game::focus = -1;
 
-Game::Game( const char *t, int l ): Sudoku{l}, title{t}, wait{false}, help{0}
+Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, help{0}
 {
 	::con->SetFont(56, L"Consolas");
 	::con->Center(WIN.width, WIN.height);
@@ -370,14 +370,16 @@ void Game::game()
 						{
 						case FROM_LEFT_1ST_BUTTON_PRESSED:
 							if (c.num == 0)
-								Sudoku::set(c, Button::button), Game::draw_cell(c);
-							else if (!solved())
+							{
+								if (Sudoku::set(c, Button::button))
+									Game::draw_cell(c);
+							}
+							else if (!Sudoku::solved() || !c.immutable)
+							{
 								Button::button = c.num;
-							break;
-						case RIGHTMOST_BUTTON_PRESSED:
-							if (!Sudoku::solved() || !c.immutable)
-								Button::button = c.num;
-							Sudoku::set(c, 0), Game::draw_cell(c);
+								if (Sudoku::set(c, 0))
+									Game::draw_cell(c);
+							}
 							break;
 						}
 
@@ -412,7 +414,7 @@ void Game::game()
 						switch (y)
 						{
 						case  2:   Game::help  =     Game::mnu[1].next(Menu::back); break;
-						case  1: Sudoku::level =     Game::mnu[0].next(Menu::back); /* falls through */
+						case  1: Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(Menu::back)); /* falls through */
 						case  3: Sudoku::generate(); Game::draw(); Button::button = 0; break;
 						case  4: Sudoku::solve();    Game::draw(); Button::button = 0; break;
 						case  5: Sudoku::undo();     Game::draw(); break;
@@ -500,7 +502,7 @@ void Game::game()
 					case 'H':   Game::help  =     Game::mnu[1].next(prev); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
-					case 'L': Sudoku::level =     Game::mnu[0].next(prev); /* falls through */
+					case 'L': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
 					case VK_TAB:                  /* falls through */
 					case 'N': Sudoku::generate(); Game::draw(); Button::button = 0; break;
 					case VK_RETURN:               /* falls through */
@@ -560,9 +562,10 @@ int main( int argc, char **argv )
 		case 'G': // game
 		{
 			::con.emplace(::title);
-			auto sudoku = Game(::title, std::islower(cmd) ? 0 : 1);
+			auto sudoku = Game(::title, std::islower(cmd) ? Difficulty::Easy : Difficulty::Medium);
 			LONG style = GetWindowLong(::con->Hwnd, GWL_STYLE);
-			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
+//			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
+			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU));
 			sudoku.game();
 			SetWindowLong(::con->Hwnd, GWL_STYLE, style);
 			::con.reset();
@@ -571,7 +574,7 @@ int main( int argc, char **argv )
 
 		case 'F': // find
 		{
-			auto sudoku = Sudoku(1);
+			auto sudoku = Sudoku(Difficulty::Medium);
 			auto data   = std::vector<uint32_t>();
 
 			if (--argc > 0)
@@ -583,7 +586,7 @@ int main( int argc, char **argv )
 			while (!GetAsyncKeyState(VK_ESCAPE))
 			{
 				sudoku.generate();
-				if (sudoku.level > 1 && sudoku.len() > 17)
+				if (sudoku.level > Difficulty::Medium && sudoku.len() > 17)
 					sudoku.check();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
@@ -599,7 +602,7 @@ int main( int argc, char **argv )
 
 		case 'T': // test
 		{
-			auto sudoku = Sudoku(1);
+			auto sudoku = Sudoku(Difficulty::Medium);
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -633,7 +636,7 @@ int main( int argc, char **argv )
 
 		case 'S': // sort
 		{
-			auto sudoku = Sudoku(1);
+			auto sudoku = Sudoku(Difficulty::Medium);
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -667,7 +670,7 @@ int main( int argc, char **argv )
 
 		case 'C': //check
 		{
-			auto sudoku = Sudoku(1);
+			auto sudoku = Sudoku(Difficulty::Medium);
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
