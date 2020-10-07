@@ -35,14 +35,14 @@
 #include <cstring> // strlen
 #include <windows.h>
 
-const char *title = "SUDOKU";
-
-auto con = Console(title);
+const char *title = "Sudoku";
 
 const Console::Rectangle TAB(0, 1, 25, 13);
 const Console::Rectangle BAR(TAB.right + 1, TAB.top,  3, TAB.height);
 const Console::Rectangle MNU(BAR.right + 1, TAB.top, 14, TAB.height);
 const Console::Rectangle WIN(TAB.left, 0, MNU.right - TAB.left + 1, TAB.bottom + 1);
+
+std::optional<Console> con;
 
 struct Button
 {
@@ -62,7 +62,7 @@ int Button::menu{0};
 
 void Button::draw()
 {
-	con.Put(BAR.x + 1, BAR.y + Button::num + (Button::num - 1) / 3, '0' + Button::num);
+	::con->Put(BAR.x + 1, BAR.y + Button::num + (Button::num - 1) / 3, '0' + Button::num);
 }
 
 void Button::update()
@@ -70,11 +70,11 @@ void Button::update()
 	int y = Button::num + (Button::num - 1) / 3;
 
 	if (Button::button == Button::num)
-		con.Put(BAR.x + 1, BAR.y + y, Console::Black, Console::White);
+		::con->Put(BAR.x + 1, BAR.y + y, Console::Black, Console::White);
 	else if (Button::menu == y)
-		con.Put(BAR.x + 1, BAR.y + y, Console::White, Console::Grey);
+		::con->Put(BAR.x + 1, BAR.y + y, Console::White, Console::Grey);
 	else
-		con.Put(BAR.x + 1, BAR.y + y, Console::LightGrey);
+		::con->Put(BAR.x + 1, BAR.y + y, Console::LightGrey);
 }
 
 struct Menu: std::vector<const char *>
@@ -128,9 +128,9 @@ void Menu::draw()
 	if (Menu::size() > 0)
 	{
 		unsigned n = std::strlen(Menu::data()[Menu::idx]);
-		con.Put (MNU.x + 1,     MNU.y + Menu::pos, Menu::key);
-		con.Put (MNU.x + 4,     MNU.y + Menu::pos, Menu::data()[Menu::idx]);
-		con.Fill(MNU.x + 4 + n, MNU.y + Menu::pos, MNU.width - 5 - n, 1);
+		::con->Put (MNU.x + 1,     MNU.y + Menu::pos, Menu::key);
+		::con->Put (MNU.x + 4,     MNU.y + Menu::pos, Menu::data()[Menu::idx]);
+		::con->Fill(MNU.x + 4 + n, MNU.y + Menu::pos, MNU.width - 5 - n, 1);
 	}
 }
 
@@ -139,20 +139,21 @@ void Menu::update()
 	if (Menu::menu == Menu::pos)
 	{
 		if (Menu::size() > 1)
-			con.Put (MNU.x + 1, MNU.y + Menu::pos, Menu::back ? "<<" : ">>");
-		con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::White, Console::Grey);
+			::con->Put (MNU.x + 1, MNU.y + Menu::pos, Menu::back ? "<<" : ">>");
+		::con->Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::White, Console::Grey);
 	}
 	else
 	{
 		if (Menu::size() > 1)
-			con.Put (MNU.x + 1, MNU.y + Menu::pos, Menu::key);
-		con.Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::LightGrey);
+			::con->Put (MNU.x + 1, MNU.y + Menu::pos, Menu::key);
+		::con->Fill(MNU.x + 1, MNU.y + Menu::pos, MNU.width - 2, 1, Console::LightGrey);
 	}
 }
 
 struct Game: public Sudoku
 {
-	static int focus;
+	static int  focus;
+	const char *title;
 
 	bool wait;
 	int  help;
@@ -160,7 +161,8 @@ struct Game: public Sudoku
 	std::vector<Button> btn;
 	std::vector<Menu>   mnu;
 
-	Game( int = 0 );
+	Game( const char *, int = 0 );
+	~Game();
 
 	void draw_cell    ( Cell & );
 	void update_cell  ( Cell & );
@@ -174,8 +176,13 @@ struct Game: public Sudoku
 
 int Game::focus = -1;
 
-Game::Game( int l ): Sudoku{l}, wait{false}, help{0}
+Game::Game( const char *t, int l ): Sudoku{l}, title{t}, wait{false}, help{0}
 {
+	::con->SetFont(56, L"Consolas");
+	::con->Center(WIN.width, WIN.height);
+	::con->HideCursor();
+	::con->Clear();
+
 	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
 	Game::mnu.emplace_back("l:",  1); Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
@@ -191,12 +198,17 @@ Game::Game( int l ): Sudoku{l}, wait{false}, help{0}
 	Game::mnu.emplace_back("q:", 11); Game::mnu.back().add("quit");
 }
 
+Game::~Game()
+{
+	::con->Clear();
+}
+
 void Game::draw_cell( Cell &cell )
 {
 	int x = TAB.x + 2 + (cell.pos % 9 + cell.pos % 9 / 3) * 2;
 	int y = TAB.y + 1 + (cell.pos / 9 + cell.pos / 9 / 3);
 
-	con.Put(x, y, "-123456789"[cell.num]);
+	::con->Put(x, y, "-123456789"[cell.num]);
 }
 
 void Game::update_cell( Cell &cell )
@@ -228,15 +240,15 @@ void Game::update_cell( Cell &cell )
 		else                                back = Console::Grey;
 	}
 
-	con.Put(x, y, fore, back);
+	::con->Put(x, y, fore, back);
 }
 
 void Game::draw_info()
 {
 	char nfo[16];
 	snprintf(nfo, sizeof(nfo), "%5d/%d", Sudoku::rating, Sudoku::len());
-	con.Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::count(Button::button) : ' ');
-	con.Put(MNU.Right(strlen(nfo)) - 1, WIN.y, nfo);
+	::con->Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::count(Button::button) : ' ');
+	::con->Put(MNU.Right(strlen(nfo)) - 1, WIN.y, nfo);
 }
 
 void Game::draw_menu()
@@ -256,7 +268,7 @@ void Game::update_banner()
 		Console::Red
 	};
 
-	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Game::wait ? Console::LightRed : Sudoku::solved() ? Console::Black : c[Sudoku::level]);
+	::con->Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Game::wait ? Console::LightRed : Sudoku::solved() ? Console::Black : c[Sudoku::level]);
 }
 
 void Game::draw()
@@ -286,14 +298,14 @@ void Game::update()
 
 void Game::game()
 {
-	con.Fill(WIN.x, WIN.y, WIN.width, 1, Console::White);
-	con.Put(TAB.x + 1, WIN.y, title);
+	::con->Fill(WIN.x, WIN.y, WIN.width, 1, Console::White);
+	::con->Put(TAB.x + 1, WIN.y, Game::title);
 
-	con.DrawSingle(TAB);
-	con.DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
-	con.DrawSingle(TAB.x + (TAB.width - 1) / 3, TAB.y, (TAB.width - 1) / 3 + 1, TAB.height);
-	con.DrawSingle(BAR);
-	con.DrawSingle(MNU);
+	::con->DrawSingle(TAB);
+	::con->DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
+	::con->DrawSingle(TAB.x + (TAB.width - 1) / 3, TAB.y, (TAB.width - 1) / 3 + 1, TAB.height);
+	::con->DrawSingle(BAR);
+	::con->DrawSingle(MNU);
 
 	for (Button b: Game::btn)
 		b.draw();
@@ -310,7 +322,7 @@ void Game::game()
 		int x, y, p;
 		INPUT_RECORD input;
 
-		while (con.GetInput(&input))
+		while (::con->GetInput(&input))
 		{
 			switch (input.EventType)
 			{
@@ -540,7 +552,7 @@ int main( int argc, char **argv )
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
-			std::cerr << title << " check: " << lst.size() << " boards loaded" << std::endl;
+			std::cerr << ::title << " check: " << lst.size() << " boards loaded" << std::endl;
 
 			for (std::string i: lst)
 			{
@@ -559,7 +571,7 @@ int main( int argc, char **argv )
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << title << " check: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
+			std::cerr << ::title << " check: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
@@ -571,7 +583,7 @@ int main( int argc, char **argv )
 			if (--argc > 0)
 				file = *++argv;
 
-			std::cerr << title << " find" << std::endl;
+			std::cerr << ::title << " find" << std::endl;
 
 			GetAsyncKeyState(VK_ESCAPE);
 			while (!GetAsyncKeyState(VK_ESCAPE))
@@ -587,7 +599,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::cerr << title << " find: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
+			std::cerr << ::title << " find: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
@@ -603,7 +615,7 @@ int main( int argc, char **argv )
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
-			std::cerr << title << " sort: " << lst.size() << " boards loaded" << std::endl;
+			std::cerr << ::title << " sort: " << lst.size() << " boards loaded" << std::endl;
 
 			for (std::string i: lst)
 			{
@@ -621,7 +633,7 @@ int main( int argc, char **argv )
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << title << " sort: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
+			std::cerr << ::title << " sort: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
@@ -637,7 +649,7 @@ int main( int argc, char **argv )
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
-			std::cerr << title << " test: " << lst.size() << " boards loaded" << std::endl;
+			std::cerr << ::title << " test: " << lst.size() << " boards loaded" << std::endl;
 
 			for (std::string i: lst)
 			{
@@ -655,54 +667,48 @@ int main( int argc, char **argv )
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << title << " test: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
+			std::cerr << ::title << " test: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
 		case 'G': // game
 		{
-			if (!con) break;
-
-			auto sudoku = Game(std::islower(cmd) ? 0 : 1);
-
-			con.SetFont(56, L"Consolas");
-			con.Center(WIN.width, WIN.height);
-			con.HideCursor();
-			con.Clear();
+			::con.emplace(::title);
+			auto sudoku = Game(::title, std::islower(cmd) ? 0 : 1);
 			sudoku.game();
-			con.Clear();
 			break;
 		}
 
 		case '?': /* falls through */
 		case 'H': // help
 		{
-			std::cerr << "Sudoku game, solver and generator" << std::endl
-			          << std::endl
-			          << "Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved." << std::endl
-			          << "This software is distributed under the MIT License."               << std::endl
-			          << "You are free to modify and redistribute it."                       << std::endl
-			          << std::endl
-			          << "Usage:"                                            << std::endl
-			          << "sudoku  -c [file] - check"                         << std::endl
-			          << "sudoku  -C [file] - check and show all"            << std::endl
-			          << "sudoku  -f [file] - find"                          << std::endl
-			          << "sudoku  -F [file] - find and show all"             << std::endl
-			          << "sudoku  -s [file] - sort by rating / length"       << std::endl
-			          << "sudoku  -S [file] - sort by length / rating"       << std::endl
-			          << "sudoku  -t [file] - test and sort by rating"       << std::endl
-			          << "sudoku  -T [file] - test and sort by threshold"    << std::endl
-			          << "sudoku  -g        - game (easy by default)"        << std::endl
-			          << "sudoku  -G        - game (medium / hard / expert)" << std::endl
-			          << "sudoku  -h        - help"                          << std::endl
-			          << "sudoku  -?        - help"                          << std::endl
+			std::cerr << "\n"
+			             "Sudoku game, solver and generator\n"
+			             "\n"
+			             "Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved.\n"
+			             "This software is distributed under the MIT License.\n"
+			             "You are free to modify and redistribute it.\n"
+			             "\n"
+			             "Usage:\n"
+			             "sudoku -g        - game (easy level by default)\n"
+			             "sudoku -G        - game (medium / hard / expert)\n"
+			             "sudoku -f [file] - find and show extreme only\n"
+			             "sudoku -F [file] - find and show all\n"
+			             "sudoku -t [file] - test and sort by rating\n"
+			             "sudoku -T [file] - test and sort by threshold\n"
+			             "sudoku -s [file] - sort by rating / length\n"
+			             "sudoku -S [file] - sort by length / rating\n"
+			             "sudoku -c [file] - check and show extreme only\n"
+			             "sudoku -C [file] - check and show all\n"
+			             "sudoku -h        - this usage help\n"
+			             "sudoku -?        - this usage help\n"
 			          << std::endl;
 			break;
 		}
 
 		default:
 		{
-			std::cerr << title << ": unknown command" << std::endl;
+			std::cerr << ::title << ": unknown command" << std::endl;
 			break;
 		}
 	}
