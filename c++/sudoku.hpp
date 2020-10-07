@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    06.10.2020
+   @date    07.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -46,6 +46,15 @@ struct Sudoku;
 
 using  CellRef = std::reference_wrapper<Cell>;
 using  CellTab = std::array<Cell, 81>;
+
+enum Difficulty
+{
+	Easy = 0,
+	Medium,
+	Hard,
+	Expert,
+	Extreme,
+};
 
 struct Cell
 {
@@ -232,7 +241,7 @@ struct Cell
 		return false;
 	}
 
-	bool generate( int level, bool check = false )
+	bool generate( Difficulty level, bool check = false )
 	{
 		if (Cell::num == 0 || Cell::immutable)
 			return false;
@@ -244,7 +253,7 @@ struct Cell
 			return true;
 
 		Cell::num = n;
-		if (level == 0 && !check)
+		if (level == Difficulty::Easy && !check)
 			return false;
 
 		for (int v: Cell::Values(*this))
@@ -311,69 +320,69 @@ struct Cell
 	}
 };
 
+struct Backup: std::array<std::pair<int, bool>, 81>
+{
+	CellTab *tmp;
+
+	Backup( CellTab *tab ): tmp{tab} { Backup::reload(); }
+
+	void reload()
+	{
+		std::transform(std::begin(*tmp), std::end(*tmp), Backup::begin(), []( Cell &c ){ return std::make_pair(c.num, c.immutable); });
+	}
+
+	void restore()
+	{
+		for (Cell &c: *tmp)
+		{
+			std::pair<int, bool> &t = Backup::data()[c.pos];
+			c.num = std::get<int>(t);
+			c.immutable = std::get<bool>(t);
+		}
+	}
+
+	bool reset()
+	{
+		return std::all_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.set(std::get<int>(Backup::data()[c.pos])); });
+	}
+
+	bool changed()
+	{
+		return std::any_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.num != std::get<int>(Backup::data()[c.pos]); });
+	}
+
+	int len()
+	{
+		return std::count_if(Backup::begin(), Backup::end(), []( std::pair<int, bool> &t ){ return std::get<int>(t) != 0; });
+	}
+};
+
+struct Temp: Backup
+{
+	Temp( CellTab *tab ): Backup(tab) {}
+	~Temp() { Backup::restore(); }
+};
+
+struct Random: std::vector<CellRef>
+{
+	Random( CellTab *tab ): std::vector<CellRef>(std::begin(*tab), std::end(*tab))
+	{
+		std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
+	}
+};
+
 struct Sudoku: CellTab
 {
-	int      level;
-	int      rating;
-	uint32_t signature;
+	Difficulty level;
+	int        rating;
+	uint32_t   signature;
 
 	std::list<std::pair<Cell *, int>> mem;
 
 	static const
 	std::vector<std::string> extreme;
 
-	struct Backup: std::array<std::pair<int, bool>, 81>
-	{
-		Sudoku *tmp;
-
-		Backup( Sudoku *sudoku ): tmp{sudoku} { Backup::reload(); }
-
-		void reload()
-		{
-			std::transform(std::begin(*tmp), std::end(*tmp), Backup::begin(), []( Cell &c ){ return std::make_pair(c.num, c.immutable); });
-		}
-
-		void restore()
-		{
-			for (Cell &c: *tmp)
-			{
-				std::pair<int, bool> &t = Backup::data()[c.pos];
-				c.num = std::get<int>(t);
-				c.immutable = std::get<bool>(t);
-			}
-		}
-
-		bool reset()
-		{
-			return std::all_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.set(std::get<int>(Backup::data()[c.pos])); });
-		}
-
-		bool changed()
-		{
-			return std::any_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.num != std::get<int>(Backup::data()[c.pos]); });
-		}
-
-		int len()
-		{
-			return std::count_if(Backup::begin(), Backup::end(), []( std::pair<int, bool> &t ){ return std::get<int>(t) != 0; });
-		}
-	};
-
-	struct Temp: Sudoku::Backup
-	{
-		Temp( Sudoku *sudoku ): Sudoku::Backup(sudoku) {}
-		~Temp() { Sudoku::Backup::restore(); }
-	};
-
-	struct Random: std::vector<CellRef>
-	{
-		Random( Sudoku *sudoku ): std::vector<CellRef>(std::begin(*sudoku), std::end(*sudoku))
-		{
-			std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
-		}
-	};
-
-	Sudoku( int l = 0 ): level{l}, rating{0}, signature{0}, mem{}
+	Sudoku( Difficulty l = Difficulty::Easy ): level{l}, rating{0}, signature{0}, mem{}
 	{
 		int i = 0;
 		for (Cell &cell: *this)
@@ -421,12 +430,15 @@ struct Sudoku: CellTab
 		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.sure(0) != 0; });
 	}
 
-	void set( Cell &cell, int n )
+	bool set( Cell &cell, int n )
 	{
 		int t = cell.num;
 
-		if (cell.set(n))
-			Sudoku::mem.emplace_back(&cell, t);
+		if (!cell.set(n))
+			return false;
+
+		Sudoku::mem.emplace_back(&cell, t);
+		return true;
 	}
 
 	void clear( bool deep = true )
@@ -438,8 +450,8 @@ struct Sudoku: CellTab
 		{
 			Sudoku::rating = 0;
 			Sudoku::signature = 0;
-			if (Sudoku::level > 0 && Sudoku::level < 4)
-				Sudoku::level = 1;
+			if (Sudoku::level > Difficulty::Easy && Sudoku::level < Difficulty::Extreme)
+				Sudoku::level = Difficulty::Medium;
 		}
 	}
 
@@ -551,7 +563,7 @@ struct Sudoku: CellTab
 		if (!Sudoku::convergent())
 			return false;
 
-		auto tmp = Sudoku::Temp(this);
+		auto tmp = Temp(this);
 
 		Sudoku::clear(false);
 		if (!tmp.reset())
@@ -565,7 +577,7 @@ struct Sudoku: CellTab
 		if (Sudoku::len() < 17)
 			return false;
 
-		auto tmp = Sudoku::Temp(this);
+		auto tmp = Temp(this);
 
 		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
 
@@ -600,17 +612,17 @@ struct Sudoku: CellTab
 
 	void check()
 	{
-		Sudoku::level = 1;
+		Sudoku::level = Difficulty::Medium;
 		Sudoku::confirm();
 
-		if (Sudoku::level == 1)
+		if (Sudoku::level == Difficulty::Medium)
 			return;
 
-		if (Sudoku::level == 2)
+		if (Sudoku::level == Difficulty::Hard)
 			Sudoku::simplify();
 
 		Sudoku::discard();
-		Sudoku::Backup tmp(this);
+		Backup tmp(this);
 
 		do
 		{
@@ -623,7 +635,7 @@ struct Sudoku: CellTab
 			do
 			{
 				changed = false;
-				for (Cell &c: Sudoku::Random(this))
+				for (Cell &c: Random(this))
 					if (c.check(true))
 						changed = true;
 			}
@@ -632,7 +644,7 @@ struct Sudoku: CellTab
 			do
 			{
 				changed = false;
-				for (Cell &c: Sudoku::Random(this))
+				for (Cell &c: Random(this))
 					if (c.check(false))
 						changed = true;
 			}
@@ -647,7 +659,7 @@ struct Sudoku: CellTab
 
 	void generate()
 	{
-		if (Sudoku::level == 4)
+		if (Sudoku::level == Difficulty::Extreme)
 		{
 			auto rnd = std::mt19937{std::random_device{}()};
 
@@ -658,7 +670,7 @@ struct Sudoku: CellTab
 		{
 			Sudoku::clear();
 			Sudoku::solve();
-			for (Cell &c: Sudoku::Random(this))
+			for (Cell &c: Random(this))
 				c.generate(Sudoku::level);
 			Sudoku::confirm();
 		}
@@ -738,13 +750,13 @@ struct Sudoku: CellTab
 
 	void level_calc()
 	{
-		if ( Sudoku::level == 0) {                    return; }
-		if ( Sudoku::level == 4) {                    return; }
-		if ( Sudoku::rating < 0) { Sudoku::level = 1; return; }
-		if ( Sudoku::solved())   { Sudoku::level = 1; return; }
-		if (!Sudoku::simplify()) { Sudoku::level = 3; return; }
-		if (!Sudoku::solved())   { Sudoku::level = 2;         }
-		else                     { Sudoku::level = 1;         }
+		if ( Sudoku::level == Difficulty::Easy)                      { return; }
+		if ( Sudoku::level == Difficulty::Extreme)                   { return; }
+		if ( Sudoku::rating < 0) { Sudoku::level = Difficulty::Medium; return; }
+		if ( Sudoku::solved())   { Sudoku::level = Difficulty::Medium; return; }
+		if (!Sudoku::simplify()) { Sudoku::level = Difficulty::Expert; return; }
+		if (!Sudoku::solved())   { Sudoku::level = Difficulty::Hard;           }
+		else                     { Sudoku::level = Difficulty::Medium;         }
 		Sudoku::again();
 	}
 
@@ -823,7 +835,7 @@ struct Sudoku: CellTab
 			return false;
 		}
 
-		return Sudoku::level == 0 || all || Sudoku::acceptable();
+		return Sudoku::level == Difficulty::Easy || all || Sudoku::acceptable();
 	}
 
 	static
@@ -876,7 +888,7 @@ struct Sudoku: CellTab
 				std::cerr << "ERROR: incorrect board entry" << std::endl;
 			else
 			{
-				sudoku.level = 1;
+				sudoku.level = Difficulty::Medium;
 				sudoku.init(line.substr(1, l));
 			}
 		}
