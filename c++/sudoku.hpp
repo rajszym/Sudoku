@@ -610,6 +610,25 @@ struct Sudoku: CellTab
 		}
 	}
 
+	void generate()
+	{
+		if (Sudoku::level == Difficulty::Extreme)
+		{
+			auto rnd = std::mt19937{std::random_device{}()};
+
+			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()]);
+			Sudoku::shuffle();
+		}
+		else
+		{
+			Sudoku::clear();
+			Sudoku::solve();
+			for (Cell &c: Random(this))
+				c.generate(Sudoku::level);
+			Sudoku::confirm();
+		}
+	}
+
 	void check()
 	{
 		Sudoku::level = Difficulty::Medium;
@@ -655,25 +674,6 @@ struct Sudoku: CellTab
 		while (tmp.changed());
 
 		Sudoku::confirm();
-	}
-
-	void generate()
-	{
-		if (Sudoku::level == Difficulty::Extreme)
-		{
-			auto rnd = std::mt19937{std::random_device{}()};
-
-			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()]);
-			Sudoku::shuffle();
-		}
-		else
-		{
-			Sudoku::clear();
-			Sudoku::solve();
-			for (Cell &c: Random(this))
-				c.generate(Sudoku::level);
-			Sudoku::confirm();
-		}
 	}
 
 	int rating_next()
