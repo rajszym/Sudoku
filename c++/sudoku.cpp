@@ -246,9 +246,9 @@ void Game::update_cell( Cell &cell )
 void Game::draw_info()
 {
 	char nfo[16];
-	snprintf(nfo, sizeof(nfo), "%5d/%d", Sudoku::rating, Sudoku::len());
+	std::snprintf(nfo, sizeof(nfo), "%5d /%d", Sudoku::len(), Sudoku::rating);
 	::con->Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::count(Button::button) : ' ');
-	::con->Put(MNU.Right(strlen(nfo)) - 1, WIN.y, nfo);
+	::con->Put(MNU.Right(std::strlen(nfo) + 1), WIN.y, nfo);
 	const char *hlp[] =
 	{
 		"                                        ",
