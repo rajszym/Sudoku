@@ -565,6 +565,7 @@ int main( int argc, char **argv )
 			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
 			sudoku.game();
 			SetWindowLong(::con->Hwnd, GWL_STYLE, style);
+			::con.reset();
 			break;
 		}
 
