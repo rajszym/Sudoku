@@ -393,10 +393,10 @@ struct Sudoku: CellTab
 
 		for (Cell &cell: *this)
 		{
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.row), [cell](Cell &c){ return Cell::in_row(cell, c); });
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.col), [cell](Cell &c){ return Cell::in_col(cell, c); });
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.seg), [cell](Cell &c){ return Cell::in_seg(cell, c); });
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.lst), [cell](Cell &c){ return Cell::in_lst(cell, c); });
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.row), [cell]( Cell &c ){ return Cell::in_row(cell, c); });
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.col), [cell]( Cell &c ){ return Cell::in_col(cell, c); });
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.seg), [cell]( Cell &c ){ return Cell::in_seg(cell, c); });
+			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.lst), [cell]( Cell &c ){ return Cell::in_lst(cell, c); });
 		}
 	}
 
