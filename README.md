@@ -8,7 +8,7 @@ Sudoku game, solver and generator using C++ and Python.
 - solve: solve the current layout.
 - undo: undo last move or return to the confirmed layout.
 - clear: clear the board.
-- test: test the current layout and start editing.
+- edit: start editing the current layout.
 - confirm: confirm the current layout and finish editing.
 - save: save the current layout to the file "*sudoku.board*".
 - read: read layout from the file "*sudoku.board*".
