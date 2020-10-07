@@ -40,8 +40,7 @@ const char *title = "Sudoku";
 const Console::Rectangle TAB(0, 1, 25, 13);
 const Console::Rectangle BAR(TAB.right + 1, TAB.top,  3, TAB.height);
 const Console::Rectangle MNU(BAR.right + 1, TAB.top, 14, TAB.height);
-const Console::Rectangle HLP(TAB.left, TAB.bottom + 1, MNU.right - TAB.left + 1, 1);
-const Console::Rectangle WIN(TAB.left, 0, HLP.width, HLP.bottom + 1);
+const Console::Rectangle WIN(TAB.left, 0, MNU.right - TAB.left + 1, TAB.height + 2);
 
 std::optional<Console> con;
 
@@ -266,7 +265,7 @@ void Game::draw_info()
 		"quit the game                           ",
 		"                                        ",
 	};
-	::con->Put(HLP.x + 1, HLP.y, hlp[Menu::menu]);
+	::con->Put(WIN.x + 1, WIN.bottom, hlp[Menu::menu]);
 }
 
 void Game::draw_menu()
@@ -318,7 +317,7 @@ void Game::game()
 {
 	::con->Fill(WIN.x, WIN.y, WIN.width, 1, Console::White);
 	::con->Put(TAB.x + 1, WIN.y, Game::title);
-	::con->Fill(HLP.x, HLP.y, HLP.width, 1, Console::LightGrey, Console::Grey);
+	::con->Fill(WIN.x, WIN.bottom, WIN.width, 1, Console::LightGrey, Console::Grey);
 
 	::con->DrawSingle(TAB);
 	::con->DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
