@@ -539,39 +539,11 @@ int main( int argc, char **argv )
 
 	switch (std::toupper(cmd))
 	{
-		case 'C': //check
+		case 'G': // game
 		{
-			auto sudoku = Sudoku(1);
-			auto data   = std::vector<uint32_t>();
-			auto coll   = std::vector<Sudoku>();
-			auto lst    = std::vector<std::string>();
-
-
-			while (--argc > 0)
-				Sudoku::load(lst, *++argv);
-			if (lst.size() == 0)
-				Sudoku::load(lst, file);
-
-			std::cerr << ::title << " check: " << lst.size() << " boards loaded" << std::endl;
-
-			for (std::string i: lst)
-			{
-				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i);
-				sudoku.check();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
-				{
-					data.push_back(sudoku.signature);
-					coll.emplace_back(sudoku);
-				}
-			}
-
-			std::sort(coll.begin(), coll.end(), Sudoku::select_rating);
-
-			for (Sudoku &tab: coll)
-				std::cout << tab << std::endl;
-
-			std::cerr << ::title << " check: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
+			::con.emplace(::title);
+			auto sudoku = Game(::title, std::islower(cmd) ? 0 : 1);
+			sudoku.game();
 			break;
 		}
 
@@ -600,40 +572,6 @@ int main( int argc, char **argv )
 			}
 
 			std::cerr << ::title << " find: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
-			break;
-		}
-
-		case 'S': // sort
-		{
-			auto sudoku = Sudoku(1);
-			auto data   = std::vector<uint32_t>();
-			auto coll   = std::vector<Sudoku>();
-			auto lst    = std::vector<std::string>();
-
-			while (--argc > 0)
-				Sudoku::load(lst, *++argv);
-			if (lst.size() == 0)
-				Sudoku::load(lst, file);
-
-			std::cerr << ::title << " sort: " << lst.size() << " boards loaded" << std::endl;
-
-			for (std::string i: lst)
-			{
-				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i);
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
-				{
-					data.push_back(sudoku.signature);
-					coll.emplace_back(sudoku);
-				}
-			}
-
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
-
-			for (Sudoku &tab: coll)
-				std::cout << tab << std::endl;
-
-			std::cerr << ::title << " sort: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
@@ -671,11 +609,73 @@ int main( int argc, char **argv )
 			break;
 		}
 
-		case 'G': // game
+		case 'S': // sort
 		{
-			::con.emplace(::title);
-			auto sudoku = Game(::title, std::islower(cmd) ? 0 : 1);
-			sudoku.game();
+			auto sudoku = Sudoku(1);
+			auto data   = std::vector<uint32_t>();
+			auto coll   = std::vector<Sudoku>();
+			auto lst    = std::vector<std::string>();
+
+			while (--argc > 0)
+				Sudoku::load(lst, *++argv);
+			if (lst.size() == 0)
+				Sudoku::load(lst, file);
+
+			std::cerr << ::title << " sort: " << lst.size() << " boards loaded" << std::endl;
+
+			for (std::string i: lst)
+			{
+				std::cerr << ' ' << ++cnt << '\r';
+				sudoku.init(i);
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
+				{
+					data.push_back(sudoku.signature);
+					coll.emplace_back(sudoku);
+				}
+			}
+
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
+
+			for (Sudoku &tab: coll)
+				std::cout << tab << std::endl;
+
+			std::cerr << ::title << " sort: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
+			break;
+		}
+
+		case 'C': //check
+		{
+			auto sudoku = Sudoku(1);
+			auto data   = std::vector<uint32_t>();
+			auto coll   = std::vector<Sudoku>();
+			auto lst    = std::vector<std::string>();
+
+
+			while (--argc > 0)
+				Sudoku::load(lst, *++argv);
+			if (lst.size() == 0)
+				Sudoku::load(lst, file);
+
+			std::cerr << ::title << " check: " << lst.size() << " boards loaded" << std::endl;
+
+			for (std::string i: lst)
+			{
+				std::cerr << ' ' << ++cnt << '\r';
+				sudoku.init(i);
+				sudoku.check();
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
+				{
+					data.push_back(sudoku.signature);
+					coll.emplace_back(sudoku);
+				}
+			}
+
+			std::sort(coll.begin(), coll.end(), Sudoku::select_rating);
+
+			for (Sudoku &tab: coll)
+				std::cout << tab << std::endl;
+
+			std::cerr << ::title << " check: " << data.size() << " boards found, " << elapsed(start) << 's' << std::endl;
 			break;
 		}
 
