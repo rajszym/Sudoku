@@ -561,7 +561,10 @@ int main( int argc, char **argv )
 		{
 			::con.emplace(::title);
 			auto sudoku = Game(::title, std::islower(cmd) ? 0 : 1);
+			LONG style = GetWindowLong(::con->Hwnd, GWL_STYLE);
+			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
 			sudoku.game();
+			SetWindowLong(::con->Hwnd, GWL_STYLE, style);
 			break;
 		}
 
