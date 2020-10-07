@@ -40,7 +40,8 @@ const char *title = "Sudoku";
 const Console::Rectangle TAB(0, 1, 25, 13);
 const Console::Rectangle BAR(TAB.right + 1, TAB.top,  3, TAB.height);
 const Console::Rectangle MNU(BAR.right + 1, TAB.top, 14, TAB.height);
-const Console::Rectangle WIN(TAB.left, 0, MNU.right - TAB.left + 1, TAB.bottom + 1);
+const Console::Rectangle HLP(TAB.left, TAB.bottom + 1, TAB.width, 1);
+const Console::Rectangle WIN(TAB.left, 0, MNU.right - TAB.left + 1, HLP.bottom + 1);
 
 std::optional<Console> con;
 
@@ -249,6 +250,23 @@ void Game::draw_info()
 	snprintf(nfo, sizeof(nfo), "%5d/%d", Sudoku::rating, Sudoku::len());
 	::con->Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::count(Button::button) : ' ');
 	::con->Put(MNU.Right(strlen(nfo)) - 1, WIN.y, nfo);
+	const char *hlp[] =
+	{
+		"                                        ",
+		"change difficulty level of the game     ",
+		"change help level of the game           ",
+		"generate or load a new layout           ",
+		"solve the current layout                ",
+		"undo last move /restore confirmed layout",
+		"clear the board                         ",
+		"start editing the current layout        ",
+		"confirm the layout and finish editing   ",
+		"save the current layout to the file     ",
+		"read layout from the file               ",
+		"quit the game                           ",
+		"                                        ",
+	};
+	::con->Put(HLP.x + 1, HLP.y, hlp[Menu::menu]);
 }
 
 void Game::draw_menu()
@@ -446,7 +464,7 @@ void Game::game()
 
 				case MOUSE_WHEELED:
 
-					if (x >= TAB.left && x <= BAR.right && y >= BAR.top && y <= BAR.right && !solved())
+					if (x >= TAB.left && x <= BAR.right && y >= BAR.top && y <= BAR.bottom && !solved())
 					{
 						if ((int) input.Event.MouseEvent.dwButtonState < 0)
 							Button::button = (Button::button == 0) ? 1 : 1 + (Button::button + 0) % 9;
