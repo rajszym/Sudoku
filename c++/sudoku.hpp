@@ -149,14 +149,14 @@ struct Cell
 		return Cell::num != 0 && Cell::num == n;
 	}
 
-	bool dummy()
+	bool corrupt()
 	{
 		return Cell::num == 0 && Cell::len() == 0;
 	}
 
 	bool convergent()
 	{
-		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.dummy(); });
+		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.corrupt(); });
 	}
 
 	bool allowed( int n )
@@ -422,7 +422,7 @@ struct Sudoku: CellTab
 
 	bool convergent()
 	{
-		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.dummy(); });
+		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.corrupt(); });
 	}
 
 	bool tips()
