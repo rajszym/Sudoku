@@ -62,7 +62,7 @@ struct Button
 	Button( int n ): num{n} {}
 
 	void draw();
-	void update();
+	void update(Assistance, Cell *);
 };
 
 int Button::button{0};
@@ -73,16 +73,35 @@ void Button::draw()
 	::con->Put(BAR.x + 1, BAR.y + Button::num + (Button::num - 1) / 3, '0' + Button::num);
 }
 
-void Button::update()
+void Button::update(Assistance help, Cell *c)
 {
 	int y = Button::num + (Button::num - 1) / 3;
 
+	auto fore = Console::LightGrey;
+	auto back = Console::Black;
+
 	if (Button::button == Button::num)
-		::con->Put(BAR.x + 1, BAR.y + y, Console::Black, Console::White);
-	else if (Button::menu == y)
-		::con->Put(BAR.x + 1, BAR.y + y, Console::White, Console::Grey);
+	{
+		fore = Console::Black;
+		back = Console::White;
+	}
 	else
-		::con->Put(BAR.x + 1, BAR.y + y, Console::LightGrey);
+	if (Button::menu == y)
+	{
+		fore = Console::White;
+		back = Console::Grey;
+	}
+	else
+	if (c != nullptr)
+	{
+		if (help >= Assistance::Sure && c->sure(Button::num))
+			fore = Console::Green;
+		else
+		if (help >= Assistance::Available && c->allowed(Button::num))
+			fore = Console::Orange;
+	}
+
+	::con->Put(BAR.x + 1, BAR.y + y, fore, back);
 }
 
 struct Menu: std::vector<const char *>
@@ -194,7 +213,7 @@ Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, hel
 	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
 	Game::mnu.emplace_back("l:",  1); Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
-	Game::mnu.emplace_back("h:",  2); Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
+	Game::mnu.emplace_back("a:",  2); Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
 	Game::mnu.emplace_back("n:",  3); Game::mnu.back().add("new");
 	Game::mnu.emplace_back("s:",  4); Game::mnu.back().add("solve");
 	Game::mnu.emplace_back("u:",  5); Game::mnu.back().add("undo");
@@ -263,7 +282,7 @@ void Game::draw_info()
 	{
 		"                                        ",
 		"change difficulty level of the game     ",
-		"change help level of the game           ",
+		"change assistance level of the game     ",
 		"generate or load a new layout           ",
 		"solve the current layout                ",
 		"undo last move /restore confirmed layout",
@@ -314,10 +333,10 @@ void Game::update()
 	for (Cell &c: *this)
 		Game::update_cell(c);
 
-	for (Button b: Game::btn)
-		b.update();
+	for (Button &b: Game::btn)
+		b.update(Game::help, Game::focus >= 0 ? &Sudoku::data()[focus] : nullptr);
 
-	for (Menu m: Game::mnu)
+	for (Menu &m: Game::mnu)
 		m.update();
 
 	Game::draw_info();
@@ -367,6 +386,13 @@ void Game::game()
 
 					if (x > TAB.left && x < TAB.right && y > TAB.top && y < TAB.bottom)
 					{
+						switch (input.Event.MouseEvent.dwButtonState)
+						{
+						case RIGHTMOST_BUTTON_PRESSED:
+							Button::button = 0;
+							break;
+						}
+
 						x -= TAB.x; y -= TAB.y;
 						if (x % 2 != 0 || x % 8 == 0 || y % 4 == 0)
 							break;
@@ -381,6 +407,9 @@ void Game::game()
 						case FROM_LEFT_1ST_BUTTON_PRESSED:
 							if (c.num == 0)
 							{
+								if (Button::button == 0 && Game::help == Assistance::Sure)
+									Button::button = c.sure();
+								else
 								if (Sudoku::set(c, Button::button, Game::help <= Assistance::Current))
 									Game::draw_cell(c);
 							}
@@ -509,7 +538,7 @@ void Game::game()
 					case '9': Button::button = input.Event.KeyEvent.wVirtualKeyCode - '0'; break;
 					case VK_LEFT:  prev = true;   /* falls through */
 					case VK_RIGHT:                /* falls through */
-					case 'H':   Game::help  =     static_cast<Assistance>(Game::mnu[1].next(prev)); break;
+					case 'A':   Game::help  =     static_cast<Assistance>(Game::mnu[1].next(prev)); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
 					case 'L': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
