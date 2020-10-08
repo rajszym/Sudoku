@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    07.10.2020
+   @date    08.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -245,9 +245,11 @@ void Game::update_cell( Cell &cell )
 
 void Game::draw_info()
 {
+	int cnt = Sudoku::count(Button::button);
+	::con->Put(BAR.x + 1, WIN.y, Button::button == 0 ? ' ' : cnt > 9 ? '?' : '0' + cnt);
+	::con->Put(TAB.right - 6, WIN.y, Sudoku::solved() ? "solved" : "      ");
 	char nfo[16];
 	std::snprintf(nfo, sizeof(nfo), "%5d /%d", Sudoku::len(), Sudoku::rating);
-	::con->Put(BAR.x + 1, WIN.y, Button::button ? '0' + Sudoku::count(Button::button) : ' ');
 	::con->Put(MNU.Right(std::strlen(nfo) + 1), WIN.y, nfo);
 	const char *hlp[] =
 	{
