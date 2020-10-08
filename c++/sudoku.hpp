@@ -676,7 +676,7 @@ struct Sudoku: CellTab
 		Sudoku::confirm();
 	}
 
-	int rating_next()
+	int parse_rating()
 	{
 		std::vector<std::pair<Cell *, int>> sure;
 		for (Cell &c: *this)
@@ -700,7 +700,7 @@ struct Sudoku: CellTab
 				if (!std::get<Cell *>(p)->set(std::get<int>(p)))
 					success = false;
 			if (success)
-				result = Sudoku::rating_next() + 1;
+				result = Sudoku::parse_rating() + 1;
 			for (std::pair<Cell *, int> &p: sure)
 				std::get<Cell *>(p)->num = 0;
 			return result;
@@ -722,7 +722,7 @@ struct Sudoku: CellTab
 				{
 					if (v != 0 && c.set(v))
 					{
-						r += Sudoku::rating_next();
+						r += Sudoku::parse_rating();
 						c.num = 0;
 					}
 				}
@@ -734,21 +734,21 @@ struct Sudoku: CellTab
 		return result + 1;
 	}
 
-	void rating_calc()
+	void calculate_rating()
 	{
 		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
 		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
 
 		Sudoku::rating = 0;
 		int msb = 0;
-		int result = Sudoku::rating_next();
+		int result = Sudoku::parse_rating();
 		for (int i = Sudoku::count(0); result > 0; Sudoku::rating += i--, result >>= 1)
 			msb = (result & 1) ? msb + 1 : 0;
 		Sudoku::rating += msb - 1;
-//		Sudoku::rating = Sudoku::rating_next();
+//		Sudoku::rating = Sudoku::parse_rating();
 }
 
-	void level_calc()
+	void calculate_level()
 	{
 		if ( Sudoku::level == Difficulty::Easy)                      { return; }
 		if ( Sudoku::level == Difficulty::Extreme)                   { return; }
@@ -777,7 +777,7 @@ struct Sudoku: CellTab
 		return crc;
 	}
 
-	void signature_calc()
+	void calculate_signature()
 	{
 		std::array<uint32_t, 10> x = { 0 };
 		std::array<uint32_t, 81> t;
@@ -797,9 +797,9 @@ struct Sudoku: CellTab
 
 	void specify()
 	{
-		Sudoku::rating_calc();
-		Sudoku::level_calc();
-		Sudoku::signature_calc();
+		Sudoku::calculate_rating();
+		Sudoku::calculate_level();
+		Sudoku::calculate_signature();
 	}
 
 	void undo()
