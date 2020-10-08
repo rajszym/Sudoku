@@ -151,12 +151,10 @@ struct Cell
 
 	bool corrupt()
 	{
-		return Cell::num == 0 && Cell::len() == 0;
-	}
+		if (Cell::num == 0)
+			return Cell::len() == 0;
 
-	bool convergent()
-	{
-		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.corrupt(); });
+		return std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [this]( Cell &c ){ return Cell::num == c.num; });
 	}
 
 	bool allowed( int n )
@@ -164,11 +162,8 @@ struct Cell
 		if (Cell::num != 0 || n == 0)
 			return false;
 
-		if (std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell &c ){ return c.num == n; }))
-			return false;
-
 		Cell::num = n;
-		bool result = Cell::convergent();
+		bool result = std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.corrupt(); });
 		Cell::num = 0;
 
 		return result;
@@ -417,12 +412,12 @@ struct Sudoku: CellTab
 
 	bool solved()
 	{
-		return std::all_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
+		return Sudoku::len() == 81 && !Sudoku::corrupt();
 	}
 
-	bool convergent()
+	bool corrupt()
 	{
-		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.corrupt(); });
+		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.corrupt(); });
 	}
 
 	bool tips()
@@ -430,12 +425,22 @@ struct Sudoku: CellTab
 		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.sure(0) != 0; });
 	}
 
-	bool set( Cell &cell, int n )
+	bool set( Cell &cell, int n, bool force = true )
 	{
 		int t = cell.num;
 
-		if (!cell.set(n))
-			return false;
+		if (force)
+		{
+			if (cell.immutable || cell.num == n)
+				return false;
+
+			cell.num = n;
+		}
+		else
+		{
+			if (!cell.set(n))
+				return false;
+		}
 
 		Sudoku::mem.emplace_back(&cell, t);
 		return true;
@@ -560,7 +565,7 @@ struct Sudoku: CellTab
 
 	bool solvable()
 	{
-		if (!Sudoku::convergent())
+		if (Sudoku::corrupt())
 			return false;
 
 		auto tmp = Temp(this);
