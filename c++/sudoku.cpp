@@ -44,6 +44,14 @@ const Console::Rectangle WIN(TAB.left, 0, MNU.right - TAB.left + 1, TAB.height +
 
 std::optional<Console> con;
 
+enum Assistance
+{
+	None,
+	Current,
+	Available,
+	Sure,
+};
+
 struct Button
 {
 	static int button;
@@ -155,8 +163,8 @@ struct Game: public Sudoku
 	static int  focus;
 	const char *title;
 
-	bool wait;
-	int  help;
+	bool        wait;
+	Assistance  help;
 
 	std::vector<Button> btn;
 	std::vector<Menu>   mnu;
@@ -176,7 +184,7 @@ struct Game: public Sudoku
 
 int Game::focus = -1;
 
-Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, help{0}
+Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, help{Assistance::None}
 {
 	::con->SetFont(56, L"Consolas");
 	::con->Center(WIN.width, WIN.height);
@@ -214,14 +222,14 @@ void Game::draw_cell( Cell &cell )
 void Game::update_cell( Cell &cell )
 {
 	int n = Button::button;
-	int h = Game::help;
+	Assistance h = Game::help;
 	int x = TAB.x + 2 + (cell.pos % 9 + cell.pos % 9 / 3) * 2;
 	int y = TAB.y + 1 + (cell.pos / 9 + cell.pos / 9 / 3);
 
 	auto fore = Console::LightGrey;
 	auto back = Console::Black;
 
-	if (h >= 1 && cell.equal(n))
+	if (h >= Assistance::Current && cell.equal(n))
 	{
 		fore = cell.immutable          ? Console::White : Console::LightGreen;
 		back = Game::focus == cell.pos ? Console::Grey  : Console::Red;
@@ -235,9 +243,9 @@ void Game::update_cell( Cell &cell )
 	else
 	if (Game::focus == cell.pos)
 	{
-		if      (h >= 3 && cell.sure(n))    back = Console::Green;
-		else if (h >= 2 && cell.allowed(n)) back = Console::Orange;
-		else                                back = Console::Grey;
+		if      (h >= Assistance::Sure      && cell.sure(n))    back = Console::Green;
+		else if (h >= Assistance::Available && cell.allowed(n)) back = Console::Orange;
+		else                                                    back = Console::Grey;
 	}
 
 	::con->Put(x, y, fore, back);
@@ -373,7 +381,7 @@ void Game::game()
 						case FROM_LEFT_1ST_BUTTON_PRESSED:
 							if (c.num == 0)
 							{
-								if (Sudoku::set(c, Button::button))
+								if (Sudoku::set(c, Button::button, Game::help <= Assistance::Current))
 									Game::draw_cell(c);
 							}
 							else if (!Sudoku::solved() || !c.immutable)
@@ -415,7 +423,7 @@ void Game::game()
 
 						switch (y)
 						{
-						case  2:   Game::help  =     Game::mnu[1].next(Menu::back); break;
+						case  2:   Game::help  =     static_cast<Assistance>(Game::mnu[1].next(Menu::back)); break;
 						case  1: Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(Menu::back)); /* falls through */
 						case  3: Sudoku::generate(); Game::draw(); Button::button = 0; break;
 						case  4: Sudoku::solve();    Game::draw(); Button::button = 0; break;
@@ -501,7 +509,7 @@ void Game::game()
 					case '9': Button::button = input.Event.KeyEvent.wVirtualKeyCode - '0'; break;
 					case VK_LEFT:  prev = true;   /* falls through */
 					case VK_RIGHT:                /* falls through */
-					case 'H':   Game::help  =     Game::mnu[1].next(prev); break;
+					case 'H':   Game::help  =     static_cast<Assistance>(Game::mnu[1].next(prev)); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
 					case 'L': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
