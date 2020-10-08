@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    07.10.2020
+   @date    08.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
