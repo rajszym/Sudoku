@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    08.10.2020
+   @date    09.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -38,8 +38,8 @@
 const char *title = "Sudoku";
 
 const Console::Rectangle TAB(0, 1, 25, 13);
-const Console::Rectangle BAR(TAB.right + 1, TAB.top,  3, TAB.height);
-const Console::Rectangle MNU(BAR.right + 1, TAB.top, 14, TAB.height);
+const Console::Rectangle BTN(TAB.right + 1, TAB.top,  3, TAB.height);
+const Console::Rectangle MNU(BTN.right + 1, TAB.top, 14, TAB.height);
 const Console::Rectangle WIN(TAB.left, 0, MNU.right - TAB.left + 1, TAB.height + 2);
 
 std::optional<Console> con;
@@ -54,8 +54,8 @@ enum Assistance
 
 struct Button
 {
-	static int button;
-	static int menu;
+	static int     button;
+	static Button *focus;
 
 	int num;
 
@@ -65,18 +65,16 @@ struct Button
 	void update(Assistance, Cell *);
 };
 
-int Button::button{0};
-int Button::menu{0};
+int     Button::button{0};
+Button *Button::focus {nullptr};
 
 void Button::draw()
 {
-	::con->Put(BAR.x + 1, BAR.y + Button::num + (Button::num - 1) / 3, '0' + Button::num);
+	::con->Put(BTN.x + 1, BTN.y + Button::num + (Button::num - 1) / 3, '0' + Button::num);
 }
 
 void Button::update(Assistance help, Cell *c)
 {
-	int y = Button::num + (Button::num - 1) / 3;
-
 	auto fore = Console::LightGrey;
 	auto back = Console::Black;
 
@@ -86,7 +84,7 @@ void Button::update(Assistance help, Cell *c)
 		back = Console::White;
 	}
 	else
-	if (Button::menu == y)
+	if (Button::focus == this)
 	{
 		fore = Console::White;
 		back = Console::Grey;
@@ -101,20 +99,23 @@ void Button::update(Assistance help, Cell *c)
 			fore = Console::Orange;
 	}
 
-	::con->Put(BAR.x + 1, BAR.y + y, fore, back);
+	int y = Button::num + (Button::num - 1) / 3;
+
+	::con->Put(BTN.x + 1, BTN.y + y, fore, back);
 }
 
 struct Menu: std::vector<const char *>
 {
-	static int  menu;
-	static bool back;
+	static Menu *focus;
+	static bool  back;
 
-	const char *key;
+	const  char *key;
+	const  char *info;
 
 	int pos;
 	int idx;
 
-	Menu( const char *k, const int p ): key{k}, pos{p}, idx{0} {}
+	Menu( const char *k, const int p, const char *i ): key{k}, info{i}, pos{p}, idx{0} {}
 
 	Menu &add  ( const char * );
 	int  next  ( bool );
@@ -122,8 +123,8 @@ struct Menu: std::vector<const char *>
 	void update();
 };
 
-int  Menu::menu{0};
-bool Menu::back{false};
+Menu *Menu::focus{nullptr};
+bool  Menu::back {false};
 
 Menu &Menu::add( const char *item )
 {
@@ -163,7 +164,7 @@ void Menu::draw()
 
 void Menu::update()
 {
-	if (Menu::menu == Menu::pos)
+	if (Menu::focus == this)
 	{
 		if (Menu::size() > 1)
 			::con->Put (MNU.x + 1, MNU.y + Menu::pos, Menu::back ? "<<" : ">>");
@@ -179,8 +180,8 @@ void Menu::update()
 
 struct Game: public Sudoku
 {
-	static int  focus;
-	const char *title;
+	static Cell *focus;
+	const  char *title;
 
 	bool        wait;
 	Assistance  help;
@@ -201,7 +202,7 @@ struct Game: public Sudoku
 	void game         ();
 };
 
-int Game::focus = -1;
+Cell *Game::focus = nullptr;
 
 Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, help{Assistance::None}
 {
@@ -212,17 +213,17 @@ Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, hel
 
 	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-	Game::mnu.emplace_back("l:",  1); Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
-	Game::mnu.emplace_back("a:",  2); Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
-	Game::mnu.emplace_back("n:",  3); Game::mnu.back().add("new");
-	Game::mnu.emplace_back("s:",  4); Game::mnu.back().add("solve");
-	Game::mnu.emplace_back("u:",  5); Game::mnu.back().add("undo");
-	Game::mnu.emplace_back("c:",  6); Game::mnu.back().add("clear");
-	Game::mnu.emplace_back("e:",  7); Game::mnu.back().add("edit");
-	Game::mnu.emplace_back("f:",  8); Game::mnu.back().add("confirm");
-	Game::mnu.emplace_back("v:",  9); Game::mnu.back().add("save");
-	Game::mnu.emplace_back("r:", 10); Game::mnu.back().add("read");
-	Game::mnu.emplace_back("q:", 11); Game::mnu.back().add("quit");
+	Game::mnu.emplace_back("l:",  1, "change difficulty level of the game     "); Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
+	Game::mnu.emplace_back("a:",  2, "change assistance level of the game     "); Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
+	Game::mnu.emplace_back("n:",  3, "generate or load a new layout           "); Game::mnu.back().add("new");
+	Game::mnu.emplace_back("s:",  4, "solve the current layout                "); Game::mnu.back().add("solve");
+	Game::mnu.emplace_back("u:",  5, "undo last move /restore confirmed layout"); Game::mnu.back().add("undo");
+	Game::mnu.emplace_back("c:",  6, "clear the board                         "); Game::mnu.back().add("clear");
+	Game::mnu.emplace_back("e:",  7, "start editing the current layout        "); Game::mnu.back().add("edit");
+	Game::mnu.emplace_back("f:",  8, "confirm the layout and finish editing   "); Game::mnu.back().add("confirm");
+	Game::mnu.emplace_back("v:",  9, "save the current layout to the file     "); Game::mnu.back().add("save");
+	Game::mnu.emplace_back("r:", 10, "read layout from the file               "); Game::mnu.back().add("read");
+	Game::mnu.emplace_back("q:", 11, "quit the game                           "); Game::mnu.back().add("quit");
 }
 
 Game::~Game()
@@ -250,17 +251,17 @@ void Game::update_cell( Cell &cell )
 
 	if (h >= Assistance::Current && cell.equal(n))
 	{
-		fore = cell.immutable          ? Console::White : Console::LightGreen;
-		back = Game::focus == cell.pos ? Console::Grey  : Console::Red;
+		fore = cell.immutable       ? Console::White : Console::LightGreen;
+		back = Game::focus == &cell ? Console::Grey  : Console::Red;
 	}
 	else
 	if (cell.num != 0)
 	{
-		fore = cell.immutable          ? Console::White : Console::Green;
-		back = Game::focus == cell.pos ? Console::Grey  : Console::Black;
+		fore = cell.immutable       ? Console::White : Console::Green;
+		back = Game::focus == &cell ? Console::Grey  : Console::Black;
 	}
 	else
-	if (Game::focus == cell.pos)
+	if (Game::focus == &cell)
 	{
 		if      (h >= Assistance::Sure      && cell.sure(n))    back = Console::Green;
 		else if (h >= Assistance::Available && cell.allowed(n)) back = Console::Orange;
@@ -273,28 +274,15 @@ void Game::update_cell( Cell &cell )
 void Game::draw_info()
 {
 	int cnt = Sudoku::count(Button::button);
-	::con->Put(BAR.x + 1, WIN.y, Button::button == 0 ? ' ' : cnt > 9 ? '?' : '0' + cnt);
+	::con->Put(BTN.x + 1, WIN.y, Button::button == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
 	::con->Put(TAB.right - 6, WIN.y, Sudoku::solved() ? "solved" : "      ");
 	char nfo[16];
 	std::snprintf(nfo, sizeof(nfo), "%5d /%d", Sudoku::len(), Sudoku::rating);
 	::con->Put(MNU.Right(std::strlen(nfo) + 1), WIN.y, nfo);
-	const char *hlp[] =
-	{
-		"                                        ",
-		"change difficulty level of the game     ",
-		"change assistance level of the game     ",
-		"generate or load a new layout           ",
-		"solve the current layout                ",
-		"undo last move /restore confirmed layout",
-		"clear the board                         ",
-		"start editing the current layout        ",
-		"confirm the layout and finish editing   ",
-		"save the current layout to the file     ",
-		"read layout from the file               ",
-		"quit the game                           ",
-		"                                        ",
-	};
-	::con->Put(WIN.x + 1, WIN.bottom, hlp[Menu::menu]);
+	if (Menu::focus != nullptr)
+		::con->Put(WIN.x + 1, WIN.bottom, Menu::focus->info);
+	else
+		::con->Fill(WIN.x + 1, WIN.bottom, WIN.width - 2, 1);
 }
 
 void Game::draw_menu()
@@ -334,7 +322,7 @@ void Game::update()
 		Game::update_cell(c);
 
 	for (Button &b: Game::btn)
-		b.update(Game::help, Game::focus >= 0 ? &Sudoku::data()[focus] : nullptr);
+		b.update(Game::help, Game::focus);
 
 	for (Menu &m: Game::mnu)
 		m.update();
@@ -351,7 +339,7 @@ void Game::game()
 	::con->DrawSingle(TAB);
 	::con->DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
 	::con->DrawSingle(TAB.x + (TAB.width - 1) / 3, TAB.y, (TAB.width - 1) / 3 + 1, TAB.height);
-	::con->DrawSingle(BAR);
+	::con->DrawSingle(BTN);
 	::con->DrawSingle(MNU);
 
 	for (Button b: Game::btn)
@@ -425,9 +413,9 @@ void Game::game()
 						Game::draw_info();
 					}
 					else
-					if (x >= BAR.left && x <= BAR.right && y > BAR.top && y < BAR.bottom && !Sudoku::solved())
+					if (x >= BTN.left && x <= BTN.right && y > BTN.top && y < BTN.bottom && !Sudoku::solved())
 					{
-						x -= BAR.x; y -= BAR.y;
+						x -= BTN.x; y -= BTN.y;
 
 						switch (input.Event.MouseEvent.dwButtonState)
 						{
@@ -440,7 +428,7 @@ void Game::game()
 						}
 					}
 					else
-					if (x >= MNU.left && x <= MNU.right && y > MNU.top && y < MNU.bottom)
+					if (x > MNU.left && x < MNU.right && y > MNU.top && y < MNU.bottom)
 					{
 						x -= MNU.x; y -= MNU.y;
 
@@ -473,9 +461,9 @@ void Game::game()
 
 				case MOUSE_MOVED:
 
-					Menu::menu   = 0;
-					Button::menu = 0;
-					Game::focus = -1;
+					Game::focus   = nullptr;
+					Button::focus = nullptr;
+					Menu::focus   = nullptr;
 
 					if (x > TAB.left && x < TAB.right && y > TAB.top && y < TAB.bottom)
 					{
@@ -486,26 +474,29 @@ void Game::game()
 						x = (x / 2) - (x / 8) - 1;
 						y = y - (y / 4) - 1;
 						p = y * 9 + x;
-						Game::focus = p;
+						Game::focus = &Game::data()[p];
 					}
 					else
-					if (x >= BAR.left && x <= BAR.right && y > BAR.top && y < BAR.bottom && !solved())
+					if (x >= BTN.left && x <= BTN.right && y > BTN.top && y < BTN.bottom && !solved())
 					{
-						x -= BAR.x; y -= BAR.y;
-						Button::menu = y;
+						x -= BTN.x; y -= BTN.y;
+						if (y % 4 == 0)
+							break;
+						y = y - (y / 4) - 1;
+						Button::focus = &Game::btn[y];
 					}
 					else
-					if (x >= MNU.left && x <= MNU.right && y > MNU.top && y < MNU.bottom)
+					if (x > MNU.left && x < MNU.right && y > MNU.top && y < MNU.bottom)
 					{
 						x -= MNU.x; y -= MNU.y;
-						Menu::menu = y;
+						Menu::focus = &Game::mnu[y - 1];
 						Menu::back = x < MNU.width / 2;
 					}
 					break;
 
 				case MOUSE_WHEELED:
 
-					if (x >= TAB.left && x <= BAR.right && y >= BAR.top && y <= BAR.bottom && !solved())
+					if (x >= TAB.left && x <= BTN.right && y >= BTN.top && y <= BTN.bottom && !solved())
 					{
 						if ((int) input.Event.MouseEvent.dwButtonState < 0)
 							Button::button = (Button::button == 0) ? 1 : 1 + (Button::button + 0) % 9;
@@ -538,7 +529,7 @@ void Game::game()
 					case '9': Button::button = input.Event.KeyEvent.wVirtualKeyCode - '0'; break;
 					case VK_LEFT:  prev = true;   /* falls through */
 					case VK_RIGHT:                /* falls through */
-					case 'A':   Game::help  =     static_cast<Assistance>(Game::mnu[1].next(prev)); break;
+					case 'A':   Game::help =      static_cast<Assistance>(Game::mnu[1].next(prev)); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
 					case 'L': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
@@ -603,7 +594,7 @@ int main( int argc, char **argv )
 			::con.emplace(::title);
 			auto sudoku = Game(::title, std::islower(cmd) ? Difficulty::Easy : Difficulty::Medium);
 			LONG style = GetWindowLong(::con->Hwnd, GWL_STYLE);
-//			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
+		//	SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
 			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU));
 			sudoku.game();
 			SetWindowLong(::con->Hwnd, GWL_STYLE, style);
@@ -707,7 +698,7 @@ int main( int argc, char **argv )
 			break;
 		}
 
-		case 'C': //check
+		case 'C': // check
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto data   = std::vector<uint32_t>();
