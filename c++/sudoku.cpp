@@ -37,16 +37,18 @@
 
 const char *title = "Sudoku";
 
-const Console::Rectangle TAB(0, 1, 25, 13);
+const Console::Rectangle WIN(0, 0, 42, 15);
+const Console::Rectangle BNR(WIN.left, WIN.top, WIN.width, 1);
+const Console::Rectangle TAB(BNR.left, BNR.bottom + 1, 25, 13);
 const Console::Rectangle BTN(TAB.right + 1, TAB.top,  3, TAB.height);
 const Console::Rectangle MNU(BTN.right + 1, TAB.top, 14, TAB.height);
-const Console::Rectangle WIN(TAB.left, 0, MNU.right - TAB.left + 1, TAB.height + 2);
+const Console::Rectangle NFO(WIN.left, WIN.bottom, WIN.width, 1);
 
 std::optional<Console> con;
 
 enum Assistance
 {
-	None,
+	None = 0,
 	Current,
 	Available,
 	Sure,
@@ -274,15 +276,15 @@ void Game::update_cell( Cell &cell )
 void Game::draw_info()
 {
 	int cnt = Sudoku::count(Button::button);
-	::con->Put(BTN.x + 1, WIN.y, Button::button == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
-	::con->Put(TAB.right - 6, WIN.y, Sudoku::solved() ? "solved" : "      ");
+	::con->Put(BTN.x + 1, BNR.y, Button::button == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
+	::con->Put(TAB.right - 6, BNR.y, Sudoku::solved() ? "solved" : "      ");
 	char nfo[16];
 	std::snprintf(nfo, sizeof(nfo), "%5d /%d", Sudoku::len(), Sudoku::rating);
-	::con->Put(MNU.Right(std::strlen(nfo) + 1), WIN.y, nfo);
+	::con->Put(MNU.Right(std::strlen(nfo) + 1), BNR.y, nfo);
 	if (Menu::focus != nullptr)
-		::con->Put(WIN.x + 1, WIN.bottom, Menu::focus->info);
+		::con->Put(NFO.x + 1, NFO.y, Menu::focus->info);
 	else
-		::con->Fill(WIN.x + 1, WIN.bottom, WIN.width - 2, 1);
+		::con->Fill(NFO);
 }
 
 void Game::draw_menu()
@@ -302,7 +304,7 @@ void Game::update_banner()
 		Console::Red
 	};
 
-	::con->Fill(WIN.x, WIN.y, WIN.width, 1, Console::White, Game::wait ? Console::LightRed : Sudoku::solved() ? Console::Black : c[Sudoku::level]);
+	::con->Fill(BNR, Console::White, Game::wait ? Console::LightRed : Sudoku::solved() ? Console::Black : c[Sudoku::level]);
 }
 
 void Game::draw()
@@ -332,9 +334,9 @@ void Game::update()
 
 void Game::game()
 {
-	::con->Fill(WIN.x, WIN.y, WIN.width, 1, Console::White);
-	::con->Put(TAB.x + 1, WIN.y, Game::title);
-	::con->Fill(WIN.x, WIN.bottom, WIN.width, 1, Console::Black, Console::Grey);
+	::con->Fill(BNR, Console::White);
+	::con->Put(BNR.x + 1, BNR.y, Game::title);
+	::con->Fill(NFO, Console::Black, Console::Grey);
 
 	::con->DrawSingle(TAB);
 	::con->DrawSingle(TAB.x, TAB.y + (TAB.height - 1) / 3, TAB.width, (TAB.height - 1) / 3 + 1);
