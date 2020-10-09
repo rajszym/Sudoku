@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    08.10.2020
+   @date    09.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -91,41 +91,68 @@ struct Cell
 		}
 	};
 
-	static
-	bool in_row( const Cell &a, const Cell &b )
+	bool in_row( const Cell &c )
 	{
-		int r1 = a.pos / 9;
-		int r2 = b.pos / 9;
+		if (Cell::pos == c.pos)
+			return false;
 
-		return a.pos != b.pos && r1 == r2;
+		int r1 = Cell::pos / 9;
+		int r2 = c.pos / 9;
+
+		return r1 == r2;
 	}
 
-	static
-	bool in_col( const Cell &a, const Cell &b )
+	bool in_col( const Cell &c )
 	{
-		int c1 = a.pos % 9;
-		int c2 = b.pos % 9;
+		if (Cell::pos == c.pos)
+			return false;
 
-		return a.pos != b.pos && c1 == c2;
+		int c1 = Cell::pos % 9;
+		int c2 = c.pos % 9;
+
+		return c1 == c2;
 	}
 
-	static
-	bool in_seg( const Cell &a, const Cell &b )
+	bool in_seg( const Cell &c )
 	{
-		int r1 = a.pos / 9;
-		int r2 = b.pos / 9;
-		int c1 = a.pos % 9;
-		int c2 = b.pos % 9;
+		if (Cell::pos == c.pos)
+			return false;
+
+		int r1 = Cell::pos / 9;
+		int r2 = c.pos / 9;
+		int c1 = Cell::pos % 9;
+		int c2 = c.pos % 9;
 		int s1 = (r1 / 3) * 3 + (c1 / 3);
 		int s2 = (r2 / 3) * 3 + (c2 / 3);
 
-		return a.pos != b.pos && s1 == s2;
+		return s1 == s2;
 	}
 	
-	static
-	bool in_lst( const Cell &a, const Cell &b )
+	bool in_lst( const Cell &c )
 	{
-		return Cell::in_row(a, b) || Cell::in_col(a, b) || Cell::in_seg(a, b);
+		return Cell::in_row(c) || Cell::in_col(c) || Cell::in_seg(c);
+	}
+
+	void link( Cell &c )
+	{
+		if (Cell::in_row(c)) Cell::row.push_back(std::ref(c));
+		if (Cell::in_col(c)) Cell::col.push_back(std::ref(c));
+		if (Cell::in_seg(c)) Cell::seg.push_back(std::ref(c));
+		if (Cell::in_lst(c)) Cell::lst.push_back(std::ref(c));
+	}
+
+	void init( int p, CellTab *t )
+	{
+		Cell::pos = p;
+		Cell::tab = t;
+
+		for (int i = 0; i < p; i++)
+		{
+			Cell &c = (*t)[i];
+
+			Cell::link(c);
+			c.link(*this);
+		}
 	}
 
 	int len()
@@ -376,18 +403,7 @@ struct Sudoku: CellTab
 	{
 		int i = 0;
 		for (Cell &cell: *this)
-		{
-			cell.pos = i++;
-			cell.tab = this;
-		}
-
-		for (Cell &cell: *this)
-		{
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.row), [cell]( Cell &c ){ return Cell::in_row(cell, c); });
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.col), [cell]( Cell &c ){ return Cell::in_col(cell, c); });
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.seg), [cell]( Cell &c ){ return Cell::in_seg(cell, c); });
-			std::copy_if(Sudoku::begin(), Sudoku::end(), std::back_inserter(cell.lst), [cell]( Cell &c ){ return Cell::in_lst(cell, c); });
-		}
+			cell.init(i++, this);
 	}
 
 	int len()
