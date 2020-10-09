@@ -233,7 +233,8 @@ struct Cell
 		CellRef c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
 		if (c.get().num != 0)
 		{
-			c = std::ref(*std::min_element(this - Cell::pos, this - Cell::pos + 81, Cell::select));
+			Cell * const tab = this - Cell::pos;
+			c = std::ref(*std::min_element(tab, tab + 81, Cell::select));
 			if (c.get().num != 0)
 				return true;
 		}
