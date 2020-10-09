@@ -169,12 +169,6 @@ struct Cell
 		return result;
 	}
 
-	static
-	bool evident( const std::vector<CellRef> &lst, int n )
-	{
-		return std::none_of(std::begin(lst), std::end(lst), [n]( Cell &c ){ return c.allowed(n); });
-	}
-
 	int sure( int n = 0 )
 	{
 		if (Cell::num == 0 && n == 0)
@@ -188,9 +182,10 @@ struct Cell
 
 		if (!Cell::allowed(n)) return 0;
 		if ( Cell::len() == 1) return n;
-		if ( Cell::evident(Cell::row, n)) return n;
-		if ( Cell::evident(Cell::col, n)) return n;
-		if ( Cell::evident(Cell::seg, n)) return n;
+
+		if (std::none_of(std::begin(Cell::row), std::end(Cell::row), [n]( Cell &c ){ return c.allowed(n); })) return n;
+		if (std::none_of(std::begin(Cell::col), std::end(Cell::col), [n]( Cell &c ){ return c.allowed(n); })) return n;
+		if (std::none_of(std::begin(Cell::seg), std::end(Cell::seg), [n]( Cell &c ){ return c.allowed(n); })) return n;
 
 		return 0;
 	}
