@@ -61,7 +61,6 @@ struct Cell
 	int  pos{0};
 	int  num{0};
 	bool immutable{false};
-	CellTab *tab{nullptr};
 
 	std::vector<CellRef> row{};
 	std::vector<CellRef> col{};
@@ -141,18 +140,15 @@ struct Cell
 		if (Cell::in_lst(c)) Cell::lst.push_back(std::ref(c));
 	}
 
-	void init( int p, CellTab *t )
+	void init( int p )
 	{
 		Cell::pos = p;
-		Cell::tab = t;
 
-		for (int i = 0; i < p; i++)
+		std::for_each(this - p, this, [this]( Cell &c )
 		{
-			Cell &c = (*t)[i];
-
 			Cell::link(c);
 			c.link(*this);
-		}
+		});
 	}
 
 	int len()
@@ -237,7 +233,7 @@ struct Cell
 		CellRef c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
 		if (c.get().num != 0)
 		{
-			c = std::ref(*std::min_element(std::begin(*Cell::tab), std::end(*Cell::tab), Cell::select));
+			c = std::ref(*std::min_element(this - Cell::pos, this - Cell::pos + 81, Cell::select));
 			if (c.get().num != 0)
 				return true;
 		}
@@ -403,7 +399,7 @@ struct Sudoku: CellTab
 	{
 		int i = 0;
 		for (Cell &cell: *this)
-			cell.init(i++, this);
+			cell.init(i++);
 	}
 
 	int len()
