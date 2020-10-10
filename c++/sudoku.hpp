@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    09.10.2020
+   @date    10.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -451,6 +451,7 @@ struct Sudoku: CellTab
 		}
 
 		Sudoku::mem.emplace_back(&cell, t);
+		Sudoku::rating = 0;
 		return true;
 	}
 
@@ -474,16 +475,16 @@ struct Sudoku: CellTab
 			c.immutable = false;
 	}
 
-	void confirm()
+	void confirm( bool full = false)
 	{
 		for (Cell &c: *this)
 			c.immutable = c.num != 0;
 
-		Sudoku::specify();
+		Sudoku::specify_layout(full);
 		Sudoku::mem.clear();
 	}
 
-	void init( std::string txt )
+	void init( std::string txt, bool full = false )
 	{
 		Sudoku::clear();
 
@@ -496,7 +497,7 @@ struct Sudoku: CellTab
 			}
 		}
 
-		Sudoku::confirm();
+		Sudoku::confirm(full);
 
 		for (Cell &c: *this)
 		{
@@ -623,13 +624,13 @@ struct Sudoku: CellTab
 		}
 	}
 
-	void generate()
+	void generate( bool full = false )
 	{
 		if (Sudoku::level == Difficulty::Extreme)
 		{
 			auto rnd = std::mt19937{std::random_device{}()};
 
-			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()]);
+			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()], full);
 			Sudoku::shuffle();
 		}
 		else
@@ -638,14 +639,14 @@ struct Sudoku: CellTab
 			Sudoku::solve();
 			for (Cell &c: Random(this))
 				c.generate(Sudoku::level);
-			Sudoku::confirm();
+			Sudoku::confirm(full);
 		}
 	}
 
 	void check()
 	{
 		Sudoku::level = Difficulty::Medium;
-		Sudoku::confirm();
+		Sudoku::confirm(true);
 
 		if (Sudoku::level == Difficulty::Medium)
 			return;
@@ -686,7 +687,7 @@ struct Sudoku: CellTab
 		}
 		while (tmp.changed());
 
-		Sudoku::confirm();
+		Sudoku::confirm(true);
 	}
 
 	int parse_rating()
@@ -747,34 +748,8 @@ struct Sudoku: CellTab
 		return result + 1;
 	}
 
-	void calculate_rating()
-	{
-		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
-		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
-
-		Sudoku::rating = 0;
-		int msb = 0;
-		int result = Sudoku::parse_rating();
-		for (int i = Sudoku::count(0); result > 0; Sudoku::rating += i--, result >>= 1)
-			msb = (result & 1) ? msb + 1 : 0;
-		Sudoku::rating += msb - 1;
-//		Sudoku::rating = Sudoku::parse_rating();
-}
-
-	void calculate_level()
-	{
-		if ( Sudoku::level == Difficulty::Easy)                      { return; }
-		if ( Sudoku::level == Difficulty::Extreme)                   { return; }
-		if ( Sudoku::rating < 0) { Sudoku::level = Difficulty::Medium; return; }
-		if ( Sudoku::solved())   { Sudoku::level = Difficulty::Medium; return; }
-		if (!Sudoku::simplify()) { Sudoku::level = Difficulty::Expert; return; }
-		if (!Sudoku::solved())   { Sudoku::level = Difficulty::Hard;           }
-		else                     { Sudoku::level = Difficulty::Medium;         }
-		Sudoku::again();
-	}
-
 	template <size_t N>
-	uint32_t crc32( const std::array<uint32_t, N> &data, uint32_t crc = 0 )
+	uint32_t calculate_crc32( const std::array<uint32_t, N> &data, uint32_t crc = 0 )
 	{
 		#define POLY 0xEDB88320
 
@@ -804,15 +779,47 @@ struct Sudoku: CellTab
 		std::sort(std::begin(x), std::end(x));
 		std::sort(std::begin(t), std::end(t));
 
-		Sudoku::signature = Sudoku::crc32(x);
-		Sudoku::signature = Sudoku::crc32(t, Sudoku::signature);
+		Sudoku::signature = Sudoku::calculate_crc32(x);
+		Sudoku::signature = Sudoku::calculate_crc32(t, Sudoku::signature);
 	}
 
-	void specify()
+	void calculate_rating( bool full )
 	{
-		Sudoku::calculate_rating();
-		Sudoku::calculate_level();
-		Sudoku::calculate_signature();
+		Sudoku::rating = 0;
+		Sudoku::signature = 0;
+
+		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
+		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
+
+		if (full)
+		{
+			int msb = 0;
+			int result = Sudoku::parse_rating();
+			for (int i = Sudoku::count(0); result > 0; Sudoku::rating += i--, result >>= 1)
+				msb = (result & 1) ? msb + 1 : 0;
+			Sudoku::rating += msb - 1;
+		//	Sudoku::rating = Sudoku::parse_rating();
+
+			Sudoku::calculate_signature();
+		}
+	}
+
+	void calculate_level()
+	{
+		if ( Sudoku::level                      == Difficulty::Easy)    { return; }
+		if ( Sudoku::rating < 0) { Sudoku::level = Difficulty::Medium;    return; }
+		if ( Sudoku::level                      == Difficulty::Extreme) { return; }
+		if ( Sudoku::solved())   { Sudoku::level = Difficulty::Medium;    return; }
+		if (!Sudoku::simplify()) { Sudoku::level = Difficulty::Expert;    return; }
+		if (!Sudoku::solved())   { Sudoku::level = Difficulty::Hard;              }
+		else                     { Sudoku::level = Difficulty::Medium;            }
+		Sudoku::again();
+	}
+
+	void specify_layout( bool full )
+	{
+		Sudoku::calculate_rating(full);
+		Sudoku::calculate_level();		// must be after calculate_rating (depends on the rating)
 	}
 
 	void undo()
@@ -825,7 +832,7 @@ struct Sudoku: CellTab
 		else
 		{
 			Sudoku::again();
-			Sudoku::specify();
+			Sudoku::specify_layout(false);
 		}
 	}
 
@@ -895,15 +902,9 @@ struct Sudoku: CellTab
 		std::string line;
 		if (std::getline(in, line))
 		{
-			int l = line.find("\"", 1) - 1;
-
-			if (l < 0 || l > 81 || line.at(0) != '\"')
-				std::cerr << "ERROR: incorrect board entry" << std::endl;
-			else
-			{
-				sudoku.level = Difficulty::Medium;
-				sudoku.init(line.substr(1, l));
-			}
+			sudoku.level = Difficulty::Medium;
+			if (line.size() > 0)
+				sudoku.init(line.substr(0, 81));
 		}
 
 		return in;
@@ -912,10 +913,9 @@ struct Sudoku: CellTab
 	friend
 	std::ostream &operator <<( std::ostream &out, Sudoku &sudoku )
 	{
-		out << "\"";
 		for (Cell &c: sudoku)
 			out << c;
-		out << "\",//"      << sudoku.level      << ':'
+		out << '|'          << sudoku.level      << ':'
 		    << std::setw(2) << sudoku.len()      << ':'
 		    << std::setw(3) << sudoku.rating     << ':'
 		    << std::setw(8) << std::setfill('0') << std::hex << sudoku.signature
@@ -966,15 +966,8 @@ struct Sudoku: CellTab
 		std::string line;
 		while (std::getline(file, line))
 		{
-			if (line.size() == 0)
-				continue;
-
-			int l = line.find("\"", 1) - 1;
-
-			if (l < 0 || l > 81 || line.at(0) != '\"')
-				std::cerr << "ERROR: incorrect board entry" << std::endl;
-			else
-				lst.push_back(line.substr(1, l));
+			if (line.size() > 0)
+				lst.push_back(line.substr(0, 81));
 		}
 
 		file.close();
@@ -984,34 +977,34 @@ struct Sudoku: CellTab
 const
 std::vector<std::string> Sudoku::extreme =
 {
-".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..",//3:21:702:9cd895a7
-"4.....8.5.3..........7......2.....6.....8.4...4..1.......6.3.7.5.32.1...1.4......",//3:20:666:37bf7303
-"52...6.........7.131..........4..8..6......5...........418.........3..28.387.....",//3:20:666:9a63a17b
-".9............15...68........2.5.4...5.8...9........5....64.185....75...4.5...967",//3:24:663:75fbf454
-"7.48..............328...16....2....15.......8....93........6.....63..5...351.2...",//3:22:642:78d35561
-"52.....8...........1....7.575694......467...............8.1..29.6...24.......9..8",//3:23:630:1304dc2d
-"6.....8.3.4.7.................5.4.7.3.42.1...1.6.......2.....5.....8.6...6..1....",//3:20:617:b18cae9c
-"...2.8.1..4.3.18............94.2...56.7.5..8.1........7.6...35......7..44........",//3:23:584:b52495ca
-"2.....31..9.3.......35.64..721.........1.3.7....7.4....18.....5....3.6..........8",//3:23:584:c8a9dcea
-"..7.........9....384..1..2..7....2..36....7.......7.8.......94.18..4...2.....216.",//3:23:583:068b3d5a
-".56....82..........28...1.6....56.....5..13....14.........1...8.....2..7.7.59.4..",//3:23:583:44a09195
-".9............15...68........2.5.4...5.8...9........5....649185...1.....4.....967",//3:23:583:a672ceba
-"4.....3.8...8.2...8..7.....2..1...8734.......6........5.4.6.8......184...82......",//3:23:583:ec17c195
-"48.3............7112.......7.5....6....2..8.............1.76...3.....4......53...",//3:19:576:4a51f480
-".923.........8.1...........1.7.4...........658.6.......6.5.2...4.....7.....9.4...",//3:19:575:ae172f02
-".68.......52..7..........845..3...9..7...5...1..............5.78........3..4..2.8",//3:20:567:020b33c2
-"4.....8.5.3........5.7......2.....6.....5.4......1.......693.71..32.1...1.9......",//3:21:560:fe155cd6
-".......39.....1..5..3.5.8....8.9...6.7...2...1..4.......9.8..5..2....6..4..7.....",//3:21:556:bd715305
-"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...",//3:21:555:24160b86
-"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..",//3:21:555:a331b75e
-"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1",//3:21:555:d35727f5
-".1..6..9...795.......32..4.....42.3...9...8.............8..6..1.2..3.7..4........",//3:21:555:f241954d
-"6....5....9....4.87..2............1..1....764....1.8.9.....2....4.6.....38.5.....",//3:21:555:f33dc0aa
-"....14....3....2...7..........9...3.6.1.............8.2.....1.4....5.6.8...7.8...",//3:18:533:58b23d93
-"3...8.......7....51.......3......36...2..4....7...........6.13..452...........85.",//3:19:522:6326fa49
-"......5..........39..64......8.7......3.....2....6..4.67.....9......58..48...6...",//3:19:522:f8c281c3
-"...5.1....9....8...6.......4.1..........7..9........3.8.....1.5...21.4.3.1.36....",//3:20:518:ef9f6e72
-".98.1....2......6.............3.2.5..84.........6.4.......4.8.93..5.....8.....1.5",//3:20:513:14de7966
-".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8",//3:20:513:66750dfe
-".26.........6....3.74.8.........3..2.8..4..1.6..5.........1.78.5....9..........4.",//3:20:513:f890d4a7
+".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..|3:21:702:9cd895a7"
+"4.....8.5.3..........7......2.....6.....8.4...4..1.......6.3.7.5.32.1...1.4......|3:20:666:37bf7303"
+"52...6.........7.131..........4..8..6......5...........418.........3..28.387.....|3:20:666:9a63a17b"
+".9............15...68........2.5.4...5.8...9........5....64.185....75...4.5...967|3:24:663:75fbf454"
+"7.48..............328...16....2....15.......8....93........6.....63..5...351.2...|3:22:642:78d35561"
+"52.....8...........1....7.575694......467...............8.1..29.6...24.......9..8|3:23:630:1304dc2d"
+"6.....8.3.4.7.................5.4.7.3.42.1...1.6.......2.....5.....8.6...6..1....|3:20:617:b18cae9c"
+"...2.8.1..4.3.18............94.2...56.7.5..8.1........7.6...35......7..44........|3:23:584:b52495ca"
+"2.....31..9.3.......35.64..721.........1.3.7....7.4....18.....5....3.6..........8|3:23:584:c8a9dcea"
+"..7.........9....384..1..2..7....2..36....7.......7.8.......94.18..4...2.....216.|3:23:583:068b3d5a"
+".56....82..........28...1.6....56.....5..13....14.........1...8.....2..7.7.59.4..|3:23:583:44a09195"
+".9............15...68........2.5.4...5.8...9........5....649185...1.....4.....967|3:23:583:a672ceba"
+"4.....3.8...8.2...8..7.....2..1...8734.......6........5.4.6.8......184...82......|3:23:583:ec17c195"
+"48.3............7112.......7.5....6....2..8.............1.76...3.....4......53...|3:19:576:4a51f480"
+".923.........8.1...........1.7.4...........658.6.......6.5.2...4.....7.....9.4...|3:19:575:ae172f02"
+".68.......52..7..........845..3...9..7...5...1..............5.78........3..4..2.8|3:20:567:020b33c2"
+"4.....8.5.3........5.7......2.....6.....5.4......1.......693.71..32.1...1.9......|3:21:560:fe155cd6"
+".......39.....1..5..3.5.8....8.9...6.7...2...1..4.......9.8..5..2....6..4..7.....|3:21:556:bd715305"
+"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...|3:21:555:24160b86"
+"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..|3:21:555:a331b75e"
+"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1|3:21:555:d35727f5"
+".1..6..9...795.......32..4.....42.3...9...8.............8..6..1.2..3.7..4........|3:21:555:f241954d"
+"6....5....9....4.87..2............1..1....764....1.8.9.....2....4.6.....38.5.....|3:21:555:f33dc0aa"
+"....14....3....2...7..........9...3.6.1.............8.2.....1.4....5.6.8...7.8...|3:18:533:58b23d93"
+"3...8.......7....51.......3......36...2..4....7...........6.13..452...........85.|3:19:522:6326fa49"
+"......5..........39..64......8.7......3.....2....6..4.67.....9......58..48...6...|3:19:522:f8c281c3"
+"...5.1....9....8...6.......4.1..........7..9........3.8.....1.5...21.4.3.1.36....|3:20:518:ef9f6e72"
+".98.1....2......6.............3.2.5..84.........6.4.......4.8.93..5.....8.....1.5|3:20:513:14de7966"
+".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8|3:20:513:66750dfe"
+".26.........6....3.74.8.........3..2.8..4..1.6..5.........1.78.5....9..........4.|3:20:513:f890d4a7"
 };
