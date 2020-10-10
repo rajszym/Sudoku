@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    09.10.2020
+   @date    10.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -185,8 +185,7 @@ struct Game: public Sudoku
 	static Cell *focus;
 	const  char *title;
 
-	bool        wait;
-	Assistance  help;
+	Assistance   help;
 
 	std::vector<Button> btn;
 	std::vector<Menu>   mnu;
@@ -198,7 +197,6 @@ struct Game: public Sudoku
 	void update_cell  ( Cell & );
 	void draw_info    ();
 	void draw_menu    ();
-	void update_banner();
 	void draw         ();
 	void update       ();
 	void game         ();
@@ -206,7 +204,7 @@ struct Game: public Sudoku
 
 Cell *Game::focus = nullptr;
 
-Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, help{Assistance::None}
+Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, help{Assistance::None}
 {
 	::con->SetFont(56, L"Consolas");
 	::con->Center(WIN.width, WIN.height);
@@ -215,17 +213,17 @@ Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, wait{false}, hel
 
 	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-	Game::mnu.emplace_back("l:",  1, "change difficulty level of the game     "); Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
-	Game::mnu.emplace_back("a:",  2, "change assistance level of the game     "); Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
-	Game::mnu.emplace_back("n:",  3, "generate or load a new layout           "); Game::mnu.back().add("new");
-	Game::mnu.emplace_back("s:",  4, "solve the current layout                "); Game::mnu.back().add("solve");
+	Game::mnu.emplace_back("l:",  1, "change difficulty level of the game");      Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
+	Game::mnu.emplace_back("a:",  2, "change assistance level of the game");      Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
+	Game::mnu.emplace_back("n:",  3, "generate or load a new layout");            Game::mnu.back().add("new");
+	Game::mnu.emplace_back("s:",  4, "solve the current layout");                 Game::mnu.back().add("solve");
 	Game::mnu.emplace_back("u:",  5, "undo last move /restore confirmed layout"); Game::mnu.back().add("undo");
-	Game::mnu.emplace_back("c:",  6, "clear the board                         "); Game::mnu.back().add("clear");
-	Game::mnu.emplace_back("e:",  7, "start editing the current layout        "); Game::mnu.back().add("edit");
-	Game::mnu.emplace_back("f:",  8, "confirm the layout and finish editing   "); Game::mnu.back().add("confirm");
-	Game::mnu.emplace_back("v:",  9, "save the current layout to the file     "); Game::mnu.back().add("save");
-	Game::mnu.emplace_back("r:", 10, "read layout from the file               "); Game::mnu.back().add("read");
-	Game::mnu.emplace_back("q:", 11, "quit the game                           "); Game::mnu.back().add("quit");
+	Game::mnu.emplace_back("c:",  6, "clear the board");                          Game::mnu.back().add("clear");
+	Game::mnu.emplace_back("e:",  7, "start editing the current layout");         Game::mnu.back().add("edit");
+	Game::mnu.emplace_back("f:",  8, "confirm the layout and finish editing");    Game::mnu.back().add("confirm");
+	Game::mnu.emplace_back("v:",  9, "save the current layout to the file");      Game::mnu.back().add("save");
+	Game::mnu.emplace_back("r:", 10, "read layout from the file");                Game::mnu.back().add("read");
+	Game::mnu.emplace_back("q:", 11, "quit the game");                            Game::mnu.back().add("quit");
 }
 
 Game::~Game()
@@ -275,36 +273,21 @@ void Game::update_cell( Cell &cell )
 
 void Game::draw_info()
 {
+	const char *nfo;
 	int cnt = Sudoku::count(Button::button);
 	::con->Put(BTN.x + 1, BNR.y, Button::button == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
-	::con->Put(TAB.right - 6, BNR.y, Sudoku::solved() ? "solved" : "      ");
-	char nfo[16];
-	std::snprintf(nfo, sizeof(nfo), "%5d /%d", Sudoku::len(), Sudoku::rating);
-	::con->Put(MNU.Right(std::strlen(nfo) + 1), BNR.y, nfo);
-	if (Menu::focus != nullptr)
-		::con->Put(NFO.x + 1, NFO.y, Menu::focus->info);
-	else
-		::con->Fill(NFO);
+	nfo = Sudoku::len() < 81 ? (Sudoku::rating == 0 ? "" : Sudoku::rating == -1 ? "ambiguous" : "unsolvable") : (Sudoku::corrupt() ? "corrupt" : "solved");
+	cnt = std::strlen(nfo);
+	::con->Put(MNU.x + 1, BNR.y, nfo); ::con->Fill(MNU.x + 1 + cnt, BNR.y, MNU.width - 2 - cnt, 1);
+	nfo = (Menu::focus == nullptr) ? "" : Menu::focus->info;
+	cnt = std::strlen(nfo);
+	::con->Put(NFO.x + 1, NFO.y, nfo); ::con->Fill(NFO.x + 1 + cnt, NFO.y, NFO.width - 2 - cnt, 1);
 }
 
 void Game::draw_menu()
 {
 	Game::mnu[0].idx = Sudoku::level; Game::mnu[0].draw();
 	Game::mnu[1].idx = Game::help;    Game::mnu[1].draw();
-}
-
-void Game::update_banner()
-{
-	static const Console::Color c[] =
-	{
-		Console::Blue,
-		Console::Green,
-		Console::Orange,
-		Console::Red,
-		Console::Red
-	};
-
-	::con->Fill(BNR, Console::White, Game::wait ? Console::LightRed : Sudoku::solved() ? Console::Black : c[Sudoku::level]);
 }
 
 void Game::draw()
@@ -318,7 +301,16 @@ void Game::draw()
 
 void Game::update()
 {
-	Game::update_banner();
+	static const Console::Color banner_color[] =
+	{
+		Console::Blue,
+		Console::Green,
+		Console::Orange,
+		Console::Red,
+		Console::Red
+	};
+
+	::con->Fill(BNR, Console::White, banner_color[Sudoku::level]);
 
 	for (Cell &c: *this)
 		Game::update_cell(c);
@@ -437,9 +429,6 @@ void Game::game()
 						if (input.Event.MouseEvent.dwButtonState != FROM_LEFT_1ST_BUTTON_PRESSED)
 							break;
 
-						Game::wait = true;
-						Game::update();
-
 						switch (y)
 						{
 						case  2:   Game::help  =     static_cast<Assistance>(Game::mnu[1].next(Menu::back)); break;
@@ -457,7 +446,6 @@ void Game::game()
 
 						Game::draw_info();
 						Game::draw_menu();
-						Game::wait = false;
 					}
 					break;
 
@@ -511,9 +499,6 @@ void Game::game()
 
 			case KEY_EVENT:
 
-				Game::wait = true;
-				Game::update_banner();
-
 				if (input.Event.KeyEvent.bKeyDown)
 				{
 					bool prev = false; // input.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED;
@@ -550,7 +535,6 @@ void Game::game()
 					case VK_INSERT:               /* falls through */
 					case 'V': Sudoku::save();     break;
 					case 'R': Sudoku::load();     Game::draw(); Button::button = 0; break;
-					case 'T': Sudoku::check();    Game::draw(); break;
 					case VK_ESCAPE:               /* falls through */
 					case 'Q': return;
 					}
@@ -558,7 +542,6 @@ void Game::game()
 
 				Game::draw_info();
 				Game::draw_menu();
-				Game::wait = false;
 
 				break;
 			}
@@ -617,7 +600,7 @@ int main( int argc, char **argv )
 			GetAsyncKeyState(VK_ESCAPE);
 			while (!GetAsyncKeyState(VK_ESCAPE))
 			{
-				sudoku.generate();
+				sudoku.generate(true);
 				if (sudoku.level > Difficulty::Medium && sudoku.len() > 17)
 					sudoku.check();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
@@ -649,7 +632,7 @@ int main( int argc, char **argv )
 			for (std::string i: lst)
 			{
 				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i);
+				sudoku.init(i, true);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
 					data.push_back(sudoku.signature);
@@ -683,7 +666,7 @@ int main( int argc, char **argv )
 			for (std::string i: lst)
 			{
 				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i);
+				sudoku.init(i, true);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
 				{
 					data.push_back(sudoku.signature);
@@ -718,7 +701,7 @@ int main( int argc, char **argv )
 			for (std::string i: lst)
 			{
 				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i);
+				sudoku.init(i, true);
 				sudoku.check();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
