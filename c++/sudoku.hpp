@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    10.10.2020
+   @date    11.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -475,16 +475,16 @@ struct Sudoku: CellTab
 			c.immutable = false;
 	}
 
-	void confirm( bool full = false)
+	void confirm()
 	{
 		for (Cell &c: *this)
 			c.immutable = c.num != 0;
 
-		Sudoku::specify_layout(full);
+		Sudoku::specify_layout();
 		Sudoku::mem.clear();
 	}
 
-	void init( std::string txt, bool full = false )
+	void init( std::string txt )
 	{
 		Sudoku::clear();
 
@@ -497,7 +497,7 @@ struct Sudoku: CellTab
 			}
 		}
 
-		Sudoku::confirm(full);
+		Sudoku::confirm();
 
 		for (Cell &c: *this)
 		{
@@ -624,13 +624,13 @@ struct Sudoku: CellTab
 		}
 	}
 
-	void generate( bool full = false )
+	void generate()
 	{
 		if (Sudoku::level == Difficulty::Extreme)
 		{
 			auto rnd = std::mt19937{std::random_device{}()};
 
-			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()], full);
+			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()]);
 			Sudoku::shuffle();
 		}
 		else
@@ -639,14 +639,14 @@ struct Sudoku: CellTab
 			Sudoku::solve();
 			for (Cell &c: Random(this))
 				c.generate(Sudoku::level);
-			Sudoku::confirm(full);
+			Sudoku::confirm();
 		}
 	}
 
 	void check()
 	{
 		Sudoku::level = Difficulty::Medium;
-		Sudoku::confirm(true);
+		Sudoku::confirm();
 
 		if (Sudoku::level == Difficulty::Medium)
 			return;
@@ -687,7 +687,7 @@ struct Sudoku: CellTab
 		}
 		while (tmp.changed());
 
-		Sudoku::confirm(true);
+		Sudoku::confirm();
 	}
 
 	int parse_rating()
@@ -765,6 +765,35 @@ struct Sudoku: CellTab
 		return crc;
 	}
 
+	void calculate_rating()
+	{
+		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
+		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
+
+		Sudoku::rating = 0;
+
+		if (Sudoku::level == Difficulty::Extreme) return;
+
+		int msb = 0;
+		int result = Sudoku::parse_rating();
+		for (int i = Sudoku::count(0); result > 0; Sudoku::rating += i--, result >>= 1)
+			msb = (result & 1) ? msb + 1 : 0;
+		Sudoku::rating += msb - 1;
+	//	Sudoku::rating = Sudoku::parse_rating();
+	}
+
+	void calculate_level()
+	{
+		if ( Sudoku::level                      == Difficulty::Easy)    { return; }
+		if ( Sudoku::rating < 0) { Sudoku::level = Difficulty::Medium;    return; }
+		if ( Sudoku::level                      == Difficulty::Extreme) { return; }
+		if ( Sudoku::solved())   { Sudoku::level = Difficulty::Medium;    return; }
+		if (!Sudoku::simplify()) { Sudoku::level = Difficulty::Expert;    return; }
+		if (!Sudoku::solved())   { Sudoku::level = Difficulty::Hard;              }
+		else                     { Sudoku::level = Difficulty::Medium;            }
+		Sudoku::again();
+	}
+
 	void calculate_signature()
 	{
 		std::array<uint32_t, 10> x = { 0 };
@@ -783,43 +812,11 @@ struct Sudoku: CellTab
 		Sudoku::signature = Sudoku::calculate_crc32(t, Sudoku::signature);
 	}
 
-	void calculate_rating( bool full )
+	void specify_layout()
 	{
-		Sudoku::rating = 0;
-		Sudoku::signature = 0;
-
-		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
-		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
-
-		if (full)
-		{
-			int msb = 0;
-			int result = Sudoku::parse_rating();
-			for (int i = Sudoku::count(0); result > 0; Sudoku::rating += i--, result >>= 1)
-				msb = (result & 1) ? msb + 1 : 0;
-			Sudoku::rating += msb - 1;
-		//	Sudoku::rating = Sudoku::parse_rating();
-
-			Sudoku::calculate_signature();
-		}
-	}
-
-	void calculate_level()
-	{
-		if ( Sudoku::level                      == Difficulty::Easy)    { return; }
-		if ( Sudoku::rating < 0) { Sudoku::level = Difficulty::Medium;    return; }
-		if ( Sudoku::level                      == Difficulty::Extreme) { return; }
-		if ( Sudoku::solved())   { Sudoku::level = Difficulty::Medium;    return; }
-		if (!Sudoku::simplify()) { Sudoku::level = Difficulty::Expert;    return; }
-		if (!Sudoku::solved())   { Sudoku::level = Difficulty::Hard;              }
-		else                     { Sudoku::level = Difficulty::Medium;            }
-		Sudoku::again();
-	}
-
-	void specify_layout( bool full )
-	{
-		Sudoku::calculate_rating(full);
+		Sudoku::calculate_rating();
 		Sudoku::calculate_level();		// must be after calculate_rating (depends on the rating)
+		Sudoku::calculate_signature();
 	}
 
 	void undo()
@@ -832,7 +829,7 @@ struct Sudoku: CellTab
 		else
 		{
 			Sudoku::again();
-			Sudoku::specify_layout(false);
+			Sudoku::specify_layout();
 		}
 	}
 
