@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    10.10.2020
+   @date    11.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -276,7 +276,7 @@ void Game::draw_info()
 	const char *nfo;
 	int cnt = Sudoku::count(Button::button);
 	::con->Put(BTN.x + 1, BNR.y, Button::button == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
-	nfo = Sudoku::len() < 81 ? (Sudoku::rating == 0 ? "" : Sudoku::rating == -1 ? "ambiguous" : "unsolvable") : (Sudoku::corrupt() ? "corrupt" : "solved");
+	nfo = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable" : Sudoku::rating == -1 ? "ambiguous" : "") : (Sudoku::corrupt() ? "corrupt" : "solved");
 	cnt = std::strlen(nfo);
 	::con->Put(MNU.x + 1, BNR.y, nfo); ::con->Fill(MNU.x + 1 + cnt, BNR.y, MNU.width - 2 - cnt, 1);
 	nfo = (Menu::focus == nullptr) ? "" : Menu::focus->info;
@@ -600,7 +600,7 @@ int main( int argc, char **argv )
 			GetAsyncKeyState(VK_ESCAPE);
 			while (!GetAsyncKeyState(VK_ESCAPE))
 			{
-				sudoku.generate(true);
+				sudoku.generate();
 				if (sudoku.level > Difficulty::Medium && sudoku.len() > 17)
 					sudoku.check();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
@@ -632,7 +632,7 @@ int main( int argc, char **argv )
 			for (std::string i: lst)
 			{
 				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i, true);
+				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
 					data.push_back(sudoku.signature);
@@ -666,7 +666,7 @@ int main( int argc, char **argv )
 			for (std::string i: lst)
 			{
 				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i, true);
+				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
 				{
 					data.push_back(sudoku.signature);
@@ -701,7 +701,7 @@ int main( int argc, char **argv )
 			for (std::string i: lst)
 			{
 				std::cerr << ' ' << ++cnt << '\r';
-				sudoku.init(i, true);
+				sudoku.init(i);
 				sudoku.check();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
