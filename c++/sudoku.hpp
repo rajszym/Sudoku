@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    11.10.2020
+   @date    12.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -39,6 +39,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <chrono>
 #include <random>
 
 struct Cell;
@@ -385,7 +386,59 @@ struct Random: std::vector<CellRef>
 	}
 };
 
-struct Sudoku: CellTab
+class Timepiece
+{
+	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+	std::chrono::time_point<std::chrono::high_resolution_clock> stop_;
+
+public:
+
+	void start()
+	{
+		start_ = std::chrono::high_resolution_clock::now();
+		stop_ = start_;
+	}
+
+	void stop()
+	{
+		if (stop_ == start_)
+			stop_ = std::chrono::high_resolution_clock::now();
+	}
+
+	void pause()
+	{
+		if (stop_ == start_)
+			stop_ = std::chrono::high_resolution_clock::now();
+	}
+
+	void resume()
+	{
+		if (stop_ > start_)
+		{
+			start_ += std::chrono::high_resolution_clock::now() - stop_;
+			stop_ = start_;
+		}
+		else if (stop_ < start_)
+		{
+			start_ = std::chrono::high_resolution_clock::now();
+			stop_ = start_;
+		}
+	}
+
+	void reset()
+	{
+		start_ = std::chrono::high_resolution_clock::now();
+	}
+
+	std::chrono::duration<double> get()
+	{
+		if      (stop_ > start_) return stop_ - start_;
+		else if (stop_ < start_) return std::chrono::duration<double>::zero();
+		else                     return std::chrono::high_resolution_clock::now() - start_;
+	}
+};
+
+struct Sudoku: CellTab, Timepiece
 {
 	Difficulty level;
 	int        rating;
@@ -401,6 +454,8 @@ struct Sudoku: CellTab
 		int i = 0;
 		for (Cell &cell: *this)
 			cell.init(i++);
+
+		Sudoku::Timepiece::start();
 	}
 
 	int len()
