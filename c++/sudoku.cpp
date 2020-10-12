@@ -140,14 +140,12 @@ int Menu::next( bool prev )
 	{
 		if (prev) Menu::idx = Menu::idx == 0 ? max : Menu::idx == max ? 1 : 0;
 		else      Menu::idx = Menu::idx == max ? 0 : Menu::idx == 0 ? 1 : max;
-		Menu::draw();
 	}
 	else
 	if (max > 0)
 	{
 		if (prev) Menu::idx = (Menu::idx + max) % (max + 1);
 		else      Menu::idx = (Menu::idx + 1)   % (max + 1);
-		Menu::draw();
 	}
 
 	return Menu::idx;
@@ -194,6 +192,7 @@ struct Game: public Sudoku
 	void draw_cell    ( Cell & );
 	void update_cell  ( Cell & );
 	void update_info  ();
+	void update_menu  ();
 	void draw         ();
 	void update       ();
 	void game         ();
@@ -288,6 +287,12 @@ void Game::update_info()
 	nfo = (Menu::focus == nullptr) ? "" : Menu::focus->info;
 	cnt = std::strlen(nfo);
 	::con->Put(NFO.x + 1, NFO.y, nfo); ::con->Fill(NFO.x + 1 + cnt, NFO.y, NFO.width - 2 - cnt, 1);
+}
+
+void Game::update_menu()
+{
+	mnu[0].idx = Sudoku::level; Game::mnu[0].draw();
+	mnu[1].idx = Game::help;    Game::mnu[1].draw();
 }
 
 void Game::draw()
@@ -437,6 +442,8 @@ void Game::game()
 						case 10: Sudoku::load();     Game::draw(); Button::button = 0; Sudoku::Timepiece::start(); break;
 						case 11: return;
 						}
+
+						Game::update_menu();
 					}
 					break;
 
@@ -530,6 +537,8 @@ void Game::game()
 					case VK_ESCAPE:               /* falls through */
 					case 'Q': return;
 					}
+
+					Game::update_menu();
 				}
 
 				break;
