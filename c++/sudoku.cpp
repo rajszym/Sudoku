@@ -119,7 +119,7 @@ struct Menu: std::vector<const char *>
 
 	Menu &add  ( const char * );
 	int  next  ( bool );
-	void draw  ();
+	void draw  ( int = 0 );
 	void update();
 };
 
@@ -151,11 +151,11 @@ int Menu::next( bool prev )
 	return Menu::idx;
 }
 
-void Menu::draw()
+void Menu::draw( int i )
 {
 	if (Menu::size() > 0)
 	{
-		unsigned n = std::strlen(Menu::data()[Menu::idx]);
+		unsigned n = std::strlen(Menu::data()[Menu::idx = i]);
 		::con->Put (MNU.x + 4,     MNU.y + Menu::pos, Menu::data()[Menu::idx]);
 		::con->Fill(MNU.x + 4 + n, MNU.y + Menu::pos, MNU.width - 5 - n, 1);
 	}
@@ -291,8 +291,8 @@ void Game::update_info()
 
 void Game::update_menu()
 {
-	mnu[0].idx = Sudoku::level; Game::mnu[0].draw();
-	mnu[1].idx = Game::help;    Game::mnu[1].draw();
+	Game::mnu[0].draw(Sudoku::level);
+	Game::mnu[1].draw(Game::help);
 }
 
 void Game::draw()
