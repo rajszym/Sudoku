@@ -136,7 +136,7 @@ int Menu::next( bool prev )
 {
 	int max = Menu::size() - 1;
 
-	if (Menu::key[0] == 'l')
+	if (Menu::key[0] == 'd')
 	{
 		if (prev) Menu::idx = Menu::idx == 0 ? max : Menu::idx == max ? 1 : 0;
 		else      Menu::idx = Menu::idx == max ? 0 : Menu::idx == 0 ? 1 : max;
@@ -209,7 +209,7 @@ Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, help{Assistance:
 
 	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-	Game::mnu.emplace_back("l:",  1, "change difficulty level of the game");      Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
+	Game::mnu.emplace_back("d:",  1, "change difficulty level of the game");      Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
 	Game::mnu.emplace_back("a:",  2, "change assistance level of the game");      Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
 	Game::mnu.emplace_back("n:",  3, "generate or load a new layout");            Game::mnu.back().add("new");
 	Game::mnu.emplace_back("s:",  4, "solve the current layout");                 Game::mnu.back().add("solve");
@@ -518,7 +518,7 @@ void Game::game()
 					case 'A': Game::help =        static_cast<Assistance>(Game::mnu[1].next(prev)); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
-					case 'L': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
+					case 'D': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
 					case VK_TAB:                  /* falls through */
 					case 'N': Sudoku::generate(); Game::draw(); Button::button = 0; Sudoku::Timepiece::start(); break;
 					case VK_RETURN:               /* falls through */
