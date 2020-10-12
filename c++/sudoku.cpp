@@ -425,7 +425,7 @@ void Game::game()
 
 						switch (y)
 						{
-						case  2:   Game::help  =     static_cast<Assistance>(Game::mnu[1].next(Menu::back)); break;
+						case  2: Game::help =        static_cast<Assistance>(Game::mnu[1].next(Menu::back)); break;
 						case  1: Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(Menu::back)); /* falls through */
 						case  3: Sudoku::generate(); Game::draw(); Button::button = 0; Sudoku::Timepiece::start(); break;
 						case  4: Sudoku::solve();    Game::draw(); Button::button = 0; break;
@@ -496,19 +496,19 @@ void Game::game()
 					bool prev = false; // input.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED;
 					switch (input.Event.KeyEvent.wVirtualKeyCode)
 					{
-					case '0': /* falls through */
-					case '1': /* falls through */
-					case '2': /* falls through */
-					case '3': /* falls through */
-					case '4': /* falls through */
-					case '5': /* falls through */
-					case '6': /* falls through */
-					case '7': /* falls through */
-					case '8': /* falls through */
-					case '9': Button::button = input.Event.KeyEvent.wVirtualKeyCode - '0'; break;
+					case '0': Button::button = 0; break;
+					case '1': Button::button = 1; break;
+					case '2': Button::button = 2; break;
+					case '3': Button::button = 3; break;
+					case '4': Button::button = 4; break;
+					case '5': Button::button = 5; break;
+					case '6': Button::button = 6; break;
+					case '7': Button::button = 7; break;
+					case '8': Button::button = 8; break;
+					case '9': Button::button = 9; break;
 					case VK_LEFT:  prev = true;   /* falls through */
 					case VK_RIGHT:                /* falls through */
-					case 'A':   Game::help =      static_cast<Assistance>(Game::mnu[1].next(prev)); break;
+					case 'A': Game::help =        static_cast<Assistance>(Game::mnu[1].next(prev)); break;
 					case VK_NEXT:  prev = true;   /* falls through */ // PAGE DOWN
 					case VK_PRIOR:                /* falls through */ // PAGE UP
 					case 'L': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
