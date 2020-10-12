@@ -341,7 +341,6 @@ void Game::game()
 	Sudoku::generate();
 	Game::draw();
 	Game::update();
-	Sudoku::Timepiece::start();
 
 	for (;;)
 	{
