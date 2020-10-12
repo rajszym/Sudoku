@@ -280,7 +280,7 @@ void Game::update_info()
 	cnt = std::strlen(nfo);
 	::con->Fill(TAB.x + 9, BNR.y, TAB.width - 10 - cnt, 1); ::con->Put(TAB.Right(cnt + 1), BNR.y, nfo);
 
-	cnt = static_cast<size_t>(Sudoku::Timepiece::get().count());
+	cnt = std::chrono::duration_cast<std::chrono::seconds>(Sudoku::Timepiece::get()).count();
 	std::snprintf(txt, sizeof(txt), "%zu:%02zu:%02zu", cnt / 3600, (cnt / 60) % 60, cnt % 60);
 	cnt = std::strlen(txt);
 	::con->Fill(MNU.x + 1, BNR.y, MNU.width - 2 - cnt, 1); ::con->Put(MNU.Right(cnt + 1), BNR.y, txt);
