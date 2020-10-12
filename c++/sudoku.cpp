@@ -291,8 +291,8 @@ void Game::update_info()
 
 void Game::update_menu()
 {
-	Game::mnu[0].draw(Sudoku::level);
-	Game::mnu[1].draw(Game::help);
+	Game::mnu[0].draw(static_cast<int>(Sudoku::level));
+	Game::mnu[1].draw(static_cast<int>(Game::help));
 }
 
 void Game::draw()
