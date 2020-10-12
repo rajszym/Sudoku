@@ -31,7 +31,7 @@
 
 #include "sudoku.hpp"
 #include "console.hpp"
-#include <cstring> // strlen
+#include <cstring>
 #include <windows.h>
 
 const char *title = "Sudoku";
