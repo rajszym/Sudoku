@@ -59,8 +59,9 @@ struct Button
 	static Button *focus;
 
 	int num;
+	int pos;
 
-	Button( int n ): num{n} {}
+	Button( int n ): num{n}, pos{n+(n-1)/3} {}
 
 	void draw();
 	void update(Assistance, Cell *);
@@ -71,7 +72,7 @@ Button *Button::focus {nullptr};
 
 void Button::draw()
 {
-	::con->Put(BTN.x + 1, BTN.y + Button::num + (Button::num - 1) / 3, '0' + Button::num);
+	::con->Put(BTN.x + 1, BTN.y + Button::pos, '0' + Button::num);
 }
 
 void Button::update(Assistance help, Cell *c)
@@ -100,9 +101,7 @@ void Button::update(Assistance help, Cell *c)
 			fore = Console::Orange;
 	}
 
-	int y = Button::num + (Button::num - 1) / 3;
-
-	::con->Put(BTN.x + 1, BTN.y + y, fore, back);
+	::con->Put(BTN.x + 1, BTN.y + Button::pos, fore, back);
 }
 
 struct Menu: std::vector<const char *>
