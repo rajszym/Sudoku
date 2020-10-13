@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    12.10.2020
+   @date    13.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -888,7 +888,7 @@ struct Sudoku: CellTab, Timepiece
 		}
 	}
 
-	bool acceptable()
+	bool expert()
 	{
 		return Sudoku::rating >= Sudoku::len() * 20;
 	}
@@ -907,7 +907,7 @@ struct Sudoku: CellTab, Timepiece
 			return false;
 		}
 
-		return Sudoku::level == Difficulty::Easy || all || Sudoku::acceptable();
+		return Sudoku::level == Difficulty::Easy || all || Sudoku::expert();
 	}
 
 	static
@@ -975,15 +975,19 @@ struct Sudoku: CellTab, Timepiece
 		return out;
 	}
 
-	void load( std::string filename = "sudoku.board" )
+	bool load( std::string filename = "sudoku.board" )
 	{
 		auto file = std::ifstream(filename);
 		if (!file.is_open())
-			return;
+			return false;
+
+		Backup tmp(this);
 
 		file >> *this;
 
 		file.close();
+
+		return tmp.changed();
 	}
 
 	void save( std::string filename = "sudoku.board" )
