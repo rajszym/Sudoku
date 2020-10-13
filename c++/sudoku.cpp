@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    12.10.2020
+   @date    13.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -439,7 +439,7 @@ void Game::game()
 						case  7: Sudoku::discard();  Sudoku::Timepiece::reset(); break;
 						case  8: Sudoku::confirm();  break;
 						case  9: Sudoku::save();     break;
-						case 10: Sudoku::load();     Game::draw(); Button::button = 0; Sudoku::Timepiece::start(); break;
+						case 10: if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timepiece::start(); break;
 						case 11: return;
 						}
 
@@ -533,7 +533,7 @@ void Game::game()
 					case 'F': Sudoku::confirm();  break;
 					case VK_INSERT:               /* falls through */
 					case 'V': Sudoku::save();     break;
-					case 'R': Sudoku::load();     Game::draw(); Button::button = 0; Sudoku::Timepiece::start(); break;
+					case 'R': if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timepiece::start(); break;
 					case VK_ESCAPE:               /* falls through */
 					case 'Q': return;
 					}
