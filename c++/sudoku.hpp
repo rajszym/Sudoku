@@ -530,7 +530,7 @@ struct Sudoku: CellTab, Timepiece
 			c.immutable = false;
 	}
 
-	void confirm()
+	void accept()
 	{
 		for (Cell &c: *this)
 			c.immutable = c.num != 0;
@@ -552,7 +552,7 @@ struct Sudoku: CellTab, Timepiece
 			}
 		}
 
-		Sudoku::confirm();
+		Sudoku::accept();
 
 		for (Cell &c: *this)
 		{
@@ -694,14 +694,14 @@ struct Sudoku: CellTab, Timepiece
 			Sudoku::solve();
 			for (Cell &c: Random(this))
 				c.generate(Sudoku::level);
-			Sudoku::confirm();
+			Sudoku::accept();
 		}
 	}
 
 	void check()
 	{
 		Sudoku::level = Difficulty::Medium;
-		Sudoku::confirm();
+		Sudoku::accept();
 
 		if (Sudoku::level == Difficulty::Medium)
 			return;
@@ -742,7 +742,7 @@ struct Sudoku: CellTab, Timepiece
 		}
 		while (tmp.changed());
 
-		Sudoku::confirm();
+		Sudoku::accept();
 	}
 
 	int parse_rating()
