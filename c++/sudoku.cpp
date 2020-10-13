@@ -213,12 +213,12 @@ Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, help{Assistance:
 	Game::mnu.emplace_back("a:",  2, "change assistance level of the game");      Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
 	Game::mnu.emplace_back("n:",  3, "generate or load a new layout");            Game::mnu.back().add("new");
 	Game::mnu.emplace_back("s:",  4, "solve the current layout");                 Game::mnu.back().add("solve");
-	Game::mnu.emplace_back("u:",  5, "undo last move /restore confirmed layout"); Game::mnu.back().add("undo");
+	Game::mnu.emplace_back("u:",  5, "undo last move / restore accepted layout"); Game::mnu.back().add("undo");
 	Game::mnu.emplace_back("c:",  6, "clear the board");                          Game::mnu.back().add("clear");
 	Game::mnu.emplace_back("e:",  7, "start editing the current layout");         Game::mnu.back().add("edit");
-	Game::mnu.emplace_back("f:",  8, "confirm the layout and finish editing");    Game::mnu.back().add("confirm");
+	Game::mnu.emplace_back("t:",  8, "accept the layout and finish editing");     Game::mnu.back().add("accept");
 	Game::mnu.emplace_back("v:",  9, "save the current layout to the file");      Game::mnu.back().add("save");
-	Game::mnu.emplace_back("r:", 10, "read layout from the file");                Game::mnu.back().add("read");
+	Game::mnu.emplace_back("l:", 10, "load layout from the file");                Game::mnu.back().add("load");
 	Game::mnu.emplace_back("q:", 11, "quit the game");                            Game::mnu.back().add("quit");
 }
 
@@ -437,7 +437,7 @@ void Game::game()
 						case  5: Sudoku::undo();     Game::draw(); break;
 						case  6: Sudoku::clear();    Game::draw(); Button::button = 0; Sudoku::Timepiece::reset(); break;
 						case  7: Sudoku::discard();  Sudoku::Timepiece::reset(); break;
-						case  8: Sudoku::confirm();  break;
+						case  8: Sudoku::accept();   break;
 						case  9: Sudoku::save();     break;
 						case 10: if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timepiece::start(); break;
 						case 11: return;
@@ -530,10 +530,10 @@ void Game::game()
 					case VK_HOME:                 /* falls through */
 					case 'E': Sudoku::discard();  Sudoku::Timepiece::reset(); break;
 					case VK_END:                  /* falls through */
-					case 'F': Sudoku::confirm();  break;
+					case 'T': Sudoku::accept();   break;
 					case VK_INSERT:               /* falls through */
 					case 'V': Sudoku::save();     break;
-					case 'R': if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timepiece::start(); break;
+					case 'L': if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timepiece::start(); break;
 					case VK_ESCAPE:               /* falls through */
 					case 'Q': return;
 					}
