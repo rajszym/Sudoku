@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    13.10.2020
+   @date    12.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -845,7 +845,6 @@ struct Sudoku: CellTab, Timepiece
 		if ( Sudoku::solved())   { Sudoku::level = Difficulty::Medium;    return; }
 		if (!Sudoku::simplify()) { Sudoku::level = Difficulty::Expert;    return; }
 		if (!Sudoku::solved())   { Sudoku::level = Difficulty::Hard;              }
-		if ( Sudoku::rating<160) { Sudoku::level = Difficulty::Easy;              }
 		else                     { Sudoku::level = Difficulty::Medium;            }
 		Sudoku::again();
 	}
@@ -889,7 +888,7 @@ struct Sudoku: CellTab, Timepiece
 		}
 	}
 
-	bool expert()
+	bool acceptable()
 	{
 		return Sudoku::rating >= Sudoku::len() * 20;
 	}
@@ -908,7 +907,7 @@ struct Sudoku: CellTab, Timepiece
 			return false;
 		}
 
-		return Sudoku::level == Difficulty::Easy || all || Sudoku::expert();
+		return Sudoku::level == Difficulty::Easy || all || Sudoku::acceptable();
 	}
 
 	static
@@ -976,19 +975,15 @@ struct Sudoku: CellTab, Timepiece
 		return out;
 	}
 
-	bool load( std::string filename = "sudoku.board" )
+	void load( std::string filename = "sudoku.board" )
 	{
 		auto file = std::ifstream(filename);
 		if (!file.is_open())
-			return false;
-
-		Backup tmp(this);
+			return;
 
 		file >> *this;
 
 		file.close();
-
-		return tmp.changed();
 	}
 
 	void save( std::string filename = "sudoku.board" )
