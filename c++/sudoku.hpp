@@ -168,6 +168,11 @@ struct Cell
 		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), Cell::len(), []( int r, Cell &c ){ return r + c.len(); });
 	}
 
+	bool empty()
+	{
+		return Cell::num == 0;
+	}
+
 	bool equal( int n )
 	{
 		return Cell::num != 0 && Cell::num == n;
