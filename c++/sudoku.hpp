@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    13.10.2020
+   @date    14.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -393,6 +393,11 @@ class Timepiece
 
 public:
 
+	Timepiece()
+	{
+		Timepiece::start();
+	}
+
 	void start()
 	{
 		start_ = std::chrono::high_resolution_clock::now();
@@ -454,8 +459,6 @@ struct Sudoku: CellTab, Timepiece
 		int i = 0;
 		for (Cell &cell: *this)
 			cell.init(i++);
-
-		Sudoku::Timepiece::start();
 	}
 
 	int len()
