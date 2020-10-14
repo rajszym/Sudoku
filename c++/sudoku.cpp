@@ -367,7 +367,7 @@ void Game::game()
 						case FROM_LEFT_1ST_BUTTON_PRESSED:
 							if (c.num == 0)
 							{
-								if (Button::button == 0 && Game::help == Assistance::Sure)
+								if (Button::button == 0 && Game::help >= Assistance::Full)
 									Button::button = c.sure();
 								else
 								if (Sudoku::set(c, Button::button, Game::help <= Assistance::Current))
