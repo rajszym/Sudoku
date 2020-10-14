@@ -478,7 +478,7 @@ struct Sudoku: CellTab, Timepiece
 
 	bool empty()
 	{
-		return std::all_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num == 0; });
+		return std::all_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.empty(); });
 	}
 
 	bool solved()
