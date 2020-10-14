@@ -75,30 +75,15 @@ void Button::draw()
 	::con->Put(BTN.x + 1, BTN.y + Button::pos, '0' + Button::num);
 }
 
-void Button::update(Assistance help, Cell *c)
+void Button::update(Assistance h, Cell *c)
 {
-	auto fore = Console::LightGrey;
-	auto back = Console::Black;
+	auto fore = Button::button == Button::num ? Console::Black : Button::focus == this ? Console::White : Console::LightGrey;
+	auto back = Button::button == Button::num ? Console::White : Button::focus == this ? Console::Grey  : Console::Black;
 
-	if (Button::button == Button::num)
+	if (Button::button == 0 && c != nullptr)
 	{
-		fore = Console::Black;
-		back = Console::White;
-	}
-	else
-	if (Button::focus == this)
-	{
-		fore = Console::White;
-		back = Console::Grey;
-	}
-	else
-	if (c != nullptr)
-	{
-		if (help >= Assistance::Sure && c->sure(Button::num))
-			fore = Console::Green;
-		else
-		if (help >= Assistance::Available && c->allowed(Button::num))
-			fore = Console::Orange;
+		if      (h >= Assistance::Sure && c->sure(Button::num))         fore = Console::LightGreen;
+		else if (h >= Assistance::Available && c->allowed(Button::num)) fore = Console::Yellow;
 	}
 
 	::con->Put(BTN.x + 1, BTN.y + Button::pos, fore, back);
@@ -237,32 +222,21 @@ void Game::draw_cell( Cell &cell )
 
 void Game::update_cell( Cell &cell )
 {
-	int n = Button::button;
+	int b = Button::button;
 	Assistance h = Game::help;
+
 	int x = TAB.x + 2 + (cell.pos % 9 + cell.pos % 9 / 3) * 2;
 	int y = TAB.y + 1 + (cell.pos / 9 + cell.pos / 9 / 3);
 
-	auto fore = Console::LightGrey;
-	auto back = Console::Black;
+	auto fore = cell.empty() ? Console::LightGrey : cell.immutable ? Console::White : Console::LightGreen;
+	auto back = Game::focus != &cell ? Console::Black : Console::Grey;
 
-	if (h >= Assistance::Current && cell.equal(n))
-	{
-		fore = cell.immutable       ? Console::White : Console::LightGreen;
-		back = Game::focus == &cell ? Console::Grey  : Console::Red;
-	}
-	else
-	if (cell.num != 0)
-	{
-		fore = cell.immutable       ? Console::White : Console::Green;
-		back = Game::focus == &cell ? Console::Grey  : Console::Black;
-	}
-	else
-	if (Game::focus == &cell)
-	{
-		if      (h >= Assistance::Sure      && cell.sure(n))    back = Console::Green;
-		else if (h >= Assistance::Available && cell.allowed(n)) back = Console::Orange;
-		else                                                    back = Console::Grey;
-	}
+	if (h >= Assistance::Current && cell.equal(b))
+		back = Game::focus != &cell ? Console::Red : Console::LightRed;
+	else if (h >= Assistance::Sure && b != 0 && cell.sure(b))
+		back = Game::focus != &cell ? Console::Green : Console::LightGreen;
+	else if (h >= Assistance::Available && cell.allowed(b))
+		back = Game::focus != &cell ? Console::Orange : Console::Yellow;
 
 	::con->Put(x, y, fore, back);
 }
