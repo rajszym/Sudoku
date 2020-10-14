@@ -51,6 +51,7 @@ enum Assistance
 	Current,
 	Available,
 	Sure,
+	Full,
 };
 
 struct Button
@@ -80,10 +81,12 @@ void Button::update(Assistance h, Cell *c)
 	auto fore = Button::button == Button::num ? Console::Black : Button::focus == this ? Console::White : Console::LightGrey;
 	auto back = Button::button == Button::num ? Console::White : Button::focus == this ? Console::Grey  : Console::Black;
 
-	if (Button::button == 0 && c != nullptr)
+	if (c != nullptr)
 	{
-		if      (h >= Assistance::Sure && c->sure(Button::num))         fore = Console::LightGreen;
-		else if (h >= Assistance::Available && c->allowed(Button::num)) fore = Console::Yellow;
+		if (h >= Assistance::Sure && c->sure(Button::num))
+			(Button::button == Button::num ? back : fore) = Console::LightGreen;
+		else if (h >= Assistance::Available && c->allowed(Button::num))
+			(Button::button == Button::num ? back : fore) = Console::Yellow;
 	}
 
 	::con->Put(BTN.x + 1, BTN.y + Button::pos, fore, back);
@@ -195,7 +198,7 @@ Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, help{Assistance:
 	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
 	Game::mnu.emplace_back("d:",  1, "change difficulty level of the game");      Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
-	Game::mnu.emplace_back("a:",  2, "change assistance level of the game");      Game::mnu.back().add("none").add("current").add("available").add("sure").idx = Game::help;
+	Game::mnu.emplace_back("a:",  2, "change assistance level of the game");      Game::mnu.back().add("none").add("current").add("available").add("sure").add("full").idx = Game::help;
 	Game::mnu.emplace_back("n:",  3, "generate or load a new layout");            Game::mnu.back().add("new");
 	Game::mnu.emplace_back("s:",  4, "solve the current layout");                 Game::mnu.back().add("solve");
 	Game::mnu.emplace_back("u:",  5, "undo last move / restore accepted layout"); Game::mnu.back().add("undo");
@@ -233,9 +236,9 @@ void Game::update_cell( Cell &cell )
 
 	if (h >= Assistance::Current && cell.equal(b))
 		back = Game::focus != &cell ? Console::Red : Console::LightRed;
-	else if (h >= Assistance::Sure && b != 0 && cell.sure(b))
+	else if (h >= Assistance::Full && b != 0 && cell.sure(b))
 		back = Game::focus != &cell ? Console::Green : Console::LightGreen;
-	else if (h >= Assistance::Available && cell.allowed(b))
+	else if (h >= Assistance::Full && cell.allowed(b))
 		back = Game::focus != &cell ? Console::Orange : Console::Yellow;
 
 	::con->Put(x, y, fore, back);
