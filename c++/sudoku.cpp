@@ -236,7 +236,7 @@ void Game::update_cell( Cell &cell )
 
 	if (h >= Assistance::Current && cell.equal(b))
 		back = Game::focus != &cell ? Console::Red : Console::LightRed;
-	else if (h >= Assistance::Full && b != 0 && cell.sure(b))
+	else if (h >= Assistance::Full && cell.sure(b))
 		back = Game::focus != &cell ? Console::Green : Console::LightGreen;
 	else if (h >= Assistance::Full && cell.allowed(b))
 		back = Game::focus != &cell ? Console::Orange : Console::Yellow;
