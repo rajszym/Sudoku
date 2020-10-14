@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    13.10.2020
+   @date    14.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -83,10 +83,8 @@ void Button::update(Assistance h, Cell *c)
 
 	if (c != nullptr)
 	{
-		if (h >= Assistance::Sure && c->sure(Button::num))
-			(Button::button == Button::num ? back : fore) = Console::LightGreen;
-		else if (h >= Assistance::Available && c->allowed(Button::num))
-			(Button::button == Button::num ? back : fore) = Console::Yellow;
+		if      (h >= Assistance::Sure      && c->sure(Button::num))    (Button::button == Button::num ? back : fore) = Console::LightGreen;
+		else if (h >= Assistance::Available && c->allowed(Button::num)) (Button::button == Button::num ? back : fore) = Console::Yellow;
 	}
 
 	::con->Put(BTN.x + 1, BTN.y + Button::pos, fore, back);
@@ -122,7 +120,7 @@ Menu &Menu::add( const char *item )
 
 int Menu::next( bool prev )
 {
-	int max = Menu::size() - 1;
+	const int max = Menu::size() - 1;
 
 	if (Menu::key[0] == 'd')
 	{
@@ -225,21 +223,21 @@ void Game::draw_cell( Cell &cell )
 
 void Game::update_cell( Cell &cell )
 {
-	int b = Button::button;
-	Assistance h = Game::help;
+	const int n = Button::button; // n = Button::button == 0 && Button::focus != nullptr ? Button::focus->num : Button::button;
+	const Assistance h = Game::help;
 
-	int x = TAB.x + 2 + (cell.pos % 9 + cell.pos % 9 / 3) * 2;
-	int y = TAB.y + 1 + (cell.pos / 9 + cell.pos / 9 / 3);
+	const int x = TAB.x + 2 + (cell.pos % 9 + cell.pos % 9 / 3) * 2;
+	const int y = TAB.y + 1 + (cell.pos / 9 + cell.pos / 9 / 3);
 
 	auto fore = cell.empty() ? Console::LightGrey : cell.immutable ? Console::White : Console::LightGreen;
 	auto back = Game::focus != &cell ? Console::Black : Console::Grey;
 
-	if (h >= Assistance::Current && cell.equal(b))
-		back = Game::focus != &cell ? Console::Red : Console::LightRed;
-	else if (h >= Assistance::Full && cell.sure(b))
-		back = Game::focus != &cell ? Console::Green : Console::LightGreen;
-	else if (h >= Assistance::Full && cell.allowed(b))
-		back = Game::focus != &cell ? Console::Orange : Console::Yellow;
+	if (n != 0)
+	{
+		if      (h >= Assistance::Current && cell.equal(n))   back = Game::focus != &cell ? Console::Red    : Console::LightRed;
+		else if (h >= Assistance::Full    && cell.sure(n))    back = Game::focus != &cell ? Console::Green  : Console::LightGreen;
+		else if (h >= Assistance::Full    && cell.allowed(n)) back = Game::focus != &cell ? Console::Orange : Console::Yellow;
+	}
 
 	::con->Put(x, y, fore, back);
 }
@@ -248,8 +246,9 @@ void Game::update_info()
 {
 	char txt[16];
 	const char *nfo;
-	size_t cnt = static_cast<size_t>(Sudoku::count(Button::button));
-	::con->Put(BTN.x + 1, BNR.y, Button::button == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
+	const int n = Button::button; // n = Button::button == 0 && Button::focus != nullptr ? Button::focus->num : Button::button;
+	size_t cnt = n == 0 || Game::help == Assistance::None ? 0 : static_cast<size_t>(Sudoku::count(n));
+	::con->Put(BTN.x + 1, BNR.y, n == 0 ? ' ' : cnt > 9 ? '?' : '0' + cnt);
 
 	nfo = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable" : Sudoku::rating == -1 ? "ambiguous" : "")
 	                         : (Sudoku::corrupt() ? "corrupt" : "solved");
