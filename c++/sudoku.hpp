@@ -419,11 +419,12 @@ struct SudokuTimer
 		start_ = std::chrono::high_resolution_clock::now();
 	}
 
+	template<typename T = std::chrono::seconds>
 	int get()
 	{
 		return stop_ < start_ ? 0 :
-		       stop_ > start_ ? std::chrono::duration_cast<std::chrono::seconds>(stop_ - start_).count() :
-		                        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start_).count();
+		       stop_ > start_ ? std::chrono::duration_cast<T>(stop_ - start_).count() :
+		                        std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - start_).count();
 	}
 };
 
