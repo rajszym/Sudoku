@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    14.10.2020
+   @date    15.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -255,7 +255,7 @@ void Game::update_info()
 	cnt = std::strlen(nfo);
 	::con->Fill(TAB.x + 9, BNR.y, TAB.width - 10 - cnt, 1); ::con->Put(TAB.Right(cnt + 1), BNR.y, nfo);
 
-	cnt = std::chrono::duration_cast<std::chrono::seconds>(Sudoku::Timepiece::get()).count();
+	cnt = static_cast<size_t>(Sudoku::Timer::get());
 	std::snprintf(txt, sizeof(txt), "%zu:%02zu:%02zu", cnt / 3600, (cnt / 60) % 60, cnt % 60);
 	cnt = std::strlen(txt);
 	::con->Fill(MNU.x + 1, BNR.y, MNU.width - 2 - cnt, 1); ::con->Put(MNU.Right(cnt + 1), BNR.y, txt);
@@ -408,14 +408,14 @@ void Game::game()
 						{
 						case  2: Game::help =        static_cast<Assistance>(Game::mnu[1].next(Menu::back)); break;
 						case  1: Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(Menu::back)); /* falls through */
-						case  3: Sudoku::generate(); Game::draw(); Button::button = 0; Sudoku::Timepiece::start(); break;
+						case  3: Sudoku::generate(); Game::draw(); Button::button = 0; Sudoku::Timer::start(); break;
 						case  4: Sudoku::solve();    Game::draw(); Button::button = 0; break;
 						case  5: Sudoku::undo();     Game::draw(); break;
-						case  6: Sudoku::clear();    Game::draw(); Button::button = 0; Sudoku::Timepiece::reset(); break;
-						case  7: Sudoku::discard();  Sudoku::Timepiece::reset(); break;
+						case  6: Sudoku::clear();    Game::draw(); Button::button = 0; Sudoku::Timer::reset(); break;
+						case  7: Sudoku::discard();  Sudoku::Timer::reset(); break;
 						case  8: Sudoku::accept();   break;
 						case  9: Sudoku::save();     break;
-						case 10: if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timepiece::start(); break;
+						case 10: if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timer::start(); break;
 						case 11: return;
 						}
 
@@ -496,20 +496,20 @@ void Game::game()
 					case VK_PRIOR:                /* falls through */ // PAGE UP
 					case 'D': Sudoku::level =     static_cast<Difficulty>(Game::mnu[0].next(prev)); /* falls through */
 					case VK_TAB:                  /* falls through */
-					case 'N': Sudoku::generate(); Game::draw(); Button::button = 0; Sudoku::Timepiece::start(); break;
+					case 'N': Sudoku::generate(); Game::draw(); Button::button = 0; Sudoku::Timer::start(); break;
 					case VK_RETURN:               /* falls through */
 					case 'S': Sudoku::solve();    Game::draw(); Button::button = 0; break;
 					case VK_BACK:                 /* falls through */
 					case 'U': Sudoku::undo();     Game::draw(); break;
 					case VK_DELETE:               /* falls through */
-					case 'C': Sudoku::clear();    Game::draw(); Button::button = 0; Sudoku::Timepiece::reset(); break;
+					case 'C': Sudoku::clear();    Game::draw(); Button::button = 0; Sudoku::Timer::reset(); break;
 					case VK_HOME:                 /* falls through */
-					case 'E': Sudoku::discard();  Sudoku::Timepiece::reset(); break;
+					case 'E': Sudoku::discard();  Sudoku::Timer::reset(); break;
 					case VK_END:                  /* falls through */
 					case 'T': Sudoku::accept();   break;
 					case VK_INSERT:               /* falls through */
 					case 'V': Sudoku::save();     break;
-					case 'L': if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timepiece::start(); break;
+					case 'L': if (Sudoku::load()) Game::draw(), Button::button = 0, Sudoku::Timer::start(); break;
 					case VK_ESCAPE:               /* falls through */
 					case 'Q': return;
 					}
@@ -523,7 +523,7 @@ void Game::game()
 			if (Sudoku::solved())
 			{
 				Button::button = 0;
-				Sudoku::Timepiece::stop();
+				Sudoku::Timer::stop();
 			}
 
 			Game::update();
@@ -581,7 +581,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::cerr << ::title << " find: " << data.size() << " boards found, " << sudoku.Timepiece::get().count() << 's' << std::endl;
+			std::cerr << ::title << " find: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
 			break;
 		}
 
@@ -615,7 +615,7 @@ int main( int argc, char **argv )
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " test: " << data.size() << " boards found, " << sudoku.Timepiece::get().count() << 's' << std::endl;
+			std::cerr << ::title << " test: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
 			break;
 		}
 
@@ -649,7 +649,7 @@ int main( int argc, char **argv )
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " sort: " << data.size() << " boards found, " << sudoku.Timepiece::get().count() << 's' << std::endl;
+			std::cerr << ::title << " sort: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
 			break;
 		}
 
@@ -685,7 +685,7 @@ int main( int argc, char **argv )
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " check: " << data.size() << " boards found, " << sudoku.Timepiece::get().count() << 's' << std::endl;
+			std::cerr << ::title << " check: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
 			break;
 		}
 
