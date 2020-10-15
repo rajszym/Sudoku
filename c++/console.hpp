@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    02.10.2020
+   @date    15.10.2020
    @brief   console class
 
 *******************************************************************************
@@ -31,45 +31,38 @@
 
 #pragma once
 
-#include <atomic>
+#include <chrono>
 #include <algorithm>
 #include <windows.h>
 
-class Timer
+class ConsoleTimer
 {
-	HANDLE timer_;
-	mutable std::atomic_flag flag_;
-
-	static VOID CALLBACK Handler_(PVOID flag, BOOLEAN)
-	{
-		atomic_flag_clear(static_cast<std::atomic_flag *>(flag));
-	}
+	std::chrono::milliseconds tick_;
+	std::chrono::time_point<std::chrono::high_resolution_clock> time_;
 
 public:
 
-	Timer( const DWORD duration = 0 ): flag_(ATOMIC_FLAG_INIT)
+	ConsoleTimer( const int duration = 0 )
 	{
-		if (!duration || !CreateTimerQueueTimer(&timer_, NULL, Handler_, &flag_, duration, duration, WT_EXECUTEDEFAULT))
-			timer_ = NULL;
+		tick_ = std::chrono::milliseconds(duration);
+		time_ = std::chrono::high_resolution_clock::now();
 	}
 
-	~Timer()
+	bool Waiting()
 	{
-		if (timer_) {
-			DeleteTimerQueueTimer(NULL, timer_, NULL);
-			CloseHandle(timer_);
-		}
-	}
+		if (std::chrono::high_resolution_clock::now() - time_ < tick_)
+			return true;
 
-	bool Wait() const
-	{
-		return atomic_flag_test_and_set(&flag_);
+		time_ += tick_;
+		return false;
 	}
 };
 
-class Console: public Timer
+class Console: public ConsoleTimer
 {
 public:
+
+	using Timer = ConsoleTimer;
 
 	enum: char
 	{
@@ -309,7 +302,7 @@ public:
 	const HANDLE &Cout;
 	const HANDLE &Cerr;
 
-	Console( LPCTSTR title = NULL, const DWORD duration = 0 ): Timer(duration), Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
+	Console( LPCTSTR title = NULL, const int duration = 0 ): ConsoleTimer(duration), Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
 	{
 		if (!Open(title)) {
 			cerr_ = cout_ = cin_ = NULL;
