@@ -62,7 +62,7 @@ struct Button
 	int num;
 	int pos;
 
-	Button( int n ): num{n}, pos{n+(n-1)/3} {}
+	Button( const int n ): num{n}, pos{n+(n-1)/3} {}
 
 	void draw();
 	void update(Assistance, Cell *);
@@ -101,28 +101,21 @@ struct Menu: std::vector<const char *>
 	int pos;
 	int idx;
 
-	Menu( const char *k, const int p, const char *i ): key{k}, info{i}, pos{p}, idx{0} {}
+	Menu( const int p, const char *k, const char *i, const std::vector<const char *> v, const int x = 0 ): std::vector<const char *>{v}, key{k}, info{i}, pos{p}, idx{x} {}
 
-	Menu &add  ( const char * );
-	int  next  ( bool );
-	void draw  ( int = 0 );
+	int  next( bool );
+	void draw( int = 0 );
 	void update();
 };
 
 Menu *Menu::focus{nullptr};
 bool  Menu::back {false};
 
-Menu &Menu::add( const char *item )
-{
-	Menu::push_back(item);
-	return *this;
-}
-
 int Menu::next( bool prev )
 {
 	const int max = Menu::size() - 1;
 
-	if (Menu::key[0] == 'd')
+	if (Menu::pos == 1)
 	{
 		if (prev) Menu::idx = Menu::idx == 0 ? max : Menu::idx == max ? 1 : 0;
 		else      Menu::idx = Menu::idx == max ? 0 : Menu::idx == 0 ? 1 : max;
@@ -139,7 +132,7 @@ int Menu::next( bool prev )
 
 void Menu::draw( int i )
 {
-	if (Menu::size() > 0)
+	if (Menu::size() > static_cast<size_t>(i))
 	{
 		unsigned n = std::strlen(Menu::data()[Menu::idx = i]);
 		::con->Put (MNU.x + 4,     MNU.y + Menu::pos, Menu::data()[Menu::idx]);
@@ -193,19 +186,20 @@ Game::Game( const char *t, Difficulty l ): Sudoku{l}, title{t}, help{Assistance:
 	::con->HideCursor();
 	::con->Clear();
 
-	Game::btn = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	Game::btn = { { 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 } };
 
-	Game::mnu.emplace_back("d:",  1, "change difficulty level of the game");      Game::mnu.back().add("easy").add("medium").add("hard").add("expert").add("extreme").idx = Sudoku::level;
-	Game::mnu.emplace_back("a:",  2, "change assistance level of the game");      Game::mnu.back().add("none").add("current").add("available").add("sure").add("full").idx = Game::help;
-	Game::mnu.emplace_back("n:",  3, "generate or load a new layout");            Game::mnu.back().add("new");
-	Game::mnu.emplace_back("s:",  4, "solve the current layout");                 Game::mnu.back().add("solve");
-	Game::mnu.emplace_back("u:",  5, "undo last move / restore accepted layout"); Game::mnu.back().add("undo");
-	Game::mnu.emplace_back("c:",  6, "clear the board");                          Game::mnu.back().add("clear");
-	Game::mnu.emplace_back("e:",  7, "start editing the current layout");         Game::mnu.back().add("edit");
-	Game::mnu.emplace_back("t:",  8, "accept the layout and finish editing");     Game::mnu.back().add("accept");
-	Game::mnu.emplace_back("v:",  9, "save the current layout to the file");      Game::mnu.back().add("save");
-	Game::mnu.emplace_back("l:", 10, "load layout from the file");                Game::mnu.back().add("load");
-	Game::mnu.emplace_back("q:", 11, "quit the game");                            Game::mnu.back().add("quit");
+	Game::mnu = { {  1, "d:", "change difficulty level of the game",      { "easy", "medium", "hard", "expert", "extreme"  }, Sudoku::level },
+	              {  2, "a:", "change assistance level of the game",      { "none", "current", "available", "sure", "full" }, Game::help },
+	              {  3, "n:", "generate or load a new layout",            { "new"    } },
+	              {  4, "s:", "solve the current layout",                 { "solve"  } },
+	              {  5, "u:", "undo last move / restore accepted layout", { "undo"   } },
+	              {  6, "c:", "clear the board",                          { "clear"  } },
+	              {  7, "e:", "start editing the current layout",         { "edit"   } },
+	              {  8, "t:", "accept the layout and finish editing",     { "accept" } },
+	              {  9, "v:", "save the current layout to the file",      { "save"   } },
+	              { 10, "l:", "load layout from the file",                { "load"   } },
+	              { 11, "q:", "quit the game",                            { "quit"   } },
+	            };
 }
 
 Game::~Game()
@@ -317,7 +311,7 @@ void Game::game()
 		b.draw();
 
 	for (Menu m: Game::mnu)
-		m.draw();
+		m.draw(m.idx);
 
 	Sudoku::generate();
 	Game::draw();
