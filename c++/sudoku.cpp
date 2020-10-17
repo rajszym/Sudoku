@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    15.10.2020
+   @date    17.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -241,8 +241,8 @@ void Game::update_info()
 	char txt[16];
 	const char *nfo;
 	const int n = Button::button; // n = Button::button == 0 && Button::focus != nullptr ? Button::focus->num : Button::button;
-	size_t cnt = n == 0 || Game::help == Assistance::None ? 0 : static_cast<size_t>(Sudoku::count(n));
-	::con->Put(BTN.x + 1, BNR.y, n == 0 ? ' ' : cnt > 9 ? '?' : '0' + cnt);
+	size_t cnt = n == 0 ? 0 : static_cast<size_t>(Sudoku::count(n));
+	::con->Put(BTN.x + 1, BNR.y, n == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
 
 	nfo = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable" : Sudoku::rating == -1 ? "ambiguous" : "")
 	                         : (Sudoku::corrupt() ? "corrupt" : "solved");
