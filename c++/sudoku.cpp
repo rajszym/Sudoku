@@ -250,8 +250,8 @@ void Game::update_info()
 	size_t cnt = n == 0 ? 0 : static_cast<size_t>(Sudoku::count(n));
 	::con->Put(BTN.x + 1, BNR.y, n == 0 || Game::help == Assistance::None ? ' ' : cnt > 9 ? '?' : '0' + cnt);
 
-	nfo = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable" : Sudoku::rating == -1 ? "ambiguous" : "")
-	                         : (Sudoku::corrupt() ? "corrupt" : "solved");
+	nfo = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable :(" : Sudoku::rating == -1 ? "ambiguous :/" : "")
+	                         : (Sudoku::corrupt() ? "corrupt  :(" : "solved :)");
 	cnt = std::strlen(nfo);
 	::con->Fill(TAB.x + 9, BNR.y, TAB.width - 10 - cnt, 1); ::con->Put(TAB.Right(cnt + 1), BNR.y, nfo);
 
