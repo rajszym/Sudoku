@@ -65,8 +65,10 @@ public:
 	int  num{0};
 	bool immutable{false};
 
-	struct Values: std::array<int, 10>
+	class Values: public std::array<int, 10>
 	{
+	public:
+
 		Values( Cell &cell )
 		{
 		 	std::iota(Values::begin(), Values::end(), 0);
@@ -732,6 +734,8 @@ public:
 		if (Sudoku::level == Difficulty::Medium)
 			return;
 
+		int weight = Sudoku::weight();
+
 		if (Sudoku::level == Difficulty::Hard)
 			Sudoku::simplify();
 
@@ -740,10 +744,10 @@ public:
 
 		do
 		{
-			if (Sudoku::len() > tmp.len())
-				tmp.restore();
-			else
-				tmp.reload();
+			int wgt = Sudoku::weight();
+
+			if (weight > wgt) tmp.restore();
+			else weight = wgt, tmp.reload();
 
 			bool changed;
 			do
