@@ -569,6 +569,8 @@ public:
 		}
 	}
 
+private:
+
 	void again()
 	{
 		for (Cell &c: *this)
@@ -577,8 +579,6 @@ public:
 
 		Sudoku::mem.clear();
 	}
-
-private:
 
 	void swap_cells( int p1, int p2 )
 	{
@@ -882,14 +882,14 @@ private:
 		Sudoku::signature = Sudoku::calculate_crc32(r, Sudoku::signature);
 	}
 
-public:
-
 	void specify_layout()
 	{
 		Sudoku::calculate_rating();
 		Sudoku::calculate_level();		// must be after calculate_rating (depends on the rating)
 		Sudoku::calculate_signature();
 	}
+
+public:
 
 	void undo()
 	{
