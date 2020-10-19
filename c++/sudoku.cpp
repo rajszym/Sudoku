@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    17.10.2020
+   @date    19.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -134,8 +134,8 @@ void Menu::draw( int i )
 {
 	if (Menu::size() > static_cast<size_t>(i))
 	{
-		unsigned n = std::strlen(Menu::data()[Menu::idx = i]);
-		::con->Put (MNU.x + 4,     MNU.y + Menu::pos, Menu::data()[Menu::idx]);
+		unsigned n = std::strlen(Menu::at(Menu::idx = i));
+		::con->Put (MNU.x + 4,     MNU.y + Menu::pos, Menu::at(Menu::idx));
 		::con->Fill(MNU.x + 4 + n, MNU.y + Menu::pos, MNU.width - 5 - n, 1);
 	}
 }
@@ -155,7 +155,7 @@ void Menu::update()
 	}
 }
 
-struct Game: public Sudoku
+class Game: public Sudoku
 {
 	static Cell *focus;
 	const  char *title;
@@ -165,16 +165,22 @@ struct Game: public Sudoku
 	std::vector<Button> btn;
 	std::vector<Menu>   mnu;
 
+public:
+
 	Game( const char *, Difficulty = Difficulty::Easy );
 	~Game();
 
-	void draw_cell    ( Cell & );
-	void update_cell  ( Cell & );
-	void update_info  ();
-	void update_menu  ();
-	void draw         ();
-	void update       ();
-	void game         ();
+	void operator()( void ) { Game::run(); }
+
+private:
+
+	void draw_cell  ( Cell & );
+	void update_cell( Cell & );
+	void update_info();
+	void update_menu();
+	void draw       ();
+	void update     ();
+	void run        ();
 };
 
 Cell *Game::focus = nullptr;
@@ -295,7 +301,7 @@ void Game::update()
 		m.update();
 }
 
-void Game::game()
+void Game::run()
 {
 	::con->Fill(BNR, Console::White);
 	::con->Put(BNR.x + 1, BNR.y, Game::title);
@@ -353,7 +359,7 @@ void Game::game()
 						x = (x / 2) - (x / 8) - 1;
 						y = y - (y / 4) - 1;
 						p = y * 9 + x;
-						Cell &c = Sudoku::data()[p];
+						Cell &c = Sudoku::at(p);
 
 						switch (input.Event.MouseEvent.dwButtonState)
 						{
@@ -432,7 +438,7 @@ void Game::game()
 						x = (x / 2) - (x / 8) - 1;
 						y = y - (y / 4) - 1;
 						p = y * 9 + x;
-						Game::focus = &Game::data()[p];
+						Game::focus = &Sudoku::at(p);
 					}
 					else
 					if (x >= BTN.left && x <= BTN.right && y > BTN.top && y < BTN.bottom && !solved())
@@ -545,7 +551,7 @@ int main( int argc, char **argv )
 			LONG style = GetWindowLong(::con->Hwnd, GWL_STYLE);
 		//	SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX));
 			SetWindowLong(::con->Hwnd, GWL_STYLE, style & ~(WS_SIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU));
-			sudoku.game();
+			sudoku();
 			SetWindowLong(::con->Hwnd, GWL_STYLE, style);
 			::con.reset();
 			break;
