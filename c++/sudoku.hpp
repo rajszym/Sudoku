@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    15.10.2020
+   @date    19.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -42,11 +42,11 @@
 #include <chrono>
 #include <random>
 
-struct Cell;
-struct Sudoku;
+class Cell;
+class Sudoku;
 
-using  CellRef = std::reference_wrapper<Cell>;
-using  CellTab = std::array<Cell, 81>;
+using  cell_ref = std::reference_wrapper<Cell>;
+using  cell_array = std::array<Cell, 81>;
 
 enum Difficulty
 {
@@ -57,16 +57,13 @@ enum Difficulty
 	Extreme,
 };
 
-struct Cell
+class Cell
 {
+public:
+
 	int  pos{0};
 	int  num{0};
 	bool immutable{false};
-
-	std::vector<CellRef> row{};
-	std::vector<CellRef> col{};
-	std::vector<CellRef> seg{};
-	std::vector<CellRef> lst{};
 
 	struct Values: std::array<int, 10>
 	{
@@ -74,9 +71,9 @@ struct Cell
 		{
 		 	std::iota(Values::begin(), Values::end(), 0);
 
-			Values::data()[cell.num] = 0;
+			Values::at(cell.num) = 0;
 			for (Cell &c: cell.lst)
-				Values::data()[c.num] = 0;
+				Values::at(c.num) = 0;
 		}
 
 		int len()
@@ -90,6 +87,13 @@ struct Cell
 			return *this;
 		}
 	};
+
+private:
+
+	std::vector<cell_ref> row{};
+	std::vector<cell_ref> col{};
+	std::vector<cell_ref> seg{};
+	std::vector<cell_ref> lst{};
 
 	bool in_row( const Cell &c )
 	{
@@ -141,6 +145,19 @@ struct Cell
 		if (Cell::in_lst(c)) Cell::lst.push_back(std::ref(c));
 	}
 
+public:
+
+	static
+	bool select( Cell &a, Cell &b )
+	{
+		int a_len = a.len();
+		int b_len = b.len();
+
+		return a.num == 0 &&
+		      (b.num != 0 || a_len <  b_len ||
+		                    (a_len == b_len && a.range() < b.range()));
+	}
+
 	void init( int p )
 	{
 		Cell::pos = p;
@@ -165,7 +182,7 @@ struct Cell
 		if (Cell::num != 0)
 			return 0;
 
-		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), Cell::len(), []( int r, Cell &c ){ return r + c.len(); });
+		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), 0, []( int r, Cell &c ){ return r + c.len(); });
 	}
 
 	bool empty()
@@ -236,7 +253,7 @@ struct Cell
 
 	bool solve( bool check = false )
 	{
-		CellRef c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
+		cell_ref c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
 		if (c.get().num != 0)
 		{
 			Cell * const tab = this - Cell::pos;
@@ -320,17 +337,6 @@ struct Cell
 		return true;
 	}
 
-	static
-	bool select( Cell &a, Cell &b )
-	{
-		int a_len = a.len();
-		int b_len = b.len();
-
-		return a.num == 0 && (b.num != 0     ||
-		                      a_len <  b_len ||
-		                     (a_len == b_len && a.range() < b.range()));
-	}
-
 	friend
 	std::ostream &operator <<( std::ostream &out, const Cell &cell )
 	{
@@ -340,11 +346,13 @@ struct Cell
 	}
 };
 
-struct Backup: std::array<std::pair<int, bool>, 81>
+class Backup: std::array<std::pair<int, bool>, 81>
 {
-	CellTab *tmp;
+	cell_array *tmp;
 
-	Backup( CellTab *tab ): tmp{tab} { Backup::reload(); }
+public:
+
+	Backup( cell_array *tab ): tmp{tab} { Backup::reload(); }
 
 	void reload()
 	{
@@ -355,7 +363,7 @@ struct Backup: std::array<std::pair<int, bool>, 81>
 	{
 		for (Cell &c: *tmp)
 		{
-			std::pair<int, bool> &t = Backup::data()[c.pos];
+			std::pair<int, bool> &t = Backup::at(c.pos);
 			c.num = std::get<int>(t);
 			c.immutable = std::get<bool>(t);
 		}
@@ -363,12 +371,12 @@ struct Backup: std::array<std::pair<int, bool>, 81>
 
 	bool reset()
 	{
-		return std::all_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.set(std::get<int>(Backup::data()[c.pos])); });
+		return std::all_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.set(std::get<int>(Backup::at(c.pos))); });
 	}
 
 	bool changed()
 	{
-		return std::any_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.num != std::get<int>(Backup::data()[c.pos]); });
+		return std::any_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.num != std::get<int>(Backup::at(c.pos)); });
 	}
 
 	int len()
@@ -377,24 +385,30 @@ struct Backup: std::array<std::pair<int, bool>, 81>
 	}
 };
 
-struct Temp: Backup
+class Temp: public Backup
 {
-	Temp( CellTab *tab ): Backup(tab) {}
+public:
+
+	Temp( cell_array *tab ): Backup(tab) {}
 	~Temp() { Backup::restore(); }
 };
 
-struct Random: std::vector<CellRef>
+class Random: public std::vector<cell_ref>
 {
-	Random( CellTab *tab ): std::vector<CellRef>(std::begin(*tab), std::end(*tab))
+public:
+
+	Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
 	{
 		std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
 	}
 };
 
-struct SudokuTimer
+class SudokuTimer
 {
 	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
 	std::chrono::time_point<std::chrono::high_resolution_clock> stop_;
+
+public:
 
 	SudokuTimer()
 	{
@@ -428,24 +442,25 @@ struct SudokuTimer
 	}
 };
 
-struct Sudoku: CellTab, SudokuTimer
+class Sudoku: public cell_array, public SudokuTimer
 {
+	static const
+	std::vector<std::string> extreme;
+
+	std::list<std::pair<Cell *, int>> mem;
+
+public:
+
 	using Timer = SudokuTimer;
 
 	Difficulty level;
 	int        rating;
 	uint32_t   signature;
 
-	std::list<std::pair<Cell *, int>> mem;
-
-	static const
-	std::vector<std::string> extreme;
-
-	Sudoku( Difficulty l = Difficulty::Easy ): level{l}, rating{0}, signature{0}, mem{}
+	Sudoku( Difficulty l = Difficulty::Easy ): mem{}, level{l}, rating{0}, signature{0}
 	{
-		int i = 0;
 		for (Cell &cell: *this)
-			cell.init(i++);
+			cell.init(&cell - this->cell_array::data());
 	}
 
 	int len()
@@ -563,10 +578,12 @@ struct Sudoku: CellTab, SudokuTimer
 		Sudoku::mem.clear();
 	}
 
+private:
+
 	void swap_cells( int p1, int p2 )
 	{
-		std::swap(Sudoku::data()[p1].num,       Sudoku::data()[p2].num);
-		std::swap(Sudoku::data()[p1].immutable, Sudoku::data()[p2].immutable);
+		std::swap(Sudoku::at(p1).num,       Sudoku::at(p2).num);
+		std::swap(Sudoku::at(p1).immutable, Sudoku::at(p2).immutable);
 	}
 
 	void swap_rows( int r1, int r2 )
@@ -581,6 +598,8 @@ struct Sudoku: CellTab, SudokuTimer
 		for (int r = 0; r < 81; r += 9)
 			Sudoku::swap_cells(r + c1, r + c2);
 	}
+
+public:
 
 	void shuffle()
 	{
@@ -735,6 +754,8 @@ struct Sudoku: CellTab, SudokuTimer
 		Sudoku::accept();
 	}
 
+private:
+
 	int parse_rating()
 	{
 		std::vector<std::pair<Cell *, int>> sure;
@@ -841,21 +862,27 @@ struct Sudoku: CellTab, SudokuTimer
 
 	void calculate_signature()
 	{
-		std::array<uint32_t, 10> x = { 0 };
-		std::array<uint32_t, 81> t;
+		std::array<uint32_t, 10> v = { 0 };
+		std::array<uint32_t, 81> l;
+		std::array<uint32_t, 81> r;
 
 		for (Cell &c: *this)
 		{
-			x[c.num]++;
-			t[c.pos] = static_cast<uint32_t>(c.range());
+			v[c.num]++;
+			l[c.pos] = static_cast<uint32_t>(c.len());
+			r[c.pos] = static_cast<uint32_t>(c.range());
 		}
 
-		std::sort(std::begin(x), std::end(x));
-		std::sort(std::begin(t), std::end(t));
+		std::sort(std::begin(v), std::end(v));
+		std::sort(std::begin(l), std::end(l));
+		std::sort(std::begin(r), std::end(r));
 
-		Sudoku::signature = Sudoku::calculate_crc32(x);
-		Sudoku::signature = Sudoku::calculate_crc32(t, Sudoku::signature);
+		Sudoku::signature = Sudoku::calculate_crc32(v);
+		Sudoku::signature = Sudoku::calculate_crc32(l, Sudoku::signature);
+		Sudoku::signature = Sudoku::calculate_crc32(r, Sudoku::signature);
 	}
+
+public:
 
 	void specify_layout()
 	{
@@ -1023,34 +1050,34 @@ struct Sudoku: CellTab, SudokuTimer
 const
 std::vector<std::string> Sudoku::extreme =
 {
-".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..|3:21:702:9cd895a7"
-"4.....8.5.3..........7......2.....6.....8.4...4..1.......6.3.7.5.32.1...1.4......|3:20:666:37bf7303"
-"52...6.........7.131..........4..8..6......5...........418.........3..28.387.....|3:20:666:9a63a17b"
-".9............15...68........2.5.4...5.8...9........5....64.185....75...4.5...967|3:24:663:75fbf454"
-"7.48..............328...16....2....15.......8....93........6.....63..5...351.2...|3:22:642:78d35561"
-"52.....8...........1....7.575694......467...............8.1..29.6...24.......9..8|3:23:630:1304dc2d"
-"6.....8.3.4.7.................5.4.7.3.42.1...1.6.......2.....5.....8.6...6..1....|3:20:617:b18cae9c"
-"...2.8.1..4.3.18............94.2...56.7.5..8.1........7.6...35......7..44........|3:23:584:b52495ca"
-"2.....31..9.3.......35.64..721.........1.3.7....7.4....18.....5....3.6..........8|3:23:584:c8a9dcea"
-"..7.........9....384..1..2..7....2..36....7.......7.8.......94.18..4...2.....216.|3:23:583:068b3d5a"
-".56....82..........28...1.6....56.....5..13....14.........1...8.....2..7.7.59.4..|3:23:583:44a09195"
-".9............15...68........2.5.4...5.8...9........5....649185...1.....4.....967|3:23:583:a672ceba"
-"4.....3.8...8.2...8..7.....2..1...8734.......6........5.4.6.8......184...82......|3:23:583:ec17c195"
-"48.3............7112.......7.5....6....2..8.............1.76...3.....4......53...|3:19:576:4a51f480"
-".923.........8.1...........1.7.4...........658.6.......6.5.2...4.....7.....9.4...|3:19:575:ae172f02"
-".68.......52..7..........845..3...9..7...5...1..............5.78........3..4..2.8|3:20:567:020b33c2"
-"4.....8.5.3........5.7......2.....6.....5.4......1.......693.71..32.1...1.9......|3:21:560:fe155cd6"
-".......39.....1..5..3.5.8....8.9...6.7...2...1..4.......9.8..5..2....6..4..7.....|3:21:556:bd715305"
-"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...|3:21:555:24160b86"
-"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..|3:21:555:a331b75e"
-"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1|3:21:555:d35727f5"
-".1..6..9...795.......32..4.....42.3...9...8.............8..6..1.2..3.7..4........|3:21:555:f241954d"
-"6....5....9....4.87..2............1..1....764....1.8.9.....2....4.6.....38.5.....|3:21:555:f33dc0aa"
-"....14....3....2...7..........9...3.6.1.............8.2.....1.4....5.6.8...7.8...|3:18:533:58b23d93"
-"3...8.......7....51.......3......36...2..4....7...........6.13..452...........85.|3:19:522:6326fa49"
-"......5..........39..64......8.7......3.....2....6..4.67.....9......58..48...6...|3:19:522:f8c281c3"
-"...5.1....9....8...6.......4.1..........7..9........3.8.....1.5...21.4.3.1.36....|3:20:518:ef9f6e72"
-".98.1....2......6.............3.2.5..84.........6.4.......4.8.93..5.....8.....1.5|3:20:513:14de7966"
-".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8|3:20:513:66750dfe"
-".26.........6....3.74.8.........3..2.8..4..1.6..5.........1.78.5....9..........4.|3:20:513:f890d4a7"
+".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..|3:21:702:21508082",
+"4.....8.5.3..........7......2.....6.....8.4...4..1.......6.3.7.5.32.1...1.4......|3:20:666:a4b001b2",
+"52...6.........7.131..........4..8..6......5...........418.........3..28.387.....|3:20:666:e412ec97",
+".9............15...68........2.5.4...5.8...9........5....64.185....75...4.5...967|3:24:663:6abf1107",
+"7.48..............328...16....2....15.......8....93........6.....63..5...351.2...|3:22:642:a36c4f11",
+"52.....8...........1....7.575694......467...............8.1..29.6...24.......9..8|3:23:630:771656ec",
+"6.....8.3.4.7.................5.4.7.3.42.1...1.6.......2.....5.....8.6...6..1....|3:20:617:5466af98",
+"...2.8.1..4.3.18............94.2...56.7.5..8.1........7.6...35......7..44........|3:23:584:cef51458",
+"2.....31..9.3.......35.64..721.........1.3.7....7.4....18.....5....3.6..........8|3:23:584:db91fdb3",
+".9............15...68........2.5.4...5.8...9........5....649185...1.....4.....967|3:23:583:28430562",
+"4.....3.8...8.2...8..7.....2..1...8734.......6........5.4.6.8......184...82......|3:23:583:5eab607f",
+"..7.........9....384..1..2..7....2..36....7.......7.8.......94.18..4...2.....216.|3:23:583:99823934",
+".56....82..........28...1.6....56.....5..13....14.........1...8.....2..7.7.59.4..|3:23:583:aed3d61b",
+"48.3............7112.......7.5....6....2..8.............1.76...3.....4......53...|3:19:576:2596784d",
+".923.........8.1...........1.7.4...........658.6.......6.5.2...4.....7.....9.4...|3:19:575:d9cee3fd",
+".68.......52..7..........845..3...9..7...5...1..............5.78........3..4..2.8|3:20:567:7992ac75",
+"4.....8.5.3........5.7......2.....6.....5.4......1.......693.71..32.1...1.9......|3:21:560:129cae30",
+".......39.....1..5..3.5.8....8.9...6.7...2...1..4.......9.8..5..2....6..4..7.....|3:21:556:d7858e67",
+"8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..|3:21:555:5b1c614f",
+".1..6..9...795.......32..4.....42.3...9...8.............8..6..1.2..3.7..4........|3:21:555:626c97f9",
+"..1..4.......6.3.5...9.....8.....7.3.......285...7.6..3...8...6..92......4...1...|3:21:555:e87183df",
+"6....5....9....4.87..2............1..1....764....1.8.9.....2....4.6.....38.5.....|3:21:555:eb54dd79",
+"1.......2.9.4...5...6...7...5.9.3.......7.......85..4.7.....6...3...9.8...2.....1|3:21:555:f5181918",
+"....14....3....2...7..........9...3.6.1.............8.2.....1.4....5.6.8...7.8...|3:18:533:c0182e41",
+"3...8.......7....51.......3......36...2..4....7...........6.13..452...........85.|3:19:522:58766157",
+"......5..........39..64......8.7......3.....2....6..4.67.....9......58..48...6...|3:19:522:c153d5fe",
+"...5.1....9....8...6.......4.1..........7..9........3.8.....1.5...21.4.3.1.36....|3:20:518:861f17f5",
+".98.1....2......6.............3.2.5..84.........6.4.......4.8.93..5.....8.....1.5|3:20:513:1cb55995",
+".26.........6....3.74.8.........3..2.8..4..1.6..5.........1.78.5....9..........4.|3:20:513:768c7f5e",
+".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8|3:20:513:f4916447",
 };
