@@ -346,42 +346,53 @@ public:
 	}
 };
 
-class Backup: std::array<std::pair<int, bool>, 81>
+class Backup: public std::array<std::tuple<Cell *, int, bool>, 81>
 {
-	cell_array *tmp;
-
 public:
 
-	Backup( cell_array *tab ): tmp{tab} { Backup::reload(); }
+	Backup( cell_array *tab )
+	{
+		std::transform(std::begin(*tab), std::end(*tab), Backup::begin(), []( Cell &c )
+		{
+			return std::make_tuple(&c, c.num, c.immutable);
+		});
+	}
 
 	void reload()
 	{
-		std::transform(std::begin(*tmp), std::end(*tmp), Backup::begin(), []( Cell &c ){ return std::make_pair(c.num, c.immutable); });
+		std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+		{
+			Cell *c = std::get<Cell *>(t);
+			std::get<int>(t) = c->num;
+			std::get<bool>(t) = c->immutable;
+		});
 	}
 
 	void restore()
 	{
-		for (Cell &c: *tmp)
+		std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
 		{
-			std::pair<int, bool> &t = Backup::at(c.pos);
-			c.num = std::get<int>(t);
-			c.immutable = std::get<bool>(t);
-		}
-	}
-
-	bool reset()
-	{
-		return std::all_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.set(std::get<int>(Backup::at(c.pos))); });
+			Cell *c = std::get<Cell *>(t);
+			c->num = std::get<int>(t);
+			c->immutable = std::get<bool>(t);
+		});
 	}
 
 	bool changed()
 	{
-		return std::any_of(std::begin(*tmp), std::end(*tmp), [this]( Cell &c ){ return c.num != std::get<int>(Backup::at(c.pos)); });
+		return std::any_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+		{
+			Cell *c = std::get<Cell *>(t);
+			return c->num != std::get<int>(t);
+		});
 	}
 
 	int len()
 	{
-		return std::count_if(Backup::begin(), Backup::end(), []( std::pair<int, bool> &t ){ return std::get<int>(t) != 0; });
+		return std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+		{
+			return std::get<int>(t) != 0;
+		});
 	}
 };
 
@@ -391,6 +402,15 @@ public:
 
 	Temp( cell_array *tab ): Backup(tab) {}
 	~Temp() { Backup::restore(); }
+
+	bool reset()
+	{
+		return std::all_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+		{
+			Cell *c = std::get<Cell *>(t);
+			return c->set(std::get<int>(t));
+		});
+	}
 };
 
 class Random: public std::vector<cell_ref>
@@ -635,12 +655,9 @@ private:
 			return false;
 
 		auto tmp = Temp(this);
-
 		Sudoku::clear(false);
-		if (!tmp.reset())
-			return false;
 
-		return true;
+		return tmp.reset();
 	}
 
 	bool correct()
