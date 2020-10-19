@@ -693,7 +693,7 @@ private:
 
 	int weight()
 	{
-		return Sudoku::rating - Sudoku::len() * 20;
+		return Sudoku::rating - Sudoku::len() * 25;
 	}
 
 public:
