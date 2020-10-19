@@ -478,19 +478,14 @@ public:
 		return std::all_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.empty(); });
 	}
 
-	bool solved()
-	{
-		return Sudoku::len() == 81 && !Sudoku::corrupt();
-	}
-
 	bool corrupt()
 	{
 		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.corrupt(); });
 	}
 
-	bool tips()
+	bool solved()
 	{
-		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.sure(0) != 0; });
+		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.empty() || c.corrupt(); });
 	}
 
 	bool set( Cell &cell, int n, bool force = true )
@@ -569,8 +564,6 @@ public:
 		}
 	}
 
-private:
-
 	void again()
 	{
 		for (Cell &c: *this)
@@ -579,6 +572,8 @@ private:
 
 		Sudoku::mem.clear();
 	}
+
+private:
 
 	void swap_cells( int p1, int p2 )
 	{
@@ -598,8 +593,6 @@ private:
 		for (int r = 0; r < 81; r += 9)
 			Sudoku::swap_cells(r + c1, r + c2);
 	}
-
-public:
 
 	void shuffle()
 	{
@@ -678,6 +671,8 @@ public:
 
 		return result;
 	}
+
+public:
 
 	void solve()
 	{
