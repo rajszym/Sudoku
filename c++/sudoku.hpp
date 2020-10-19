@@ -689,6 +689,11 @@ private:
 		return result;
 	}
 
+	int weight()
+	{
+		return Sudoku::rating - Sudoku::len() * 20;
+	}
+
 public:
 
 	void solve()
@@ -764,6 +769,37 @@ public:
 		while (tmp.changed());
 
 		Sudoku::accept();
+	}
+
+	bool test( bool all )
+	{
+		if (Sudoku::rating == -2)
+		{
+			std::cerr << "ERROR: unsolvable" << std::endl;
+			return false;
+		}
+
+		if (Sudoku::rating == -1)
+		{
+			std::cerr << "ERROR: ambiguous"  << std::endl;
+			return false;
+		}
+
+		return Sudoku::level == Difficulty::Easy || all || Sudoku::weight() >= 0;
+	}
+
+	void undo()
+	{
+		if (!Sudoku::mem.empty())
+		{
+			std::get<Cell *>(Sudoku::mem.back())->num = std::get<int>(Sudoku::mem.back());
+			Sudoku::mem.pop_back();
+		}
+		else
+		{
+			Sudoku::again();
+			Sudoku::specify_layout();
+		}
 	}
 
 private:
@@ -903,52 +939,16 @@ private:
 
 public:
 
-	void undo()
-	{
-		if (!Sudoku::mem.empty())
-		{
-			std::get<Cell *>(Sudoku::mem.back())->num = std::get<int>(Sudoku::mem.back());
-			Sudoku::mem.pop_back();
-		}
-		else
-		{
-			Sudoku::again();
-			Sudoku::specify_layout();
-		}
-	}
-
-	bool expert()
-	{
-		return Sudoku::rating >= Sudoku::len() * 20;
-	}
-
-	bool test( bool all )
-	{
-		if (Sudoku::rating == -2)
-		{
-			std::cerr << "ERROR: unsolvable" << std::endl;
-			return false;
-		}
-
-		if (Sudoku::rating == -1)
-		{
-			std::cerr << "ERROR: ambiguous"  << std::endl;
-			return false;
-		}
-
-		return Sudoku::level == Difficulty::Easy || all || Sudoku::expert();
-	}
-
 	static
-	bool select_threshold( Sudoku &a, Sudoku &b )
+	bool select_weight( Sudoku &a, Sudoku &b )
 	{
 		int a_len = a.len();
 		int b_len = b.len();
-		int a_thr = a.rating - a_len * 20;
-		int b_thr = b.rating - b_len * 20;
+		int a_wgt = a.weight();
+		int b_wgt = b.weight();
 
-		return a_thr  > b_thr ||
-		      (a_thr == b_thr && (a_len  < b_len ||
+		return a_wgt  > b_wgt ||
+		      (a_wgt == b_wgt && (a_len  < b_len ||
 		                         (a_len == b_len && (a.level  > b.level ||
 		                                            (a.level == b.level && a.signature < b.signature)))));
 	}
