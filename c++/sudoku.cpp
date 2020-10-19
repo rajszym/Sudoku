@@ -610,7 +610,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_threshold);
+			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_weight);
 
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
@@ -705,7 +705,7 @@ int main( int argc, char **argv )
 			             "sudoku -f [file] - find and show extreme only\n"
 			             "sudoku -F [file] - find and show all\n"
 			             "sudoku -t [file] - test and sort by rating\n"
-			             "sudoku -T [file] - test and sort by threshold\n"
+			             "sudoku -T [file] - test and sort by weight\n"
 			             "sudoku -s [file] - sort by rating / length\n"
 			             "sudoku -S [file] - sort by length / rating\n"
 			             "sudoku -c [file] - check and show extreme only\n"
