@@ -731,8 +731,6 @@ public:
 		if (Sudoku::level == Difficulty::Medium)
 			return;
 
-		int weight = Sudoku::weight();
-
 		if (Sudoku::level == Difficulty::Hard)
 			Sudoku::simplify();
 
@@ -741,10 +739,8 @@ public:
 
 		do
 		{
-			int wgt = Sudoku::weight();
-
-			if (weight > wgt) tmp.restore();
-			else weight = wgt, tmp.reload();
+			if (Sudoku::len() > tmp.len()) tmp.restore();
+			else                           tmp.reload();
 
 			bool changed;
 			do
