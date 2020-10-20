@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    19.10.2020
+   @date    20.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -572,7 +572,7 @@ int main( int argc, char **argv )
 			{
 				sudoku.generate();
 				if (sudoku.level > Difficulty::Medium && sudoku.len() > 17)
-					sudoku.check();
+					sudoku.raise();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
 					data.push_back(sudoku.signature);
@@ -653,7 +653,7 @@ int main( int argc, char **argv )
 			break;
 		}
 
-		case 'C': // check
+		case 'R': // raise
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto data   = std::vector<uint32_t>();
@@ -666,13 +666,13 @@ int main( int argc, char **argv )
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
-			std::cerr << ::title << " check: " << lst.size() << " boards loaded" << std::endl;
+			std::cerr << ::title << " raise: " << lst.size() << " boards loaded" << std::endl;
 
 			for (std::string i: lst)
 			{
 				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
-				sudoku.check();
+				sudoku.raise();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
 					data.push_back(sudoku.signature);
@@ -685,7 +685,7 @@ int main( int argc, char **argv )
 			for (Sudoku &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " check: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
+			std::cerr << ::title << " raise: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
 			break;
 		}
 
@@ -708,8 +708,8 @@ int main( int argc, char **argv )
 			             "sudoku -T [file] - test and sort by weight\n"
 			             "sudoku -s [file] - sort by rating / length\n"
 			             "sudoku -S [file] - sort by length / rating\n"
-			             "sudoku -c [file] - check and show extreme only\n"
-			             "sudoku -C [file] - check and show all\n"
+			             "sudoku -r [file] - raise and show extreme only\n"
+			             "sudoku -R [file] - raise and show all\n"
 			             "sudoku -h        - this usage help\n"
 			             "sudoku -?        - this usage help\n"
 			          << std::endl;
