@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    19.10.2020
+   @date    20.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -150,7 +150,7 @@ private:
 public:
 
 	static
-	bool select( Cell &a, Cell &b )
+	bool select_length( Cell &a, Cell &b )
 	{
 		int a_len = a.len();
 		int b_len = b.len();
@@ -181,9 +181,6 @@ public:
 
 	int range()
 	{
-		if (Cell::num != 0)
-			return 0;
-
 		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), 0, []( int r, Cell &c ){ return r + c.len(); });
 	}
 
@@ -255,11 +252,11 @@ public:
 
 	bool solve( bool check = false )
 	{
-		cell_ref c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select);
+		cell_ref c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select_length);
 		if (c.get().num != 0)
 		{
 			Cell * const tab = this - Cell::pos;
-			c = std::ref(*std::min_element(tab, tab + 81, Cell::select));
+			c = std::ref(*std::min_element(tab, tab + 81, Cell::select_length));
 			if (c.get().num != 0)
 				return true;
 		}
@@ -669,7 +666,7 @@ private:
 
 		auto tmp = Temp(this);
 
-		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
+		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select_length)->solve();
 
 		return std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; });
 	}
@@ -702,7 +699,7 @@ public:
 	{
 		if (Sudoku::solvable())
 		{
-			std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select)->solve();
+			std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select_length)->solve();
 			Sudoku::mem.clear();
 		}
 	}
@@ -838,7 +835,7 @@ private:
 			return result;
 		}
 			
-		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select);
+		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_length);
 		if (cell.num != 0) // solved!
 			return 1;
 
