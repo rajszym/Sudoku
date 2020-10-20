@@ -305,7 +305,7 @@ public:
 		return true;
 	}
 
-	bool check( bool strict )
+	bool raise( bool strict )
 	{
 		if (Cell::num == 0)
 			return false;
@@ -723,7 +723,7 @@ public:
 		}
 	}
 
-	void check()
+	void raise()
 	{
 		Sudoku::level = Difficulty::Medium;
 		Sudoku::accept();
@@ -747,7 +747,7 @@ public:
 			{
 				changed = false;
 				for (Cell &c: Random(this))
-					if (c.check(true))
+					if (c.raise(true))
 						changed = true;
 			}
 			while (changed);
@@ -756,7 +756,7 @@ public:
 			{
 				changed = false;
 				for (Cell &c: Random(this))
-					if (c.check(false))
+					if (c.raise(false))
 						changed = true;
 			}
 			while (changed);
