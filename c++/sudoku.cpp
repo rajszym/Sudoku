@@ -571,7 +571,7 @@ int main( int argc, char **argv )
 			while (!GetAsyncKeyState(VK_ESCAPE))
 			{
 				sudoku.generate();
-				if (sudoku.level > Difficulty::Medium && sudoku.len() > 17)
+				if (sudoku.level > Difficulty::Medium && sudoku.len() > 17 && std::islower(cmd))
 					sudoku.raise();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
 				{
