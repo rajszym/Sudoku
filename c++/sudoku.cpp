@@ -850,6 +850,7 @@ void Game::command( const Command _c )
 	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
 	                    break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
+	                    if (!Sudoku::solved()) Sudoku::rating = -2;
 	                    break;
 	case UndoCmd:       Sudoku::undo();
 	                    break;
