@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    15.10.2020
+   @date    24.10.2020
    @brief   console class
 
 *******************************************************************************
@@ -105,24 +105,29 @@ public:
 			x(_x), y(_y), width(_w), height(_h),
 			left(_x), top(_y), right(_x + _w - 1), bottom(_y + _h - 1) {}
 
-		int Center( const int w ) const
+		bool contains( const int _x, const int _y ) const
 		{
-			return x + (width - w) / 2;
+			return _x >= left && _x <= right && _y >= top && _y <= bottom;
 		}
 
-		int Right( const int w ) const
+		int Center( const int _w ) const
 		{
-			return x + width - w;
+			return x + (width - _w) / 2;
 		}
 
-		int Middle( const int h ) const
+		int Right( const int _w ) const
 		{
-			return y + (height - h) / 2;
+			return x + width - _w;
 		}
 
-		int Bottom( const int h ) const
+		int Middle( const int _h ) const
 		{
-			return y + height - h;
+			return y + (height - _h) / 2;
+		}
+
+		int Bottom( const int _h ) const
+		{
+			return y + height - _h;
 		}
 	};
 
