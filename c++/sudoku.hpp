@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    20.10.2020
+   @date    24.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -42,11 +42,11 @@
 #include <chrono>
 #include <random>
 
-class Cell;
+class SudokuCell;
 class Sudoku;
 
-using  cell_ref = std::reference_wrapper<Cell>;
-using  cell_array = std::array<Cell, 81>;
+using  cell_ref = std::reference_wrapper<SudokuCell>;
+using  cell_array = std::array<SudokuCell, 81>;
 
 enum Difficulty
 {
@@ -57,8 +57,10 @@ enum Difficulty
 	Extreme,
 };
 
-class Cell
+class SudokuCell
 {
+	using Cell = SudokuCell;
+
 public:
 
 	int  pos{0};
@@ -345,83 +347,6 @@ public:
 	}
 };
 
-class Backup: public std::array<std::tuple<Cell *, int, bool>, 81>
-{
-public:
-
-	Backup( cell_array *tab )
-	{
-		std::transform(std::begin(*tab), std::end(*tab), Backup::begin(), []( Cell &c )
-		{
-			return std::make_tuple(&c, c.num, c.immutable);
-		});
-	}
-
-	void reload()
-	{
-		std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
-		{
-			Cell *c = std::get<Cell *>(t);
-			std::get<int>(t) = c->num;
-			std::get<bool>(t) = c->immutable;
-		});
-	}
-
-	void restore()
-	{
-		std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
-		{
-			Cell *c = std::get<Cell *>(t);
-			c->num = std::get<int>(t);
-			c->immutable = std::get<bool>(t);
-		});
-	}
-
-	bool changed()
-	{
-		return std::any_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
-		{
-			Cell *c = std::get<Cell *>(t);
-			return c->num != std::get<int>(t);
-		});
-	}
-
-	int len()
-	{
-		return std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
-		{
-			return std::get<int>(t) != 0;
-		});
-	}
-};
-
-class Temp: public Backup
-{
-public:
-
-	Temp( cell_array *tab ): Backup(tab) {}
-	~Temp() { Backup::restore(); }
-
-	bool reset()
-	{
-		return std::all_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
-		{
-			Cell *c = std::get<Cell *>(t);
-			return c->set(std::get<int>(t));
-		});
-	}
-};
-
-class Random: public std::vector<cell_ref>
-{
-public:
-
-	Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
-	{
-		std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
-	}
-};
-
 class SudokuTimer
 {
 	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
@@ -463,10 +388,89 @@ public:
 
 class Sudoku: public cell_array, public SudokuTimer
 {
+	using Cell = SudokuCell;
+
 	static const
 	std::vector<std::string> extreme;
 
 	std::list<std::pair<Cell *, int>> mem;
+
+	class Backup: public std::array<std::tuple<Cell *, int, bool>, 81>
+	{
+	public:
+
+		Backup( cell_array *tab )
+		{
+			std::transform(std::begin(*tab), std::end(*tab), Backup::begin(), []( Cell &c )
+			{
+				return std::make_tuple(&c, c.num, c.immutable);
+			});
+		}
+
+		void reload()
+		{
+			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			{
+				Cell *c = std::get<Cell *>(t);
+				std::get<int>(t) = c->num;
+				std::get<bool>(t) = c->immutable;
+			});
+		}
+
+		void restore()
+		{
+			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			{
+				Cell *c = std::get<Cell *>(t);
+				c->num = std::get<int>(t);
+				c->immutable = std::get<bool>(t);
+			});
+		}
+
+		bool changed()
+		{
+			return std::any_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			{
+				Cell *c = std::get<Cell *>(t);
+				return c->num != std::get<int>(t);
+			});
+		}
+
+		int len()
+		{
+			return std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			{
+				return std::get<int>(t) != 0;
+			});
+		}
+	};
+
+	class Temp: public Sudoku::Backup
+	{
+	public:
+
+		Temp( cell_array *tab ): Sudoku::Backup(tab) {}
+		~Temp() { Sudoku::Backup::restore(); }
+
+		bool reset()
+		{
+			return std::all_of(Sudoku::Backup::begin(), Sudoku::Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			{
+				Cell *c = std::get<Cell *>(t);
+				return c->set(std::get<int>(t));
+			});
+		}
+	};
+
+	class Random: public std::vector<cell_ref>
+	{
+	public:
+
+		Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
+		{
+			std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
+		}
+	};
 
 public:
 
@@ -653,7 +657,7 @@ private:
 		if (Sudoku::corrupt())
 			return false;
 
-		auto tmp = Temp(this);
+		auto tmp = Sudoku::Temp(this);
 		Sudoku::clear(false);
 
 		return tmp.reset();
@@ -664,7 +668,7 @@ private:
 		if (Sudoku::len() < 17)
 			return false;
 
-		auto tmp = Temp(this);
+		auto tmp = Sudoku::Temp(this);
 
 		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select_length)->solve();
 
@@ -717,7 +721,7 @@ public:
 		{
 			Sudoku::clear();
 			Sudoku::solve();
-			for (Cell &c: Random(this))
+			for (Cell &c: Sudoku::Random(this))
 				c.generate(Sudoku::level);
 			Sudoku::accept();
 		}
@@ -735,7 +739,7 @@ public:
 			Sudoku::simplify();
 
 		Sudoku::discard();
-		Backup tmp(this);
+		Sudoku::Backup tmp(this);
 
 		do
 		{
@@ -746,7 +750,7 @@ public:
 			do
 			{
 				changed = false;
-				for (Cell &c: Random(this))
+				for (Cell &c: Sudoku::Random(this))
 					if (c.raise(true))
 						changed = true;
 			}
@@ -755,7 +759,7 @@ public:
 			do
 			{
 				changed = false;
-				for (Cell &c: Random(this))
+				for (Cell &c: Sudoku::Random(this))
 					if (c.raise(false))
 						changed = true;
 			}
@@ -1007,7 +1011,7 @@ public:
 		if (!file.is_open())
 			return false;
 
-		Backup tmp(this);
+		Sudoku::Backup tmp(this);
 
 		file >> *this;
 
