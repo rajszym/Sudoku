@@ -942,11 +942,12 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
 	RegisterClassEx(&wc);
 
 	RECT rc = { 0, 0, WIN.right, WIN.bottom };
-	AdjustWindowRect(&rc, WS_OVERLAPPED | WS_CAPTION | WS_THICKFRAME, FALSE);
-	SIZE s  = { GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
-	SIZE w  = { rc.right  - rc.left,           rc.bottom - rc.top            };
+	DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME;
+	AdjustWindowRectEx(&rc, style, FALSE, 0);
+	SIZE s = { GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
+	SIZE w = { rc.right - rc.left + 1, rc.bottom - rc.top + 1 };
 
-	HWND hWnd = CreateWindowEx(0, ::title, ::title, WS_OVERLAPPED | WS_CAPTION | WS_THICKFRAME,
+	HWND hWnd = CreateWindowEx(0, ::title, ::title, style,
 	                          (s.cx - w.cx) / 2, (s.cy - w.cy) / 2, w.cx, w.cy,
 	                          GetDesktopWindow(), NULL, hInstance, NULL);
 
