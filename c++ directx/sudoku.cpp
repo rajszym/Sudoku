@@ -42,12 +42,12 @@ constexpr int LowMargin { CellSize / 16 };
 constexpr int TabSize   { CellSize * 9 + LowMargin * 6 + BigMargin * 2 };
 constexpr int MnuHeight { (TabSize - LowMargin * 10) / 11 };
 
-const DirectX::Rectangle TAB(LowMargin, CellSize, TabSize, TabSize);
+const DirectX::Rectangle TAB(BigMargin, CellSize, TabSize, TabSize);
 const DirectX::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, CellSize, TAB.height);
 const DirectX::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuHeight * 4, TAB.height);
 const DirectX::Rectangle HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
 const DirectX::Rectangle FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
-const DirectX::Rectangle WIN(0, 0, HDR.right + LowMargin, FTR.bottom);
+const DirectX::Rectangle WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
 
 constexpr D3DCOLOR Background = DirectX::Moccasin;
 constexpr D3DCOLOR Lighted    = DirectX::OldLace;
@@ -305,16 +305,16 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 	if (GameHeader::font == NULL)
 	{
 		D3DXFONT_DESC desc = {};
-		desc.Height          = HDR.height - LowMargin * 2;
+		desc.Height          = HDR.height;
 		desc.Width           = 0;
-		desc.Weight          = FW_NORMAL;
+		desc.Weight          = FW_BOLD;
 		desc.MipLevels       = 0;
 		desc.Italic          = FALSE;
 		desc.CharSet         = DEFAULT_CHARSET;
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = VARIABLE_PITCH;
-//		strcpy(desc.FaceName, "Calibri");
+		desc.PitchAndFamily  = MONO_FONT;
+		strcpy(desc.FaceName, "Lato");
 
 		GameHeader::font = dx.font(&desc);
 	}
@@ -418,7 +418,7 @@ void GameTable::update( DirectX &dx )
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = MONO_FONT;
-//		strcpy(desc.FaceName, "Consolas");
+		strcpy(desc.FaceName, "Lato");
 
 		GameTable::font = dx.font(&desc);
 	}
@@ -533,7 +533,7 @@ void GameButtons::update( DirectX &dx, int count )
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = MONO_FONT;
-//		strcpy(desc.FaceName, "Consolas");
+		strcpy(desc.FaceName, "Lato");
 
 		GameButtons::font = dx.font(&desc);
 	}
@@ -746,8 +746,10 @@ void GameFooter::update( DirectX &dx )
 		GameFooter::font = dx.font(&desc);
 	}
 
+	const char *info = "Sudoku game, solver and generator";
 	if (MenuItem::focus != nullptr)
-		dx.text(FTR, GameFooter::font, DirectX::Grey, DT_CENTER | DT_VCENTER, MenuItem::focus->info);
+		info = MenuItem::focus->info;
+	dx.text(FTR, GameFooter::font, DirectX::Grey, DT_CENTER | DT_VCENTER, info);
 }
 
 /*---------------------------------------------------------------------------*/
