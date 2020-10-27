@@ -2,7 +2,7 @@
 
    @file    directx.hpp
    @author  Rajmund Szymanski
-   @date    25.10.2020
+   @date    27.10.2020
    @brief   directx class
 
 *******************************************************************************
@@ -232,14 +232,20 @@ public:
 		Gainsboro            = D3DCOLOR_XRGB(0xdc, 0xdc, 0xdc),
 		WhiteSmoke           = D3DCOLOR_XRGB(0xf5, 0xf5, 0xf5),
 		White                = D3DCOLOR_XRGB(0xff, 0xff, 0xff),
-		Cream                = D3DCOLOR_XRGB(0xff, 0xfd, 0xd0),
 	};
 
-	struct Rectangle: RECT
+	struct Rectangle
 	{
-		const int x, y, width, height;
+		const int left, top, right, bottom, x, y, width, height;
 
-		Rectangle(int _x, int _y, int _w, int _h): RECT{_x, _y, _x + _w, _y + _h}, x(_x), y(_y), width(_w), height(_h) {}
+		Rectangle(int _x, int _y, int _w, int _h):
+			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
+			x(_x), y(_y), width(_w), height(_h) {}
+
+		operator RECT() const
+		{
+			return { left, top, right, bottom };
+		}
 
 		bool contains( const int _x, const int _y ) const
 		{
@@ -307,6 +313,17 @@ public:
 		return d3d != NULL;
 	}
 
+	LPD3DXFONT font( D3DXFONT_DESC *desc )
+	{
+		LPD3DXFONT font;
+		HRESULT hr = D3DXCreateFontIndirect(dev, desc, &font);
+		if (FAILED(hr))
+			return NULL;
+
+		fnt.push_back(font);
+		return font;
+	}
+
 	void quit()
 	{
 		DestroyWindow(wnd);
@@ -335,9 +352,9 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 1, v, sizeof(Vertex));
 	}
 
-	void line( const Rectangle &r, const D3DCOLOR c, const DWORD a = 0xFF )
+	void line( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
 	{
-		line(r.x, r.y, r.width, r.height, c, a);
+		line(r.left, r.right, r.right - r.left, r.bottom - r.top, c, a);
 	}
 
 	void rect( const int x, const int y, const int w, const int h, const D3DCOLOR c, const DWORD a = 0xFF )
@@ -419,36 +436,21 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
 	}
 
-	LPD3DXFONT font( D3DXFONT_DESC *desc )
-	{
-		LPD3DXFONT font;
-		HRESULT hr = D3DXCreateFontIndirect(dev, desc, &font);
-		if (FAILED(hr))
-			return NULL;
-
-		fnt.push_back(font);
-		return font;
-	}
-
-	void put( RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char t )
-	{
-		f->DrawText(NULL, &t, 1, &r, a | DT_VCENTER | DT_NOCLIP, c);
-	}
-
-	void put( const Rectangle &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char t )
+	void put( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char t )
 	{
 		RECT rc = r;
-		put(rc, f, c, a, t);
+		f->DrawText(NULL, &t, 1, &rc, a | DT_VCENTER | DT_NOCLIP, c);
 	}
 
-	void text( RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
-	{
-		f->DrawText(NULL, t, -1, &r, a | DT_VCENTER | DT_NOCLIP, c);
-	}
-
-	void text( const Rectangle &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
+	void text( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
 	{
 		RECT rc = r;
+		f->DrawText(NULL, t, -1, &rc, a | DT_VCENTER | DT_NOCLIP, c);
+	}
+
+	void text( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
+	{
+		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
 		text(rc, f, c, a, t);
 	}
 };
