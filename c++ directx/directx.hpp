@@ -239,11 +239,11 @@ public:
 	{
 		const int x, y, width, height;
 
-		Rectangle(int _x, int _y, int _w, int _h): RECT{_x, _y, _x + _w - 1, _y + _h - 1}, x(_x), y(_y), width(_w), height(_h) {}
+		Rectangle(int _x, int _y, int _w, int _h): RECT{_x, _y, _x + _w, _y + _h}, x(_x), y(_y), width(_w), height(_h) {}
 
 		bool contains( const int _x, const int _y ) const
 		{
-			return _x >= left && _x <= right && _y >= top && _y <= bottom;
+			return _x >= left && _x < right && _y >= top && _y < bottom;
 		}
 
 		int Center( const int _w ) const
@@ -354,9 +354,14 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
 	}
 
-	void rect( const Rectangle &r, const D3DCOLOR c, const DWORD a = 0xFF )
+	void rect( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
 	{
-		rect(r.x, r.y, r.width, r.height, c, a);
+		rect(r.left, r.top, r.right - r.left, r.bottom - r.top, c, a);
+	}
+
+	void rect( const RECT &r, const int m, const D3DCOLOR c, const DWORD a = 0xFF )
+	{
+		rect(r.left + m, r.top + m, r.right - r.left - m * 2, r.bottom - r.top - m * 2, c, a);
 	}
 
 	void fill( const int x, const int y, const int w, const int h, const D3DCOLOR c, const DWORD a = 0xFF )
@@ -372,9 +377,46 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, v, sizeof(Vertex));
 	}
 
-	void fill( const Rectangle &r, const D3DCOLOR c, const DWORD a = 0xFF )
+	void fill( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
 	{
-		fill(r.x, r.y, r.width, r.height, c, a);
+		fill(r.left, r.top, r.right - r.left, r.bottom - r.top, c, a);
+	}
+
+	void fill( const RECT &r, const int m, const D3DCOLOR c, const DWORD a = 0xFF )
+	{
+		fill(r.left + m, r.top + m, r.right - r.left - m * 2, r.bottom - r.top - m * 2, c, a);
+	}
+
+	void left( const RECT &r, int m, const D3DCOLOR c, const DWORD a = 0xFF )
+	{
+		int x = r.left + 1;
+		int y = (r.bottom + r.top) / 2;
+		int d = (r.bottom - r.top) / 2 - m;
+
+		Vertex v[] =
+		{
+			Vertex(x,     y,     c, a),
+			Vertex(x + d, y - d, c, a),
+			Vertex(x + d, y + d, c, a),
+		};
+
+		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
+	}
+
+	void right( const RECT &r, int m, const D3DCOLOR c, const DWORD a = 0xFF )
+	{
+		int x = r.right - 1;
+		int y = (r.bottom + r.top) / 2;
+		int d = (r.bottom - r.top) / 2 - m;
+
+		Vertex v[] =
+		{
+			Vertex(x - d, y - d, c, a),
+			Vertex(x,     y,     c, a),
+			Vertex(x - d, y + d, c, a),
+		};
+
+		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
 	}
 
 	LPD3DXFONT font( D3DXFONT_DESC *desc )
