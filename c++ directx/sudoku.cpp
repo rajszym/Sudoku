@@ -331,16 +331,17 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 		DirectX::Crimson,
 	};
 
+//	dx.rect(HDR, DirectX::Black);
+
 	auto f = banner_color[Game::level];
-	dx.rect(HDR, DirectX::Black);
-	dx.text(HDR, LowMargin, GameHeader::font, f, DT_LEFT, ::title);
+	dx.text(HDR, BigMargin, GameHeader::font, f, DT_LEFT, ::title);
 
 	if (info != nullptr)
 		dx.text(HDR, GameHeader::font, DirectX::Red, DT_CENTER, info);
 
 	char v[16];
 	snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-	dx.text(HDR, LowMargin, GameHeader::font, f, DT_RIGHT, v);
+	dx.text(HDR, BigMargin, GameHeader::font, f, DT_RIGHT, v);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -749,7 +750,7 @@ void GameFooter::update( DirectX &dx )
 		GameFooter::font = dx.font(&desc);
 	}
 
-	dx.rect(FTR, DirectX::Grey);
+//	dx.rect(FTR, DirectX::Grey);
 
 	if (MenuItem::focus != nullptr)
 		dx.text(FTR, GameFooter::font, DirectX::Grey, DT_CENTER, MenuItem::focus->info);
