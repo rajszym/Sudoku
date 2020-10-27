@@ -906,10 +906,16 @@ void Game::command( const Command _c )
 //----------------------------------------------------------------------------
 LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
+	RECT rc;
+	GetClientRect(hWnd, &rc);
+	int w = rc.right - rc.left;
+	int h = rc.bottom - rc.top;
 	int k = GET_KEYSTATE_WPARAM(wParam);
 	int d = GET_WHEEL_DELTA_WPARAM(wParam);
 	int x = GET_X_LPARAM(lParam);
 	int y = GET_Y_LPARAM(lParam);
+	if (w > 0) x = (x * WIN.width  + w / 2) / w;
+	if (h > 0) y = (y * WIN.height + h / 2) / h;
 
 	switch (msg)
 	{
@@ -942,7 +948,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
 	RegisterClassEx(&wc);
 
 	RECT rc = WIN;
-	DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME;
+	DWORD style = WS_OVERLAPPEDWINDOW;
 	AdjustWindowRectEx(&rc, style, FALSE, 0);
 	SIZE s = { GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
 	SIZE w = { rc.right - rc.left, rc.bottom - rc.top };
@@ -960,13 +966,14 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
 		{
 			if (msg.message == WM_QUIT)
 				break;
+
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+
+			continue;
 		}
-		else
-		{
-			sudoku.Game::update();
-		}
+
+		sudoku.Game::update();
 	}
 
 	return 0;
