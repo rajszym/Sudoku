@@ -44,7 +44,7 @@ constexpr int BarWidth  { CellSize };
 constexpr int MnuHeight { (TabSize - LowMargin * 10) / 11 };
 constexpr int MnuWidth  { MnuHeight * 4 };
 constexpr int HdrWidth  { TabSize + BarWidth + MnuWidth + BigMargin * 4 };
-constexpr int FtrHeight { MnuHeight };
+constexpr int FtrHeight { CellSize / 2 };
 
 const DirectX::Rectangle HDR(LowMargin, LowMargin, HdrWidth, CellSize);
 const DirectX::Rectangle TAB(HDR.left, HDR.bottom + BigMargin, TabSize, TabSize);
@@ -184,7 +184,6 @@ class GameButtons: public std::vector<Button>
 public:
 
 	static LPD3DXFONT font;
-	static LPD3DXFONT tiny;
 
 	GameButtons();
 
@@ -201,7 +200,6 @@ class MenuItem: public std::vector<const char *>
 	const int  y;
 	const int  idx;
 	const DirectX::Rectangle r;
-	const char key;
 
 public:
 
@@ -210,7 +208,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int x, const int _y, const char _k, const char *_i ): y{_y}, idx{x}, r{MNU.x, y, MnuWidth, MnuHeight}, key{_k}, info{_i} {}
+	MenuItem( const int x, const int _y, const char *_i ): y{_y}, idx{x}, r{MNU.x, y, MnuWidth, MnuHeight}, info{_i} {}
 
 	void    next        ( bool );
 	void    update      ( DirectX & );
@@ -281,7 +279,6 @@ public:
 LPD3DXFONT  GameHeader ::font  = NULL;
 LPD3DXFONT  GameTable  ::font  = NULL;
 LPD3DXFONT  GameButtons::font  = NULL;
-LPD3DXFONT  GameButtons::tiny  = NULL;
 LPD3DXFONT  GameMenu   ::font  = NULL;
 LPD3DXFONT  GameFooter ::font  = NULL;
 
@@ -334,16 +331,16 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 		DirectX::Crimson,
 	};
 
-	dx.fill(HDR, banner_color[Game::level]);
+	auto f = banner_color[Game::level];
+	dx.rect(HDR, DirectX::Black);
+	dx.text(HDR, LowMargin, GameHeader::font, f, DT_LEFT, ::title);
 
-	dx.text(HDR, LowMargin, GameHeader::font, DirectX::White, DT_LEFT, ::title);
-
-	RECT rc = { HDR.left, HDR.top, TAB.right, HDR.bottom };
-	dx.text(rc, GameHeader::font, DirectX::White, DT_RIGHT, info);
+	if (info != nullptr)
+		dx.text(HDR, GameHeader::font, DirectX::Red, DT_CENTER, info);
 
 	char v[16];
 	snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-	dx.text(HDR, LowMargin, GameHeader::font, DirectX::White, DT_RIGHT, v);
+	dx.text(HDR, LowMargin, GameHeader::font, f, DT_RIGHT, v);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -494,8 +491,8 @@ void Button::update( DirectX &dx, int count )
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
-		RECT rc { Button::r.right, Button::r.bottom - BigMargin * 2, Button::r.right + BigMargin * 2, Button::r.bottom };
-		dx.put(rc, GameButtons::tiny, DirectX::DimGrey, DT_CENTER, count > 9 ? '?' : '0' + count);
+		RECT rc { BTN.right, Button::r.bottom - BigMargin * 2, MNU.left, Button::r.bottom };
+		dx.put(rc, GameMenu::font, DirectX::Grey, DT_CENTER, count > 9 ? '?' : '0' + count);
 	}
 }
 
@@ -542,11 +539,6 @@ void GameButtons::update( DirectX &dx, int count )
 		strcpy(desc.FaceName, "Tahoma");
 
 		GameButtons::font = dx.font(&desc);
-
-		desc.Height          = BigMargin * 2;
-		desc.Weight          = FW_NORMAL;
-
-		GameButtons::tiny = dx.font(&desc);
 	}
 
 	for (auto &b: *this)
@@ -660,35 +652,35 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 
 GameMenu::GameMenu()
 {
-	GameMenu::emplace_back( 0, MNU.y + (TabSize - MnuHeight) *  0/10, 'D', "change difficulty level of the game");
+	GameMenu::emplace_back( 0, MNU.y + (TabSize - MnuHeight) *  0/10, "Change difficulty level of the game (keyboard shortcuts: D, PgUp, PgDn)");
 		GameMenu::back().emplace_back("easy");
 		GameMenu::back().emplace_back("medium");
 		GameMenu::back().emplace_back("hard");
 		GameMenu::back().emplace_back("expert");
 		GameMenu::back().emplace_back("extreme");
-	GameMenu::emplace_back( 1, MNU.y + (TabSize - MnuHeight) *  1/10, 'A', "change the assistance level of the game");
+	GameMenu::emplace_back( 1, MNU.y + (TabSize - MnuHeight) *  1/10, "Change the assistance level of the game (keyboard shortcuts: A, Left, Right)");
 		GameMenu::back().emplace_back("none");
 		GameMenu::back().emplace_back("current");
 		GameMenu::back().emplace_back("available");
 		GameMenu::back().emplace_back("sure");
 		GameMenu::back().emplace_back("full");
-	GameMenu::emplace_back( 2, MNU.y + (TabSize - MnuHeight) *  2/10, 'N', "generate or load a new layout");
+	GameMenu::emplace_back( 2, MNU.y + (TabSize - MnuHeight) *  2/10, "Generate or load a new layout (keyboard shortcuts: N, Tab)");
 		GameMenu::back().emplace_back("new");
-	GameMenu::emplace_back( 3, MNU.y + (TabSize - MnuHeight) *  3/10, 'S', "solve the current layout");
+	GameMenu::emplace_back( 3, MNU.y + (TabSize - MnuHeight) *  3/10, "Solve the current layout (keyboard shortcuts: S, Enter)");
 		GameMenu::back().emplace_back("solve");
-	GameMenu::emplace_back( 4, MNU.y + (TabSize - MnuHeight) *  4/10, 'U', "undo last move or restore the accepted layout");
+	GameMenu::emplace_back( 4, MNU.y + (TabSize - MnuHeight) *  4/10, "Undo last move or restore the accepted layout (keyboard shortcuts: U, Backspace)");
 		GameMenu::back().emplace_back("undo");
-	GameMenu::emplace_back( 5, MNU.y + (TabSize - MnuHeight) *  5/10, 'C', "clear the board");
+	GameMenu::emplace_back( 5, MNU.y + (TabSize - MnuHeight) *  5/10, "Clear the board (keyboard shortcuts: C, Delete)");
 		GameMenu::back().emplace_back("clear");
-	GameMenu::emplace_back( 6, MNU.y + (TabSize - MnuHeight) *  6/10, 'E', "start editing the current layout");
+	GameMenu::emplace_back( 6, MNU.y + (TabSize - MnuHeight) *  6/10, "Start editing the current layout (keyboard shortcuts: E, Home)");
 		GameMenu::back().emplace_back("edit");
-	GameMenu::emplace_back( 7, MNU.y + (TabSize - MnuHeight) *  7/10, 'T', "accept the current layout and finish editing");
+	GameMenu::emplace_back( 7, MNU.y + (TabSize - MnuHeight) *  7/10, "Accept the current layout and finish editing (keyboard shortcuts: T, End)");
 		GameMenu::back().emplace_back("accept");
-	GameMenu::emplace_back( 8, MNU.y + (TabSize - MnuHeight) *  8/10, 'V', "save the current layout to the file");
+	GameMenu::emplace_back( 8, MNU.y + (TabSize - MnuHeight) *  8/10, "Save the current layout to the file (keyboard shortcuts: V, Insert)");
 		GameMenu::back().emplace_back("save");
-	GameMenu::emplace_back( 9, MNU.y + (TabSize - MnuHeight) *  9/10, 'L', "load layout from the file");
+	GameMenu::emplace_back( 9, MNU.y + (TabSize - MnuHeight) *  9/10, "Load layout from the file (keyboard shortcut: L)");
 		GameMenu::back().emplace_back("load");
-	GameMenu::emplace_back(10, MNU.y + (TabSize - MnuHeight) * 10/10, 'Q', "quit the game");
+	GameMenu::emplace_back(10, MNU.y + (TabSize - MnuHeight) * 10/10, "Quit the game (keyboard shortcuts: Q, Esc)");
 		GameMenu::back().emplace_back("quit");
 }
 
@@ -709,10 +701,12 @@ void GameMenu::update( DirectX &dx )
 		strcpy(desc.FaceName, "Tahoma");
 
 		GameMenu::font = dx.font(&desc);
-}
+	}
 
 	for (auto &m: *this)
 		m.update(dx);
+
+	dx.rect(MNU, DirectX::Black);
 }
 
 void GameMenu::mouseMove( const int _x, const int _y )
@@ -776,8 +770,8 @@ void Game::update()
 
 	auto time  = Sudoku::Timer::get();
 	auto count = Sudoku::count(Button::cur);
-	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable :(" : Sudoku::rating == -1 ? "ambiguous :/" : "")
-	                                : (Sudoku::corrupt() ? "corrupt  :(" : "solved :)");
+	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "UNSOLVABLE" : Sudoku::rating == -1 ? "AMBIGUOUS" : nullptr)
+	                                : (Sudoku::corrupt() ? "CORRUPT" : "SOLVED");
 
 	DirectX::begin(Background);
 
