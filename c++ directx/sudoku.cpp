@@ -47,10 +47,10 @@ constexpr int HdrWidth  { TabSize + BarWidth + MnuWidth + BigMargin * 4 };
 constexpr int FtrHeight { MnuHeight };
 
 const DirectX::Rectangle HDR(LowMargin, LowMargin, HdrWidth, CellSize);
-const DirectX::Rectangle TAB(HDR.left, HDR.bottom + 1 + BigMargin, TabSize, TabSize);
-const DirectX::Rectangle BTN(TAB.right + 1 + BigMargin * 2, TAB.top, BarWidth, TabSize);
-const DirectX::Rectangle MNU(BTN.right + 1 + BigMargin * 2, TAB.top, MnuWidth, TabSize);
-const DirectX::Rectangle FTR(HDR.left, TAB.bottom + 1 + BigMargin, HDR.width, FtrHeight);
+const DirectX::Rectangle TAB(HDR.left, HDR.bottom + BigMargin, TabSize, TabSize);
+const DirectX::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, BarWidth, TabSize);
+const DirectX::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuWidth, TabSize);
+const DirectX::Rectangle FTR(HDR.left, TAB.bottom + BigMargin, HDR.width, FtrHeight);
 const DirectX::Rectangle WIN(0, 0, HDR.width + LowMargin * 2, HDR.height + TAB.height + FTR.height + BigMargin * 2 + LowMargin * 2);
 
 /*---------------------------------------------------------------------------*/
@@ -358,7 +358,7 @@ void GameCell::update( DirectX &dx )
 	}
 
 	if (GameCell::focus == this)
-		dx.fill(GameCell::r, DirectX::Khaki);
+		dx.fill(GameCell::r, LowMargin, DirectX::Khaki);
 	dx.rect(GameCell::r, DirectX::Black);
 
 	dx.put(GameCell::r, GameTable::font, f, DT_CENTER, "-123456789"[cell.num]);
@@ -467,7 +467,7 @@ void Button::update( DirectX &dx, int count )
 	auto f = DirectX::DimGrey;
 
 	if (Button::focus == this)
-		dx.fill(Button::r, DirectX::Khaki);
+		dx.fill(Button::r, LowMargin, DirectX::Khaki);
 	else
 	if (Button::cur == Button::num)
 		dx.fill(Button::r, DirectX::White);
@@ -475,8 +475,8 @@ void Button::update( DirectX &dx, int count )
 	dx.rect(Button::r, DirectX::Black);
 	if (Button::cur == Button::num)
 	{
-		dx.rect(Button::r.x + 1, Button::r.y + 1, Button::r.width - 2, Button::r.height - 2, DirectX::DimGrey);
-		dx.rect(Button::r.x + 2, Button::r.y + 2, Button::r.width - 4, Button::r.height - 4, DirectX::Grey);
+		dx.rect(Button::r, 1, DirectX::DimGrey);
+		dx.rect(Button::r, 2, DirectX::Grey);
 	}
 
 	if (GameCell::focus != nullptr)
@@ -489,8 +489,8 @@ void Button::update( DirectX &dx, int count )
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
-		RECT rc { Button::r.x + CellSize, Button::r.y + CellSize / 2, Button::r.x + CellSize * 3 / 2 - 1, Button::r.y + CellSize - 1 };
-		dx.put(rc, GameButtons::tiny, DirectX::Black, DT_CENTER, count > 9 ? '?' : '0' + count);
+		RECT rc { Button::r.right, Button::r.bottom - BigMargin * 2, Button::r.right + BigMargin * 2, Button::r.bottom };
+		dx.put(rc, GameButtons::tiny, DirectX::DimGrey, DT_CENTER, count > 9 ? '?' : '0' + count);
 	}
 }
 
@@ -538,7 +538,7 @@ void GameButtons::update( DirectX &dx, int count )
 
 		GameButtons::font = dx.font(&desc);
 
-		desc.Height          = CellSize / 2;
+		desc.Height          = BigMargin * 2;
 		desc.Weight          = FW_NORMAL;
 
 		GameButtons::tiny = dx.font(&desc);
@@ -611,8 +611,8 @@ void MenuItem::update( DirectX &dx )
 		dx.fill(MenuItem::r, DirectX::Khaki);
 		if (MenuItem::size() > 1)
 		{
-			dx.text(MenuItem::r, GameMenu::font, MenuItem::back ? DirectX::Black : DirectX::Cream, DT_LEFT, "<");
-			dx.text(MenuItem::r, GameMenu::font, MenuItem::back ? DirectX::Cream : DirectX::Black, DT_RIGHT, ">");
+			dx.left (MenuItem::r, LowMargin * 2, MenuItem::back ? DirectX::Maroon : DirectX::Cream);
+			dx.right(MenuItem::r, LowMargin * 2, MenuItem::back ? DirectX::Cream : DirectX::Maroon);
 		}
 	}
 
@@ -941,11 +941,11 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
 	wc.lpszClassName = ::title;
 	RegisterClassEx(&wc);
 
-	RECT rc = { 0, 0, WIN.right, WIN.bottom };
+	RECT rc = WIN;
 	DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME;
 	AdjustWindowRectEx(&rc, style, FALSE, 0);
 	SIZE s = { GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
-	SIZE w = { rc.right - rc.left + 1, rc.bottom - rc.top + 1 };
+	SIZE w = { rc.right - rc.left, rc.bottom - rc.top };
 
 	HWND hWnd = CreateWindowEx(0, ::title, ::title, style,
 	                          (s.cx - w.cx) / 2, (s.cy - w.cy) / 2, w.cx, w.cy,
