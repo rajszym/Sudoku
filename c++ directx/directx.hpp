@@ -254,22 +254,12 @@ public:
 
 		int Center( const int _w ) const
 		{
-			return x + (width - _w) / 2;
-		}
-
-		int Right( const int _w ) const
-		{
-			return x + width - _w;
+			return left + (width - _w) / 2;
 		}
 
 		int Middle( const int _h ) const
 		{
-			return y + (height - _h) / 2;
-		}
-
-		int Bottom( const int _h ) const
-		{
-			return y + height - _h;
+			return top + (height - _h) / 2;
 		}
 	};
 
