@@ -451,7 +451,7 @@ public:
 	void text( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
 	{
 		RECT rc = r;
-		f->DrawText(NULL, t, -1, &rc, a | DT_VCENTER | DT_NOCLIP, c);
+		f->DrawText(NULL, t, -1, &rc, a | DT_NOCLIP, c);
 	}
 
 	void text( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
