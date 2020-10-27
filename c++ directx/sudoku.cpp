@@ -87,6 +87,7 @@ enum Command: int
 	Button9Cmd = 9,
 	ClearCellCmd,
 	SetCellCmd,
+	SetSureCmd,
 	PrevHelpCmd,
 	NextHelpCmd,
 	PrevLevelCmd,
@@ -379,7 +380,7 @@ Command GameCell::mouseLButton( const int _x, const int _y )
 		if (GameCell::cell.num == 0)
 		{
 			if (Button::cur == 0 && Game::help >= Assistance::Full)
-				return static_cast<Command>(GameCell::cell.sure());
+				return SetSureCmd;
 			else
 				return SetCellCmd;
 		}
@@ -875,6 +876,8 @@ void Game::command( const Command _c )
 	                    Sudoku::set(GameCell::focus->get(), 0);
 	                    break;
 	case SetCellCmd:    Sudoku::set(GameCell::focus->get(), Button::cur, Game::help <= Assistance::Current);
+	                    break;
+	case SetSureCmd:    Sudoku::set(GameCell::focus->get(), GameCell::focus->get().sure());
 	                    break;
 	case PrevHelpCmd:   prev = true; /* falls through */
 	case NextHelpCmd:   Game::mnu[1].next(prev);
