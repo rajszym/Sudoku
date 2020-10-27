@@ -40,18 +40,14 @@ constexpr int CellSize  { 64 };
 constexpr int BigMargin { CellSize / 4 };
 constexpr int LowMargin { CellSize / 16 };
 constexpr int TabSize   { CellSize * 9 + LowMargin * 6 + BigMargin * 2 };
-constexpr int BarWidth  { CellSize };
 constexpr int MnuHeight { (TabSize - LowMargin * 10) / 11 };
-constexpr int MnuWidth  { MnuHeight * 4 };
-constexpr int HdrWidth  { TabSize + BarWidth + MnuWidth + BigMargin * 4 };
-constexpr int FtrHeight { CellSize / 2 };
 
-const DirectX::Rectangle HDR(LowMargin, LowMargin, HdrWidth, CellSize);
-const DirectX::Rectangle TAB(HDR.left, HDR.bottom + BigMargin, TabSize, TabSize);
-const DirectX::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, BarWidth, TabSize);
-const DirectX::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuWidth, TabSize);
-const DirectX::Rectangle FTR(HDR.left, TAB.bottom + BigMargin, HDR.width, FtrHeight);
-const DirectX::Rectangle WIN(0, 0, HDR.width + LowMargin * 2, HDR.height + TAB.height + FTR.height + BigMargin * 2 + LowMargin * 2);
+const DirectX::Rectangle TAB(LowMargin, CellSize, TabSize, TabSize);
+const DirectX::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, CellSize, TAB.height);
+const DirectX::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuHeight * 4, TAB.height);
+const DirectX::Rectangle HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
+const DirectX::Rectangle FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
+const DirectX::Rectangle WIN(0, 0, HDR.right + LowMargin, FTR.bottom);
 
 constexpr D3DCOLOR Background = DirectX::Moccasin;
 constexpr D3DCOLOR Lighted    = DirectX::OldLace;
@@ -198,8 +194,8 @@ public:
 
 class MenuItem: public std::vector<const char *>
 {
-	const int  y;
-	const int  idx;
+	const int y;
+	const int idx;
 	const DirectX::Rectangle r;
 
 public:
@@ -209,7 +205,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int x, const int _y, const char *_i ): y{_y}, idx{x}, r{MNU.x, y, MnuWidth, MnuHeight}, info{_i} {}
+	MenuItem( const int x, const int _y, const char *_i ): y{_y}, idx{x}, r{MNU.x, y, MNU.width, MnuHeight}, info{_i} {}
 
 	void    next        ( bool );
 	void    update      ( DirectX & );
@@ -332,17 +328,15 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 		DirectX::Crimson,
 	};
 
-//	dx.rect(HDR, DirectX::Black);
-
 	auto f = banner_color[Game::level];
-	dx.text(HDR, BigMargin, GameHeader::font, f, DT_LEFT, ::title);
+	dx.text(HDR, GameHeader::font, f, DT_LEFT | DT_VCENTER, ::title);
 
 	if (info != nullptr)
-		dx.text(HDR, GameHeader::font, DirectX::Red, DT_CENTER, info);
+		dx.text(HDR, GameHeader::font, DirectX::Red, DT_CENTER | DT_VCENTER, info);
 
 	char v[16];
 	snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-	dx.text(HDR, BigMargin, GameHeader::font, f, DT_RIGHT, v);
+	dx.text(HDR, GameHeader::font, f, DT_RIGHT | DT_VCENTER, v);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -615,7 +609,7 @@ void MenuItem::update( DirectX &dx )
 		}
 	}
 
-	dx.text(MenuItem::r, GameMenu::font, DirectX::Black, DT_CENTER, MenuItem::at(i));
+	dx.text(MenuItem::r, GameMenu::font, DirectX::Black, DT_CENTER | DT_VCENTER, MenuItem::at(i));
 }
 
 void MenuItem::mouseMove( const int _x, const int _y )
@@ -751,10 +745,8 @@ void GameFooter::update( DirectX &dx )
 		GameFooter::font = dx.font(&desc);
 	}
 
-//	dx.rect(FTR, DirectX::Grey);
-
 	if (MenuItem::focus != nullptr)
-		dx.text(FTR, GameFooter::font, DirectX::Grey, DT_CENTER, MenuItem::focus->info);
+		dx.text(FTR, GameFooter::font, DirectX::Grey, DT_CENTER | DT_VCENTER, MenuItem::focus->info);
 }
 
 /*---------------------------------------------------------------------------*/
