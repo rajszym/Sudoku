@@ -314,7 +314,7 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = VARIABLE_PITCH;
-		strcpy(desc.FaceName, "Tahoma");
+//		strcpy(desc.FaceName, "Calibri");
 
 		GameHeader::font = dx.font(&desc);
 	}
@@ -345,7 +345,7 @@ void GameCell::update( DirectX &dx )
 {
 	auto h = Game::help;
 	auto n = Button::cur;
-	auto f = cell.empty() ? DirectX::Grey : cell.immutable ? DirectX::Black : DirectX::Green;
+	auto f = GameCell::cell.empty() ? DirectX::Grey : cell.immutable ? DirectX::Black : DirectX::Green;
 
 	if (n != 0)
 	{
@@ -356,6 +356,7 @@ void GameCell::update( DirectX &dx )
 
 	if (GameCell::focus == this)
 		dx.fill(GameCell::r, LowMargin, Lighted);
+
 	dx.rect(GameCell::r, DirectX::Black);
 
 	dx.put(GameCell::r, GameTable::font, f, DT_CENTER, "-123456789"[cell.num]);
@@ -416,8 +417,8 @@ void GameTable::update( DirectX &dx )
 		desc.CharSet         = DEFAULT_CHARSET;
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = VARIABLE_PITCH;
-		strcpy(desc.FaceName, "Tahoma");
+		desc.PitchAndFamily  = MONO_FONT;
+//		strcpy(desc.FaceName, "Consolas");
 
 		GameTable::font = dx.font(&desc);
 	}
@@ -531,8 +532,8 @@ void GameButtons::update( DirectX &dx, int count )
 		desc.CharSet         = DEFAULT_CHARSET;
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = VARIABLE_PITCH;
-		strcpy(desc.FaceName, "Tahoma");
+		desc.PitchAndFamily  = MONO_FONT;
+//		strcpy(desc.FaceName, "Consolas");
 
 		GameButtons::font = dx.font(&desc);
 	}
@@ -694,7 +695,7 @@ void GameMenu::update( DirectX &dx )
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = VARIABLE_PITCH;
-		strcpy(desc.FaceName, "Tahoma");
+//		strcpy(desc.FaceName, "Calibri");
 
 		GameMenu::font = dx.font(&desc);
 	}
@@ -740,7 +741,7 @@ void GameFooter::update( DirectX &dx )
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = VARIABLE_PITCH;
-		strcpy(desc.FaceName, "Tahoma");
+//		strcpy(desc.FaceName, "Calibri");
 
 		GameFooter::font = dx.font(&desc);
 	}
