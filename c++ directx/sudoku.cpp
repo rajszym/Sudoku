@@ -652,13 +652,13 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 
 GameMenu::GameMenu()
 {
-	GameMenu::emplace_back( 0, MNU.y + (TabSize - MnuHeight) *  0/10, "Change difficulty level of the game (keyboard shortcuts: D, PgUp, PgDn)");
+	GameMenu::emplace_back( 0, MNU.y + (TabSize - MnuHeight) *  0/10, "Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)");
 		GameMenu::back().emplace_back("easy");
 		GameMenu::back().emplace_back("medium");
 		GameMenu::back().emplace_back("hard");
 		GameMenu::back().emplace_back("expert");
 		GameMenu::back().emplace_back("extreme");
-	GameMenu::emplace_back( 1, MNU.y + (TabSize - MnuHeight) *  1/10, "Change the assistance level of the game (keyboard shortcuts: A, Left, Right)");
+	GameMenu::emplace_back( 1, MNU.y + (TabSize - MnuHeight) *  1/10, "Change the assistance level: none, current, available, sure, full (keyboard shortcuts: A, Left, Right)");
 		GameMenu::back().emplace_back("none");
 		GameMenu::back().emplace_back("current");
 		GameMenu::back().emplace_back("available");
