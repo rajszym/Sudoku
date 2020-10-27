@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    26.10.2020
+   @date    27.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -41,8 +41,8 @@ constexpr int BigMargin { CellSize / 4 };
 constexpr int LowMargin { CellSize / 16 };
 constexpr int TabSize   { CellSize * 9 + LowMargin * 6 + BigMargin * 2 };
 constexpr int BarWidth  { CellSize };
-constexpr int MnuWidth  { CellSize * 3 };
 constexpr int MnuHeight { (TabSize - LowMargin * 10) / 11 };
+constexpr int MnuWidth  { MnuHeight * 4 };
 constexpr int HdrWidth  { TabSize + BarWidth + MnuWidth + BigMargin * 4 };
 constexpr int FtrHeight { MnuHeight };
 
@@ -52,6 +52,10 @@ const DirectX::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, BarWidth, TabSi
 const DirectX::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuWidth, TabSize);
 const DirectX::Rectangle FTR(HDR.left, TAB.bottom + BigMargin, HDR.width, FtrHeight);
 const DirectX::Rectangle WIN(0, 0, HDR.width + LowMargin * 2, HDR.height + TAB.height + FTR.height + BigMargin * 2 + LowMargin * 2);
+
+constexpr D3DCOLOR Background = DirectX::Moccasin;
+constexpr D3DCOLOR Lighted    = DirectX::OldLace;
+constexpr D3DCOLOR Arrow      = DirectX::Peru;
 
 /*---------------------------------------------------------------------------*/
 /*                                GAME CLASSES                               */
@@ -332,14 +336,14 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 
 	dx.fill(HDR, banner_color[Game::level]);
 
-	dx.text(HDR, GameHeader::font, DirectX::White, DT_LEFT, ::title);
+	dx.text(HDR, LowMargin, GameHeader::font, DirectX::White, DT_LEFT, ::title);
 
 	RECT rc = { HDR.left, HDR.top, TAB.right, HDR.bottom };
 	dx.text(rc, GameHeader::font, DirectX::White, DT_RIGHT, info);
 
 	char v[16];
 	snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-	dx.text(HDR, GameHeader::font, DirectX::White, DT_RIGHT, v);
+	dx.text(HDR, LowMargin, GameHeader::font, DirectX::White, DT_RIGHT, v);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -358,7 +362,7 @@ void GameCell::update( DirectX &dx )
 	}
 
 	if (GameCell::focus == this)
-		dx.fill(GameCell::r, LowMargin, DirectX::Khaki);
+		dx.fill(GameCell::r, LowMargin, Lighted);
 	dx.rect(GameCell::r, DirectX::Black);
 
 	dx.put(GameCell::r, GameTable::font, f, DT_CENTER, "-123456789"[cell.num]);
@@ -467,7 +471,7 @@ void Button::update( DirectX &dx, int count )
 	auto f = DirectX::DimGrey;
 
 	if (Button::focus == this)
-		dx.fill(Button::r, LowMargin, DirectX::Khaki);
+		dx.fill(Button::r, LowMargin, Lighted);
 	else
 	if (Button::cur == Button::num)
 		dx.fill(Button::r, DirectX::White);
@@ -477,6 +481,7 @@ void Button::update( DirectX &dx, int count )
 	{
 		dx.rect(Button::r, 1, DirectX::DimGrey);
 		dx.rect(Button::r, 2, DirectX::Grey);
+		dx.rect(Button::r, 2, DirectX::LightGrey);
 	}
 
 	if (GameCell::focus != nullptr)
@@ -608,11 +613,11 @@ void MenuItem::update( DirectX &dx )
 
 	if (MenuItem::focus == this)
 	{
-		dx.fill(MenuItem::r, DirectX::Khaki);
+		dx.fill(MenuItem::r, Lighted);
 		if (MenuItem::size() > 1)
 		{
-			dx.left (MenuItem::r, LowMargin * 2, MenuItem::back ? DirectX::Maroon : DirectX::Cream);
-			dx.right(MenuItem::r, LowMargin * 2, MenuItem::back ? DirectX::Cream : DirectX::Maroon);
+			dx.left (MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Arrow : Background);
+			dx.right(MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Background : Arrow);
 		}
 	}
 
@@ -774,7 +779,7 @@ void Game::update()
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable :(" : Sudoku::rating == -1 ? "ambiguous :/" : "")
 	                                : (Sudoku::corrupt() ? "corrupt  :(" : "solved :)");
 
-	DirectX::begin(DirectX::Cream);
+	DirectX::begin(Background);
 
 	hdr.update(*this, info, time);
 	tab.update(*this);
