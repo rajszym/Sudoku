@@ -442,6 +442,12 @@ public:
 		f->DrawText(NULL, &t, 1, &rc, a | DT_VCENTER | DT_NOCLIP, c);
 	}
 
+	void put( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char t )
+	{
+		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
+		put(rc, f, c, a, t);
+	}
+
 	void text( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
 	{
 		RECT rc = r;
