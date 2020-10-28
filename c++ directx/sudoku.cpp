@@ -309,14 +309,14 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 		D3DXFONT_DESC desc = {};
 		desc.Height          = HDR.height;
 		desc.Width           = 0;
-		desc.Weight          = FW_BOLD;
+		desc.Weight          = FW_NORMAL;
 		desc.MipLevels       = 0;
 		desc.Italic          = FALSE;
 		desc.CharSet         = DEFAULT_CHARSET;
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = MONO_FONT;
-		strcpy(desc.FaceName, "Lato");
+		strcpy(desc.FaceName, "Tahoma");
 
 		GameHeader::font = dx.font(&desc);
 	}
@@ -424,7 +424,7 @@ void GameTable::update( DirectX &dx )
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = MONO_FONT;
-		strcpy(desc.FaceName, "Lato");
+		strcpy(desc.FaceName, "Tahoma");
 
 		GameTable::font = dx.font(&desc);
 	}
@@ -490,12 +490,12 @@ void Button::update( DirectX &dx, int count )
 		else if (h >= Assistance::Available && GameCell::focus->allowed(Button::num)) f = DirectX::Orange;
 	}
 
-	dx.put(Button::r, GameButtons::font, f, DT_CENTER | DT_VCENTER, '0' + Button::num);
+	dx.put(Button::r, GameTable::font, f, DT_CENTER | DT_VCENTER, '0' + Button::num);
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
 		RECT rc { BTN.right, Button::r.bottom - BigMargin * 2, MNU.left, Button::r.bottom };
-		dx.put(rc, GameMenu::font, DirectX::Grey, DT_CENTER | DT_VCENTER, count > 9 ? '?' : '0' + count);
+		dx.put(rc, GameButtons::font, DirectX::Grey, DT_CENTER | DT_VCENTER, count > 9 ? '?' : '0' + count);
 	}
 }
 
@@ -530,16 +530,16 @@ void GameButtons::update( DirectX &dx, int count )
 	if (GameButtons::font == NULL)
 	{
 		D3DXFONT_DESC desc = {};
-		desc.Height          = CellSize;
+		desc.Height          = CellSize / 2;
 		desc.Width           = 0;
-		desc.Weight          = FW_BOLD;
+		desc.Weight          = FW_NORMAL;
 		desc.MipLevels       = 0;
 		desc.Italic          = FALSE;
 		desc.CharSet         = DEFAULT_CHARSET;
 		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = MONO_FONT;
-		strcpy(desc.FaceName, "Lato");
+		desc.PitchAndFamily  = VARIABLE_PITCH;
+		strcpy(desc.FaceName, "Tahoma");
 
 		GameButtons::font = dx.font(&desc);
 	}
