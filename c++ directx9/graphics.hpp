@@ -305,7 +305,7 @@ public:
 		desc.MipLevels       = 0;
 		desc.Italic          = FALSE;
 		desc.CharSet         = DEFAULT_CHARSET;
-		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
+		desc.OutputPrecision = OUT_TT_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = p;
 		strcpy(desc.FaceName, f);
