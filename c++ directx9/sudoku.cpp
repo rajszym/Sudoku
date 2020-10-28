@@ -32,7 +32,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include "sudoku.hpp"
-#include "directx.hpp"
+#include "graphics.hpp"
 
 const char *title = "Sudoku";
 
@@ -42,16 +42,16 @@ constexpr int LowMargin { CellSize / 16 };
 constexpr int TabSize   { CellSize * 9 + LowMargin * 6 + BigMargin * 2 };
 constexpr int MnuHeight { (TabSize - LowMargin * 10) / 11 };
 
-const DirectX::Rectangle TAB(BigMargin, CellSize, TabSize, TabSize);
-const DirectX::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, CellSize, TAB.height);
-const DirectX::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuHeight * 4, TAB.height);
-const DirectX::Rectangle HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
-const DirectX::Rectangle FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
-const DirectX::Rectangle WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
+const Graphics::Rectangle TAB(BigMargin, CellSize, TabSize, TabSize);
+const Graphics::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, CellSize, TAB.height);
+const Graphics::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuHeight * 4, TAB.height);
+const Graphics::Rectangle HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
+const Graphics::Rectangle FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
+const Graphics::Rectangle WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
 
-constexpr D3DCOLOR Background = DirectX::Moccasin;
-constexpr D3DCOLOR Lighted    = DirectX::OldLace;
-constexpr D3DCOLOR Arrow      = DirectX::Peru;
+constexpr D3DCOLOR Background = Graphics::Moccasin;
+constexpr D3DCOLOR Lighted    = Graphics::OldLace;
+constexpr D3DCOLOR Arrow      = Graphics::Peru;
 
 /*---------------------------------------------------------------------------*/
 /*                                GAME CLASSES                               */
@@ -109,7 +109,7 @@ public:
 
 	GameHeader() {}
 
-	void update( DirectX &, const char *, int );
+	void update( Graphics &, const char *, int );
 };
 
 /*---------------------------------------------------------------------------*/
@@ -120,7 +120,7 @@ class GameCell
 
 	const int x;
 	const int y;
-	const DirectX::Rectangle r;
+	const Graphics::Rectangle r;
 
 	Cell &cell;
 
@@ -134,7 +134,7 @@ public:
 	bool    allowed     ( int n ) { return GameCell::cell.allowed(n); }
 	int     sure        ( int n ) { return GameCell::cell.sure(n); }
 
-	void    update      ( DirectX & );
+	void    update      ( Graphics & );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
@@ -149,7 +149,7 @@ public:
 
 	GameTable( Sudoku & );
 
-	void    update      ( DirectX & );
+	void    update      ( Graphics & );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	void    mouseRButton( const int, const int );
@@ -160,7 +160,7 @@ public:
 class Button
 {
 	const int y;
-	const DirectX::Rectangle r;
+	const Graphics::Rectangle r;
 	const int num;
 
 public:
@@ -170,7 +170,7 @@ public:
 
 	Button( const int _y, const int _n ): y{_y}, r{BTN.x, y, BTN.width, CellSize}, num{_n} {}
 
-	void    update      ( DirectX &, int );
+	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
@@ -184,7 +184,7 @@ public:
 
 	GameButtons();
 
-	void    update      ( DirectX &, int );
+	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	void    mouseRButton( const int, const int );
@@ -196,7 +196,7 @@ class MenuItem: public std::vector<const char *>
 {
 	const int y;
 	const int idx;
-	const DirectX::Rectangle r;
+	const Graphics::Rectangle r;
 
 public:
 
@@ -208,7 +208,7 @@ public:
 	MenuItem( const int x, const int _y, const char *_i ): y{_y}, idx{x}, r{MNU.x, y, MNU.width, MnuHeight}, info{_i} {}
 
 	void    next        ( bool );
-	void    update      ( DirectX & );
+	void    update      ( Graphics & );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
@@ -223,7 +223,7 @@ public:
 
 	GameMenu();
 
-	void    update      ( DirectX & );
+	void    update      ( Graphics & );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
@@ -238,12 +238,12 @@ public:
 
 	GameFooter() {}
 
-	void update( DirectX & );
+	void update( Graphics & );
 };
 
 /*---------------------------------------------------------------------------*/
 
-class Game: public DirectX, public Sudoku
+class Game: public Graphics, public Sudoku
 {
 	GameHeader  hdr;
 	GameTable   tab;
@@ -259,7 +259,7 @@ public:
 	static Assistance help;
 	static Difficulty level;
 
-	Game(): DirectX(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, tracking{false} { Sudoku::generate(); }
+	Game(): Graphics(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, tracking{false} { Sudoku::generate(); }
 
 	void update      ();
 	void mouseMove   ( const int, const int, HWND );
@@ -302,7 +302,7 @@ auto sudoku = Game();
 /*                              IMPLEMENTATION                               */
 /*---------------------------------------------------------------------------*/
 
-void GameHeader::update( DirectX &dx, const char *info, int time )
+void GameHeader::update( Graphics &gr, const char *info, int time )
 {
 	if (GameHeader::font == NULL)
 	{
@@ -318,54 +318,54 @@ void GameHeader::update( DirectX &dx, const char *info, int time )
 		desc.PitchAndFamily  = MONO_FONT;
 		strcpy(desc.FaceName, "Tahoma");
 
-		GameHeader::font = dx.font(&desc);
+		GameHeader::font = gr.font(&desc);
 	}
 
-	static const DirectX::Color banner_color[] =
+	static const Graphics::Color banner_color[] =
 	{
-		DirectX::Blue,
-		DirectX::Green,
-		DirectX::Orange,
-		DirectX::Crimson,
-		DirectX::Crimson,
+		Graphics::Blue,
+		Graphics::Green,
+		Graphics::Orange,
+		Graphics::Crimson,
+		Graphics::Crimson,
 	};
 
 	auto f = banner_color[Game::level];
-	dx.text(HDR, GameHeader::font, f, DT_LEFT | DT_VCENTER, ::title);
+	gr.text(HDR, GameHeader::font, f, DT_LEFT | DT_VCENTER, ::title);
 
 	if (info != nullptr)
-		dx.text(HDR, GameHeader::font, DirectX::Red, DT_CENTER | DT_VCENTER, info);
+		gr.text(HDR, GameHeader::font, Graphics::Red, DT_CENTER | DT_VCENTER, info);
 
 	char v[16];
 	snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-	dx.text(HDR, GameHeader::font, f, DT_RIGHT | DT_VCENTER, v);
+	gr.text(HDR, GameHeader::font, f, DT_RIGHT | DT_VCENTER, v);
 }
 
 /*---------------------------------------------------------------------------*/
 
-void GameCell::update( DirectX &dx )
+void GameCell::update( Graphics &gr )
 {
 	auto h = Game::help;
 	auto n = Button::cur;
-	auto f = GameCell::cell.empty() ? Background : GameCell::cell.immutable ? DirectX::Black : DirectX::Green;
+	auto f = GameCell::cell.empty() ? Background : GameCell::cell.immutable ? Graphics::Black : Graphics::Green;
 
 	if (n != 0)
 	{
-		if      (h >= Assistance::Current && GameCell::cell.equal(n))   f = DirectX::Red;
-		else if (h >= Assistance::Full    && GameCell::cell.sure(n))    f = DirectX::Green;
-		else if (h >= Assistance::Full    && GameCell::cell.allowed(n)) f = DirectX::Orange;
+		if      (h >= Assistance::Current && GameCell::cell.equal(n))   f = Graphics::Red;
+		else if (h >= Assistance::Full    && GameCell::cell.sure(n))    f = Graphics::Green;
+		else if (h >= Assistance::Full    && GameCell::cell.allowed(n)) f = Graphics::Orange;
 	}
 
 	if (GameCell::focus == this)
-		dx.fill(GameCell::r, LowMargin, Lighted);
+		gr.fill(GameCell::r, LowMargin, Lighted);
 
-	dx.rect(GameCell::r, DirectX::Black);
+	gr.rect(GameCell::r, Graphics::Black);
 
 	if (!GameCell::cell.empty())
-		dx.put(GameCell::r, GameTable::font, f, DT_CENTER | DT_VCENTER, " 123456789"[GameCell::cell.num]);
+		gr.put(GameCell::r, GameTable::font, f, DT_CENTER | DT_VCENTER, " 123456789"[GameCell::cell.num]);
 	else
 	if (f != Background)
-		dx.fill(GameCell::r, LowMargin * 6, f);
+		gr.fill(GameCell::r, LowMargin * 6, f);
 }
 
 void GameCell::mouseMove( const int _x, const int _y )
@@ -410,7 +410,7 @@ GameTable::GameTable( Sudoku &_s )
 	}
 }
 
-void GameTable::update( DirectX &dx )
+void GameTable::update( Graphics &gr )
 {
 	if (GameTable::font == NULL)
 	{
@@ -426,16 +426,16 @@ void GameTable::update( DirectX &dx )
 		desc.PitchAndFamily  = MONO_FONT;
 		strcpy(desc.FaceName, "Tahoma");
 
-		GameTable::font = dx.font(&desc);
+		GameTable::font = gr.font(&desc);
 	}
 
 	for (auto &c: *this)
-		c.update(dx);
+		c.update(gr);
 
-	dx.rect(TAB.x + CellSize * 3 + LowMargin * 2 + BigMargin * 1 / 2 - 1, TAB.y, 2, TAB.height, DirectX::Black);
-	dx.rect(TAB.x + CellSize * 6 + LowMargin * 4 + BigMargin * 3 / 2 - 1, TAB.y, 2, TAB.height, DirectX::Black);
-	dx.rect(TAB.x, TAB.y + CellSize * 3 + LowMargin * 2 + BigMargin * 1 / 2 - 1, TAB.width, 2,  DirectX::Black);
-	dx.rect(TAB.x, TAB.y + CellSize * 6 + LowMargin * 4 + BigMargin * 3 / 2 - 1, TAB.width, 2,  DirectX::Black);
+	gr.rect(TAB.x + CellSize * 3 + LowMargin * 2 + BigMargin * 1 / 2 - 1, TAB.y, 2, TAB.height, Graphics::Black);
+	gr.rect(TAB.x + CellSize * 6 + LowMargin * 4 + BigMargin * 3 / 2 - 1, TAB.y, 2, TAB.height, Graphics::Black);
+	gr.rect(TAB.x, TAB.y + CellSize * 3 + LowMargin * 2 + BigMargin * 1 / 2 - 1, TAB.width, 2,  Graphics::Black);
+	gr.rect(TAB.x, TAB.y + CellSize * 6 + LowMargin * 4 + BigMargin * 3 / 2 - 1, TAB.width, 2,  Graphics::Black);
 }
 
 void GameTable::mouseMove( const int _x, const int _y )
@@ -465,37 +465,37 @@ void GameTable::mouseRButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void Button::update( DirectX &dx, int count )
+void Button::update( Graphics &gr, int count )
 {
 	auto h = Game::help;
-	auto f = DirectX::DimGrey;
+	auto f = Graphics::DimGrey;
 
 	if (Button::focus == this)
-		dx.fill(Button::r, LowMargin, Lighted);
+		gr.fill(Button::r, LowMargin, Lighted);
 	else
 	if (Button::cur == Button::num)
-		dx.fill(Button::r, DirectX::White);
+		gr.fill(Button::r, Graphics::White);
 
-	dx.rect(Button::r, DirectX::Black);
+	gr.rect(Button::r, Graphics::Black);
 	if (Button::cur == Button::num)
 	{
-		dx.rect(Button::r, 1, DirectX::DimGrey);
-		dx.rect(Button::r, 2, DirectX::Grey);
-		dx.rect(Button::r, 3, DirectX::LightGrey);
+		gr.rect(Button::r, 1, Graphics::DimGrey);
+		gr.rect(Button::r, 2, Graphics::Grey);
+		gr.rect(Button::r, 3, Graphics::LightGrey);
 	}
 
 	if (GameCell::focus != nullptr)
 	{
-		if      (h >= Assistance::Sure      && GameCell::focus->sure(Button::num))    f = DirectX::Green;
-		else if (h >= Assistance::Available && GameCell::focus->allowed(Button::num)) f = DirectX::Orange;
+		if      (h >= Assistance::Sure      && GameCell::focus->sure(Button::num))    f = Graphics::Green;
+		else if (h >= Assistance::Available && GameCell::focus->allowed(Button::num)) f = Graphics::Orange;
 	}
 
-	dx.put(Button::r, GameTable::font, f, DT_CENTER | DT_VCENTER, '0' + Button::num);
+	gr.put(Button::r, GameTable::font, f, DT_CENTER | DT_VCENTER, '0' + Button::num);
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
 		RECT rc { BTN.right, Button::r.bottom - BigMargin * 2, MNU.left, Button::r.bottom };
-		dx.put(rc, GameButtons::font, DirectX::Grey, DT_CENTER | DT_VCENTER, count > 9 ? '?' : '0' + count);
+		gr.put(rc, GameButtons::font, Graphics::Grey, DT_CENTER | DT_VCENTER, count > 9 ? '?' : '0' + count);
 	}
 }
 
@@ -525,7 +525,7 @@ GameButtons::GameButtons()
 	}
 }
 
-void GameButtons::update( DirectX &dx, int count )
+void GameButtons::update( Graphics &gr, int count )
 {
 	if (GameButtons::font == NULL)
 	{
@@ -541,11 +541,11 @@ void GameButtons::update( DirectX &dx, int count )
 		desc.PitchAndFamily  = VARIABLE_PITCH;
 		strcpy(desc.FaceName, "Tahoma");
 
-		GameButtons::font = dx.font(&desc);
+		GameButtons::font = gr.font(&desc);
 	}
 
 	for (auto &b: *this)
-		b.update(dx, count);
+		b.update(gr, count);
 }
 
 void GameButtons::mouseMove( const int _x, const int _y )
@@ -602,21 +602,21 @@ void MenuItem::next( bool prev )
 	}
 }
 
-void MenuItem::update( DirectX &dx )
+void MenuItem::update( Graphics &gr )
 {
 	int i = MenuItem::idx == 0 ? static_cast<int>(Game::level) : MenuItem::idx == 1 ? static_cast<int>(Game::help) : 0;
 
 	if (MenuItem::focus == this)
 	{
-		dx.fill(MenuItem::r, Lighted);
+		gr.fill(MenuItem::r, Lighted);
 		if (MenuItem::size() > 1)
 		{
-			dx.left (MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Arrow : Background);
-			dx.right(MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Background : Arrow);
+			gr.left (MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Arrow : Background);
+			gr.right(MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Background : Arrow);
 		}
 	}
 
-	dx.text(MenuItem::r, GameMenu::font, DirectX::Black, DT_CENTER | DT_VCENTER, MenuItem::at(i));
+	gr.text(MenuItem::r, GameMenu::font, Graphics::Black, DT_CENTER | DT_VCENTER, MenuItem::at(i));
 }
 
 void MenuItem::mouseMove( const int _x, const int _y )
@@ -687,7 +687,7 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back("quit");
 }
 
-void GameMenu::update( DirectX &dx )
+void GameMenu::update( Graphics &gr )
 {
 	if (GameMenu::font == NULL)
 	{
@@ -703,13 +703,13 @@ void GameMenu::update( DirectX &dx )
 		desc.PitchAndFamily  = VARIABLE_PITCH;
 //		strcpy(desc.FaceName, "Calibri");
 
-		GameMenu::font = dx.font(&desc);
+		GameMenu::font = gr.font(&desc);
 	}
 
 	for (auto &m: *this)
-		m.update(dx);
+		m.update(gr);
 
-	dx.rect(MNU, DirectX::Black);
+	gr.rect(MNU, Graphics::Black);
 }
 
 void GameMenu::mouseMove( const int _x, const int _y )
@@ -733,7 +733,7 @@ Command GameMenu::mouseLButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void GameFooter::update( DirectX &dx )
+void GameFooter::update( Graphics &gr )
 {
 	if (GameFooter::font == NULL)
 	{
@@ -749,13 +749,13 @@ void GameFooter::update( DirectX &dx )
 		desc.PitchAndFamily  = VARIABLE_PITCH;
 //		strcpy(desc.FaceName, "Calibri");
 
-		GameFooter::font = dx.font(&desc);
+		GameFooter::font = gr.font(&desc);
 	}
 
 	const char *info = "Sudoku game, solver and generator";
 	if (MenuItem::focus != nullptr)
 		info = MenuItem::focus->info;
-	dx.text(FTR, GameFooter::font, DirectX::Grey, DT_CENTER | DT_VCENTER, info);
+	gr.text(FTR, GameFooter::font, Graphics::Grey, DT_CENTER | DT_VCENTER, info);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -776,7 +776,7 @@ void Game::update()
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "UNSOLVABLE" : Sudoku::rating == -1 ? "AMBIGUOUS" : nullptr)
 	                                : (Sudoku::corrupt() ? "CORRUPT" : "SOLVED");
 
-	DirectX::begin(Background);
+	Graphics::begin(Background);
 
 	hdr.update(*this, info, time);
 	tab.update(*this);
@@ -784,7 +784,7 @@ void Game::update()
 	mnu.update(*this);
 	ftr.update(*this);
 
-	DirectX::end();
+	Graphics::end();
 }
 
 void Game::mouseMove( const int _x, const int _y, HWND hWnd )
@@ -917,7 +917,7 @@ void Game::command( const Command _c )
 	                    break;
 	case LoadCmd:       if (Sudoku::load()) Button::cur = 0, Sudoku::Timer::start();
 	                    break;
-	case QuitCmd:       DirectX::quit();
+	case QuitCmd:       Graphics::quit();
 	                    break;
 	}
 }
@@ -936,14 +936,13 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 	switch (msg)
 	{
-		case WM_CREATE:      if (!sudoku.DirectX::init(hWnd)) DestroyWindow(hWnd); break;
 		case WM_MOUSEMOVE:   sudoku.Game::mouseMove(x, y, hWnd);                   break;
 		case WM_MOUSELEAVE:  sudoku.Game::mouseLeave();                            break;
 		case WM_LBUTTONDOWN: sudoku.Game::mouseLButton(x, y);                      break;
 		case WM_RBUTTONDOWN: sudoku.Game::mouseRButton(x, y);                      break;
 		case WM_MOUSEWHEEL:  sudoku.Game::mouseWheel(x, y, d);                     break;
 		case WM_KEYDOWN:     sudoku.Game::keyboard(k);                             break;
-		case WM_DESTROY:     PostQuitMessage(0);                                   break;
+		case WM_DESTROY:     PostQuitMessage(0);          break;
 		default:      return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
@@ -974,6 +973,9 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
 	HWND hWnd = CreateWindowEx(0, ::title, ::title, style,
 	                          (s.cx - w.cx) / 2, (s.cy - w.cy) / 2, w.cx, w.cy,
 	                          GetDesktopWindow(), NULL, hInstance, NULL);
+
+	if (!sudoku.Graphics::init(hWnd))
+		return 0;
 
 	ShowWindow(hWnd, nCmdShow);
 
