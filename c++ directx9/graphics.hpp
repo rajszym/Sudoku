@@ -81,6 +81,7 @@ class Graphics: public GraphicsTimer
 	{
 		for (LPD3DXFONT f: fnt) f->Release();
 		fnt.clear();
+
 		if (dev != NULL) { dev->Release(); dev = NULL; }
 		if (d3d != NULL) { d3d->Release(); d3d = NULL; }
 	}
@@ -262,7 +263,7 @@ public:
 		}
 	};
 
-	Graphics( const int duration = 0 ): Timer(duration), wnd{NULL}, d3d{NULL}, dev{NULL}
+	Graphics( const int duration = 0 ): Timer(duration), wnd{NULL}, d3d{NULL}, dev{NULL}, fnt{}
 	{
 	}
 
@@ -295,10 +296,22 @@ public:
 		return true;
 	}
 
-	LPD3DXFONT font( D3DXFONT_DESC *desc )
+	LPD3DXFONT font( const INT h, const UINT w, const BYTE p, const char *f )
 	{
+		D3DXFONT_DESC desc = {};
+		desc.Height          = h;
+		desc.Width           = 0;
+		desc.Weight          = w;
+		desc.MipLevels       = 0;
+		desc.Italic          = FALSE;
+		desc.CharSet         = DEFAULT_CHARSET;
+		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
+		desc.Quality         = CLEARTYPE_QUALITY;
+		desc.PitchAndFamily  = p;
+		strcpy(desc.FaceName, f);
+
 		LPD3DXFONT font;
-		HRESULT hr = D3DXCreateFontIndirect(dev, desc, &font);
+		HRESULT hr = D3DXCreateFontIndirect(dev, &desc, &font);
 		if (FAILED(hr))
 			return NULL;
 
