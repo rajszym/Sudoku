@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    27.10.2020
+   @date    28.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -347,7 +347,7 @@ void GameCell::update( DirectX &dx )
 {
 	auto h = Game::help;
 	auto n = Button::cur;
-	auto f = GameCell::cell.empty() ? DirectX::Grey : cell.immutable ? DirectX::Black : DirectX::Green;
+	auto f = GameCell::cell.empty() ? Background : GameCell::cell.immutable ? DirectX::Black : DirectX::Green;
 
 	if (n != 0)
 	{
@@ -361,7 +361,11 @@ void GameCell::update( DirectX &dx )
 
 	dx.rect(GameCell::r, DirectX::Black);
 
-	dx.put(GameCell::r, GameTable::font, f, DT_CENTER, "-123456789"[cell.num]);
+	if (!GameCell::cell.empty())
+		dx.put(GameCell::r, GameTable::font, f, DT_CENTER | DT_VCENTER, " 123456789"[GameCell::cell.num]);
+	else
+	if (f != Background)
+		dx.fill(GameCell::r, LowMargin * 6, f);
 }
 
 void GameCell::mouseMove( const int _x, const int _y )
@@ -477,7 +481,7 @@ void Button::update( DirectX &dx, int count )
 	{
 		dx.rect(Button::r, 1, DirectX::DimGrey);
 		dx.rect(Button::r, 2, DirectX::Grey);
-		dx.rect(Button::r, 2, DirectX::LightGrey);
+		dx.rect(Button::r, 3, DirectX::LightGrey);
 	}
 
 	if (GameCell::focus != nullptr)
@@ -486,12 +490,12 @@ void Button::update( DirectX &dx, int count )
 		else if (h >= Assistance::Available && GameCell::focus->allowed(Button::num)) f = DirectX::Orange;
 	}
 
-	dx.put(Button::r, GameButtons::font, f, DT_CENTER, '0' + Button::num);
+	dx.put(Button::r, GameButtons::font, f, DT_CENTER | DT_VCENTER, '0' + Button::num);
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
 		RECT rc { BTN.right, Button::r.bottom - BigMargin * 2, MNU.left, Button::r.bottom };
-		dx.put(rc, GameMenu::font, DirectX::Grey, DT_CENTER, count > 9 ? '?' : '0' + count);
+		dx.put(rc, GameMenu::font, DirectX::Grey, DT_CENTER | DT_VCENTER, count > 9 ? '?' : '0' + count);
 	}
 }
 
