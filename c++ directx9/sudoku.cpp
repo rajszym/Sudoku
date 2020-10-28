@@ -320,7 +320,7 @@ void GameHeader::update( Graphics &gr, const char *info, int time )
 	gr.text(HDR, GameHeader::font, f, DT_LEFT | DT_VCENTER, ::title);
 
 	if (info != nullptr)
-		gr.text(HDR, GameHeader::font, Graphics::Red, DT_CENTER | DT_VCENTER, info);
+		gr.text(HDR, GameMenu::font, Graphics::Red, DT_CENTER | DT_VCENTER, info);
 
 	char v[16];
 	snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
@@ -399,7 +399,7 @@ GameTable::GameTable( Sudoku &_s )
 void GameTable::update( Graphics &gr )
 {
 	if (GameTable::font == NULL)
-		GameTable::font = gr.font(CellSize + BigMargin, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, "Tahoma");
+		GameTable::font = gr.font(CellSize, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, "Tahoma");
 
 	for (auto &c: *this)
 		c.update(gr);
