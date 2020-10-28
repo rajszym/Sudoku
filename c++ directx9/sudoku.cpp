@@ -305,7 +305,7 @@ auto sudoku = Game();
 void GameHeader::update( Graphics &gr, const char *info, int time )
 {
 	if (GameHeader::font == NULL)
-		GameHeader::font = gr.font(HDR.height, FW_NORMAL, MONO_FONT, "Tahoma");
+		GameHeader::font = gr.font(HDR.height, FW_MEDIUM, FIXED_PITCH | FF_DECORATIVE, "Tahoma");
 
 	static const Graphics::Color banner_color[] =
 	{
@@ -399,7 +399,7 @@ GameTable::GameTable( Sudoku &_s )
 void GameTable::update( Graphics &gr )
 {
 	if (GameTable::font == NULL)
-		GameTable::font = gr.font(CellSize, FW_BOLD, MONO_FONT, "Tahoma");
+		GameTable::font = gr.font(CellSize, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, "Tahoma");
 
 	for (auto &c: *this)
 		c.update(gr);
@@ -500,7 +500,7 @@ GameButtons::GameButtons()
 void GameButtons::update( Graphics &gr, int count )
 {
 	if (GameButtons::font == NULL)
-		GameButtons::font = gr.font(CellSize / 2, FW_NORMAL, VARIABLE_PITCH, "Tahoma");
+		GameButtons::font = gr.font(CellSize / 2, FW_NORMAL, FIXED_PITCH | FF_DECORATIVE, "Tahoma");
 
 	for (auto &b: *this)
 		b.update(gr, count);
@@ -648,7 +648,7 @@ GameMenu::GameMenu()
 void GameMenu::update( Graphics &gr )
 {
 	if (GameMenu::font == NULL)
-		GameMenu::font = gr.font(MnuHeight - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, "");
+		GameMenu::font = gr.font(MnuHeight - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, "Calibri");
 
 	for (auto &m: *this)
 		m.update(gr);
@@ -680,7 +680,7 @@ Command GameMenu::mouseLButton( const int _x, const int _y )
 void GameFooter::update( Graphics &gr )
 {
 	if (GameFooter::font == NULL)
-		GameFooter::font = gr.font(FTR.height - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, "");
+		GameFooter::font = gr.font(FTR.height - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, "Calibri");
 
 	const char *info = "Sudoku game, solver and generator";
 	if (MenuItem::focus != nullptr)
