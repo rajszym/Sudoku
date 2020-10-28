@@ -2,7 +2,7 @@
 
    @file    directx.hpp
    @author  Rajmund Szymanski
-   @date    27.10.2020
+   @date    28.10.2020
    @brief   directx class
 
 *******************************************************************************
@@ -289,8 +289,6 @@ public:
 		if (FAILED(hr)) { done(); return false; }
 
 		dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-	//	dev->SetRenderState(D3DRS_FILLMODE,         D3DFILL_SOLID);
-	//	dev->SetRenderState(D3DRS_COLORVERTEX,      TRUE);
 		dev->SetRenderState(D3DRS_SRCBLEND,         D3DBLEND_SRCALPHA);
 		dev->SetRenderState(D3DRS_DESTBLEND,        D3DBLEND_INVSRCALPHA);
 		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
