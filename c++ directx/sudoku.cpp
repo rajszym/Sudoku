@@ -927,14 +927,12 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
 	RECT rc;
 	GetClientRect(hWnd, &rc);
-	int w = rc.right - rc.left;
-	int h = rc.bottom - rc.top;
-	int k = GET_KEYSTATE_WPARAM(wParam);
-	int d = GET_WHEEL_DELTA_WPARAM(wParam);
-	int x = GET_X_LPARAM(lParam);
-	int y = GET_Y_LPARAM(lParam);
-	if (w > 0) x = (x * WIN.width  + w / 2) / w;
-	if (h > 0) y = (y * WIN.height + h / 2) / h;
+	const int w = rc.right - rc.left;
+	const int h = rc.bottom - rc.top;
+	const int k = GET_KEYSTATE_WPARAM(wParam);
+	const int d = GET_WHEEL_DELTA_WPARAM(wParam);
+	const int x = w > 0 ? (GET_X_LPARAM(lParam) * WIN.width  + w / 2) / w : 0;
+	const int y = h > 0 ? (GET_Y_LPARAM(lParam) * WIN.height + h / 2) / h : 0;
 
 	switch (msg)
 	{
