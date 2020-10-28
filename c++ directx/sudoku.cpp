@@ -252,16 +252,18 @@ class Game: public DirectX, public Sudoku
 	GameFooter  ftr;
 	
 	bool solved;
+	bool tracking;
 
 public:
 
 	static Assistance help;
 	static Difficulty level;
 
-	Game(): DirectX(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false} { Sudoku::generate(); }
+	Game(): DirectX(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, tracking{false} { Sudoku::generate(); }
 
 	void update      ();
-	void mouseMove   ( const int, const int );
+	void mouseMove   ( const int, const int, HWND );
+	void mouseLeave  ();
 	void mouseLButton( const int, const int );
 	void mouseRButton( const int, const int );
 	void mouseWheel  ( const int, const int, const int );
@@ -781,11 +783,26 @@ void Game::update()
 	DirectX::end();
 }
 
-void Game::mouseMove( const int _x, const int _y )
+void Game::mouseMove( const int _x, const int _y, HWND hWnd )
 {
 	tab.mouseMove(_x, _y);
 	btn.mouseMove(_x, _y);
 	mnu.mouseMove(_x, _y);
+
+	if (!Game::tracking)
+	{
+		TRACKMOUSEEVENT tme = { sizeof(tme), TME_LEAVE, hWnd, 0 };
+		TrackMouseEvent(&tme);
+		Game::tracking = true;
+	}
+}
+
+void Game::mouseLeave()
+{
+	GameCell::focus = nullptr;
+	Button::focus = nullptr;
+	MenuItem::focus = nullptr;
+	Game::tracking = false;
 }
 
 void Game::mouseLButton( const int _x, const int _y )
@@ -918,10 +935,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	switch (msg)
 	{
 		case WM_CREATE:      if (!sudoku.DirectX::init(hWnd)) DestroyWindow(hWnd); break;
-		case WM_MOUSEMOVE:   sudoku.Game::mouseMove(x, y);                         break;
-		case WM_MOUSEWHEEL:  sudoku.Game::mouseWheel(x, y, d);                     break;
+		case WM_MOUSEMOVE:   sudoku.Game::mouseMove(x, y, hWnd);                   break;
+		case WM_MOUSELEAVE:  sudoku.Game::mouseLeave();                            break;
 		case WM_LBUTTONDOWN: sudoku.Game::mouseLButton(x, y);                      break;
 		case WM_RBUTTONDOWN: sudoku.Game::mouseRButton(x, y);                      break;
+		case WM_MOUSEWHEEL:  sudoku.Game::mouseWheel(x, y, d);                     break;
 		case WM_KEYDOWN:     sudoku.Game::keyboard(k);                             break;
 		case WM_DESTROY:     PostQuitMessage(0);                                   break;
 		default:      return DefWindowProc(hWnd, msg, wParam, lParam);
