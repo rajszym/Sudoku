@@ -305,21 +305,7 @@ auto sudoku = Game();
 void GameHeader::update( Graphics &gr, const char *info, int time )
 {
 	if (GameHeader::font == NULL)
-	{
-		D3DXFONT_DESC desc = {};
-		desc.Height          = HDR.height;
-		desc.Width           = 0;
-		desc.Weight          = FW_NORMAL;
-		desc.MipLevels       = 0;
-		desc.Italic          = FALSE;
-		desc.CharSet         = DEFAULT_CHARSET;
-		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
-		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = MONO_FONT;
-		strcpy(desc.FaceName, "Tahoma");
-
-		GameHeader::font = gr.font(&desc);
-	}
+		GameHeader::font = gr.font(HDR.height, FW_NORMAL, MONO_FONT, "Tahoma");
 
 	static const Graphics::Color banner_color[] =
 	{
@@ -413,21 +399,7 @@ GameTable::GameTable( Sudoku &_s )
 void GameTable::update( Graphics &gr )
 {
 	if (GameTable::font == NULL)
-	{
-		D3DXFONT_DESC desc = {};
-		desc.Height          = CellSize;
-		desc.Width           = 0;
-		desc.Weight          = FW_BOLD;
-		desc.MipLevels       = 0;
-		desc.Italic          = FALSE;
-		desc.CharSet         = DEFAULT_CHARSET;
-		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
-		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = MONO_FONT;
-		strcpy(desc.FaceName, "Tahoma");
-
-		GameTable::font = gr.font(&desc);
-	}
+		GameTable::font = gr.font(CellSize, FW_BOLD, MONO_FONT, "Tahoma");
 
 	for (auto &c: *this)
 		c.update(gr);
@@ -528,21 +500,7 @@ GameButtons::GameButtons()
 void GameButtons::update( Graphics &gr, int count )
 {
 	if (GameButtons::font == NULL)
-	{
-		D3DXFONT_DESC desc = {};
-		desc.Height          = CellSize / 2;
-		desc.Width           = 0;
-		desc.Weight          = FW_NORMAL;
-		desc.MipLevels       = 0;
-		desc.Italic          = FALSE;
-		desc.CharSet         = DEFAULT_CHARSET;
-		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
-		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = VARIABLE_PITCH;
-		strcpy(desc.FaceName, "Tahoma");
-
-		GameButtons::font = gr.font(&desc);
-	}
+		GameButtons::font = gr.font(CellSize / 2, FW_NORMAL, VARIABLE_PITCH, "Tahoma");
 
 	for (auto &b: *this)
 		b.update(gr, count);
@@ -690,21 +648,7 @@ GameMenu::GameMenu()
 void GameMenu::update( Graphics &gr )
 {
 	if (GameMenu::font == NULL)
-	{
-		D3DXFONT_DESC desc = {};
-		desc.Height          = MnuHeight - LowMargin * 2;
-		desc.Width           = 0;
-		desc.Weight          = FW_NORMAL;
-		desc.MipLevels       = 0;
-		desc.Italic          = FALSE;
-		desc.CharSet         = DEFAULT_CHARSET;
-		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
-		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = VARIABLE_PITCH;
-//		strcpy(desc.FaceName, "Calibri");
-
-		GameMenu::font = gr.font(&desc);
-	}
+		GameMenu::font = gr.font(MnuHeight - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, "");
 
 	for (auto &m: *this)
 		m.update(gr);
@@ -736,21 +680,7 @@ Command GameMenu::mouseLButton( const int _x, const int _y )
 void GameFooter::update( Graphics &gr )
 {
 	if (GameFooter::font == NULL)
-	{
-		D3DXFONT_DESC desc = {};
-		desc.Height          = FTR.height - LowMargin * 2;
-		desc.Width           = 0;
-		desc.Weight          = FW_NORMAL;
-		desc.MipLevels       = 0;
-		desc.Italic          = FALSE;
-		desc.CharSet         = DEFAULT_CHARSET;
-		desc.OutputPrecision = OUT_OUTLINE_PRECIS;
-		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = VARIABLE_PITCH;
-//		strcpy(desc.FaceName, "Calibri");
-
-		GameFooter::font = gr.font(&desc);
-	}
+		GameFooter::font = gr.font(FTR.height - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, "");
 
 	const char *info = "Sudoku game, solver and generator";
 	if (MenuItem::focus != nullptr)
