@@ -32,6 +32,7 @@
 #pragma once
 
 #include <windows.h>
+#include <tchar.h>
 #include <d3dx9.h>
 #include <vector>
 #include <chrono>
@@ -309,7 +310,7 @@ public:
 		return true;
 	}
 
-	LPD3DXFONT font( const INT h, const UINT w, const BYTE p, const char *f )
+	LPD3DXFONT font( const INT h, const UINT w, const BYTE p, const TCHAR *f )
 	{
 		D3DXFONT_DESC desc = {};
 		desc.Height          = h;
@@ -321,7 +322,7 @@ public:
 		desc.OutputPrecision = OUT_TT_PRECIS;
 		desc.Quality         = CLEARTYPE_QUALITY;
 		desc.PitchAndFamily  = p;
-		strcpy(desc.FaceName, f);
+		_tcscpy(desc.FaceName, f);
 
 		LPD3DXFONT font;
 		HRESULT hr = D3DXCreateFontIndirect(dev, &desc, &font);
@@ -444,25 +445,25 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
 	}
 
-	void draw_char( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char t )
+	void draw_char( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, &t, 1, &rc, a | DT_NOCLIP, c);
 	}
 
-	void draw_char( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char t )
+	void draw_char( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR t )
 	{
 		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
 		draw_char(rc, f, c, a, t);
 	}
 
-	void draw_text( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
+	void draw_text( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR *t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, t, -1, &rc, a | DT_NOCLIP, c);
 	}
 
-	void draw_text( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const char *t )
+	void draw_text( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR *t )
 	{
 		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
 		draw_text(rc, f, c, a, t);
