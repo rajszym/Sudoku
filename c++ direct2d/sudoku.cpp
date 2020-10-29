@@ -49,8 +49,8 @@ const Graphics::Rectangle HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
 const Graphics::Rectangle FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
 const Graphics::Rectangle WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
 
-auto Background = Graphics::Color::Moccasin;
-auto Lighted    = Graphics::Color::OldLace;
+constexpr Graphics::Color Background = Graphics::Color::Moccasin;
+constexpr Graphics::Color Lighted    = Graphics::Color::OldLace;
 
 /*---------------------------------------------------------------------------*/
 /*                                GAME CLASSES                               */
@@ -250,7 +250,6 @@ class Game: public Graphics, public Sudoku
 	GameMenu    mnu;
 	GameFooter  ftr;
 	
-	bool solved;
 	bool tracking;
 
 public:
@@ -258,7 +257,7 @@ public:
 	static Assistance help;
 	static Difficulty level;
 
-	Game(): Graphics(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, tracking{false} { Sudoku::generate(); }
+	Game(): Graphics(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
 
 	void update      ();
 	void mouseMove   ( const int, const int, HWND );
@@ -692,13 +691,13 @@ void GameFooter::update( Graphics &gr )
 
 void Game::update()
 {
-	Game::solved = Sudoku::solved();
-	Game::level  = Sudoku::level;
+	Game::level = Sudoku::level;
 
-	if (Game::solved)
+	if (Sudoku::len() == 81)
 	{
 		Button::cur = 0;
-		Sudoku::Timer::stop();
+		if (Sudoku::solved())
+			Sudoku::Timer::stop();
 	}
 
 	auto time  = Sudoku::Timer::get();
@@ -816,7 +815,7 @@ void Game::command( const Command _c )
 	case Button6Cmd:    /* falls through */
 	case Button7Cmd:    /* falls through */
 	case Button8Cmd:    /* falls through */
-	case Button9Cmd:    if (!Game::solved) Button::cur = static_cast<int>(_c);
+	case Button9Cmd:    if (Sudoku::len() < 81) Button::cur = static_cast<int>(_c);
 	                    break;
 	case ClearCellCmd:  Button::cur = GameCell::focus->get().num;
 	                    Sudoku::set(GameCell::focus->get(), 0);
@@ -833,7 +832,7 @@ void Game::command( const Command _c )
 	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
 	                    break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
-	                    if (!Sudoku::solved()) Sudoku::rating = -2;
+	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
 	                    break;
 	case UndoCmd:       Sudoku::undo();
 	                    break;
