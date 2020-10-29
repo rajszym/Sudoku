@@ -319,7 +319,7 @@ void GameHeader::update( Graphics &gr, const wchar_t *info, int time )
 	gr.draw_text(HDR, GameHeader::font, f, Graphics::Alignment::Left, ::title);
 
 	if (info != nullptr)
-		gr.draw_text(HDR, GameMenu::font, Graphics::Color::Red, Graphics::Alignment::Down, info);
+		gr.draw_text(HDR, GameMenu::font, Graphics::Color::Red, Graphics::Alignment::Bottom, info);
 
 	wchar_t v[16];
 	swprintf(v, sizeof(v), L"%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
