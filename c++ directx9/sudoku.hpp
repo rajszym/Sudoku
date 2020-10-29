@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    24.10.2020
+   @date    29.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -652,27 +652,32 @@ private:
 		}
 	}
 
-	bool solvable()
+	int solvable()
 	{
 		if (Sudoku::corrupt())
-			return false;
+			return -2;
 
 		auto tmp = Sudoku::Temp(this);
 		Sudoku::clear(false);
 
-		return tmp.reset();
+		if (!tmp.reset())
+			return -2;
+
+		return 0;
 	}
 
-	bool correct()
+	int correct()
 	{
-		if (Sudoku::len() < 17)
-			return false;
-
 		auto tmp = Sudoku::Temp(this);
 
 		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select_length)->solve();
+		if (!Sudoku::solved())
+			return -2;
 
-		return std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; });
+		if (!std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; }))
+			return -1;
+
+		return 0;
 	}
 
 	bool simplify()
@@ -701,7 +706,7 @@ public:
 
 	void solve()
 	{
-		if (Sudoku::solvable())
+		if (Sudoku::solvable() == 0)
 		{
 			std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select_length)->solve();
 			Sudoku::mem.clear();
@@ -882,10 +887,8 @@ private:
 
 	void calculate_rating()
 	{
-		if (!Sudoku::solvable()) { Sudoku::rating = -2; return; }
-		if (!Sudoku::correct())  { Sudoku::rating = -1; return; }
-
-		Sudoku::rating = 0;
+		Sudoku::rating = Sudoku::solvable(); if (Sudoku::rating != 0) return;
+		Sudoku::rating = Sudoku::correct();  if (Sudoku::rating != 0) return;
 
 		if (Sudoku::level == Difficulty::Extreme) return;
 
