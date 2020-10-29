@@ -413,33 +413,37 @@ public:
 		fill_rect(r.left + m, r.top + m, r.right - r.left - m * 2, r.bottom - r.top - m * 2, c, a);
 	}
 
-	void left( const RECT &r, int m, const D3DCOLOR c, const DWORD a = 0xFF )
+	void draw_left( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
 	{
-		int x = r.left + 1;
-		int y = (r.bottom + r.top) / 2;
-		int d = (r.bottom - r.top) / 2 - m;
+		int h  =  r.bottom - r.top;
+		int y  = (r.bottom + r.top) / 2;
+		int x  = r.left + h / 8;
+		int dx = h / 2;
+		int dy = h / 4;
 
 		Vertex v[] =
 		{
-			Vertex(x,     y,     c, a),
-			Vertex(x + d, y - d, c, a),
-			Vertex(x + d, y + d, c, a),
+			Vertex(x,      y,      c, a),
+			Vertex(x + dx, y - dy, c, a),
+			Vertex(x + dx, y + dy, c, a),
 		};
 
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
 	}
 
-	void right( const RECT &r, int m, const D3DCOLOR c, const DWORD a = 0xFF )
+	void draw_right( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
 	{
-		int x = r.right - 1;
-		int y = (r.bottom + r.top) / 2;
-		int d = (r.bottom - r.top) / 2 - m;
+		int h  =  r.bottom - r.top;
+		int y  = (r.bottom + r.top) / 2;
+		int x  = r.right - h / 8;
+		int dx = h / 2;
+		int dy = h / 4;
 
 		Vertex v[] =
 		{
-			Vertex(x - d, y - d, c, a),
-			Vertex(x,     y,     c, a),
-			Vertex(x - d, y + d, c, a),
+			Vertex(x - dx, y - dy, c, a),
+			Vertex(x,      y,      c, a),
+			Vertex(x - dx, y + dy, c, a),
 		};
 
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
