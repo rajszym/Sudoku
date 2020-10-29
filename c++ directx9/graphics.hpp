@@ -418,8 +418,8 @@ public:
 		int h  =  r.bottom - r.top;
 		int y  = (r.bottom + r.top) / 2;
 		int x  = r.left + h / 8;
-		int dx = h / 2;
-		int dy = h / 4;
+		int dx = h / 3;
+		int dy = h / 6;
 
 		Vertex v[] =
 		{
@@ -436,8 +436,8 @@ public:
 		int h  =  r.bottom - r.top;
 		int y  = (r.bottom + r.top) / 2;
 		int x  = r.right - h / 8;
-		int dx = h / 2;
-		int dy = h / 4;
+		int dx = h / 3;
+		int dy = h / 6;
 
 		Vertex v[] =
 		{
