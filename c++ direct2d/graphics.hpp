@@ -32,6 +32,7 @@
 #pragma once
 
 #include <windows.h>
+#include <tchar.h>
 #include <d2d1.h>
 #include <d2d1helper.h>
 #include <dwrite.h>
@@ -163,10 +164,10 @@ public:
 		return SUCCEEDED(hr);
     }
 
-	IDWriteTextFormat *font( const FLOAT h, const DWRITE_FONT_WEIGHT w, DWRITE_FONT_STRETCH s, const wchar_t *f )
+	IDWriteTextFormat *font( const FLOAT h, const DWRITE_FONT_WEIGHT w, DWRITE_FONT_STRETCH s, const TCHAR *f )
 	{
 		IDWriteTextFormat *format = NULL;
-		HRESULT hr = writer->CreateTextFormat(f, NULL, w, DWRITE_FONT_STYLE_NORMAL, s, h, L"", &format);
+		HRESULT hr = writer->CreateTextFormat(f, NULL, w, DWRITE_FONT_STYLE_NORMAL, s, h, _T(""), &format);
 		if (SUCCEEDED(hr))
 		{
 			format->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
@@ -263,7 +264,7 @@ public:
 		target->FillEllipse(&e, get(c));
 	}
 
-	void draw_layout( const D2D1_RECT_F &r, IDWriteTextFormat *f, const Color c, Alignment a, const wchar_t *t, size_t s )
+	void draw_layout( const D2D1_RECT_F &r, IDWriteTextFormat *f, const Color c, Alignment a, const TCHAR *t, size_t s )
 	{
 		f->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(LOWORD(a)));
 		f->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(HIWORD(a)));
@@ -271,25 +272,25 @@ public:
 		target->DrawText(t, s, f, &r, get(c), D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
 	}
 
-	void draw_char( const D2D1_RECT_F &r, IDWriteTextFormat *f, const Color c, Alignment a, const wchar_t t )
+	void draw_char( const D2D1_RECT_F &r, IDWriteTextFormat *f, const Color c, Alignment a, const TCHAR t )
 	{
 		draw_layout(r, f, c, a, &t, 1);
 	}
 
-	void draw_char( const D2D1_RECT_F &r, const int m, IDWriteTextFormat *f, const Color c, Alignment a, const wchar_t t )
+	void draw_char( const D2D1_RECT_F &r, const int m, IDWriteTextFormat *f, const Color c, Alignment a, const TCHAR t )
 	{
 		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
 		draw_layout(rc, f, c, a, &t, 1);
 	}
 
-	void draw_text( const D2D1_RECT_F &r, IDWriteTextFormat *f, const Color c, Alignment a, const wchar_t *t )
+	void draw_text( const D2D1_RECT_F &r, IDWriteTextFormat *f, const Color c, Alignment a, const TCHAR *t )
 	{
-		draw_layout(r, f, c, a, t, wcslen(t));
+		draw_layout(r, f, c, a, t, _tcslen(t));
 	}
 
-	void draw_text( const D2D1_RECT_F &r, const int m, IDWriteTextFormat *f, const Color c, Alignment a, const wchar_t *t )
+	void draw_text( const D2D1_RECT_F &r, const int m, IDWriteTextFormat *f, const Color c, Alignment a, const TCHAR *t )
 	{
 		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		draw_layout(rc, f, c, a, t, wcslen(t));
+		draw_layout(rc, f, c, a, t, _tcslen(t));
 	}
 };
