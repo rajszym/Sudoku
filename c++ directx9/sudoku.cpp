@@ -52,7 +52,6 @@ const Graphics::Rectangle WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
 
 constexpr Graphics::Color Background = Graphics::Color::Moccasin;
 constexpr Graphics::Color Lighted    = Graphics::Color::OldLace;
-constexpr Graphics::Color Arrow      = Graphics::Color::Peru;
 
 /*---------------------------------------------------------------------------*/
 /*                                GAME CLASSES                               */
@@ -570,8 +569,13 @@ void MenuItem::update( Graphics &gr )
 		gr.fill_rect(MenuItem::r, Lighted);
 		if (MenuItem::size() > 1)
 		{
-			gr.left (MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Arrow : Background);
-			gr.right(MenuItem::r, MenuItem::r.height / 8, MenuItem::back ? Background : Arrow);
+#if defined(UNICODE)
+			gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::back ? Graphics::Color::Black : Background, Graphics::Alignment::Left,  _T('◄'));
+			gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::back ? Background : Graphics::Color::Black, Graphics::Alignment::Right, _T('►'));
+#else
+			gr.draw_left (MenuItem::r, MenuItem::back ? Graphics::Color::Black : Background);
+			gr.draw_right(MenuItem::r, MenuItem::back ? Background : Graphics::Color::Black);
+#endif
 		}
 	}
 
@@ -649,7 +653,7 @@ GameMenu::GameMenu()
 void GameMenu::update( Graphics &gr )
 {
 	if (GameMenu::font == NULL)
-		GameMenu::font = gr.font(MnuHeight - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, _T(""));
+		GameMenu::font = gr.font(MnuHeight - LowMargin * 5, FW_NORMAL, VARIABLE_PITCH, _T(""));
 
 	for (auto &m: *this)
 		m.update(gr);
