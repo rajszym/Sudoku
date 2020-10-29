@@ -681,9 +681,7 @@ void GameFooter::update( Graphics &gr )
 	if (GameFooter::font == NULL)
 		GameFooter::font = gr.font(FTR.height - LowMargin * 3, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, L"");
 
-	const wchar_t *info = L"Sudoku game, solver and generator";
-	if (MenuItem::focus != nullptr)
-		info = MenuItem::focus->info;
+	const wchar_t *info = MenuItem::focus != nullptr ? MenuItem::focus->info : L"Sudoku game, solver and generator";
 	gr.draw_text(FTR, GameFooter::font, Graphics::Color::Gray, Graphics::Alignment::Center, info);
 }
 
