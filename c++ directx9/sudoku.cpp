@@ -439,7 +439,7 @@ void GameTable::mouseRButton( const int _x, const int _y )
 void Button::update( Graphics &gr, int count )
 {
 	auto h = Game::help;
-	auto f = Graphics::Color::DimGrey;
+	auto f = Graphics::Color::DimGray;
 
 	if (Button::focus == this)
 		gr.fill_rect(Button::r, LowMargin, Lighted);
@@ -450,9 +450,9 @@ void Button::update( Graphics &gr, int count )
 	gr.draw_rect(Button::r, Graphics::Color::Black);
 	if (Button::cur == Button::num)
 	{
-		gr.draw_rect(Button::r, 1, Graphics::Color::DimGrey);
-		gr.draw_rect(Button::r, 2, Graphics::Color::Grey);
-		gr.draw_rect(Button::r, 3, Graphics::Color::LightGrey);
+		gr.draw_rect(Button::r, 1, Graphics::Color::DimGray);
+		gr.draw_rect(Button::r, 2, Graphics::Color::Gray);
+		gr.draw_rect(Button::r, 3, Graphics::Color::LightGray);
 	}
 
 	if (GameCell::focus != nullptr)
@@ -466,7 +466,7 @@ void Button::update( Graphics &gr, int count )
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
 		RECT rc { BTN.right, Button::r.bottom - BigMargin * 2, MNU.left, Button::r.bottom };
-		gr.draw_char(rc, GameButtons::font, Graphics::Color::Grey, Graphics::Alignment::Center, count > 9 ? '?' : "0123456789"[count]);
+		gr.draw_char(rc, GameButtons::font, Graphics::Color::Gray, Graphics::Alignment::Center, count > 9 ? '?' : "0123456789"[count]);
 	}
 }
 
@@ -684,7 +684,7 @@ void GameFooter::update( Graphics &gr )
 	const char *info = "Sudoku game, solver and generator";
 	if (MenuItem::focus != nullptr)
 		info = MenuItem::focus->info;
-	gr.draw_text(FTR, GameFooter::font, Graphics::Color::Grey, Graphics::Alignment::Center, info);
+	gr.draw_text(FTR, GameFooter::font, Graphics::Color::Gray, Graphics::Alignment::Center, info);
 }
 
 /*---------------------------------------------------------------------------*/
