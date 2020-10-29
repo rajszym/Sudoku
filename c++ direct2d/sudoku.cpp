@@ -880,9 +880,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 }
 
 //----------------------------------------------------------------------------
-int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
+int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow )
 {
-	WNDCLASSEXW wc = {};
+	WNDCLASSEX wc = {};
 	wc.cbSize        = sizeof(wc);
 	wc.style         = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc   = WndProc;
@@ -892,7 +892,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
 	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
 	wc.lpszMenuName  = NULL;
 	wc.lpszClassName = ::title;
-	RegisterClassExW(&wc);
+	RegisterClassEx(&wc);
 
 	RECT rc = WIN;
 	DWORD style = WS_OVERLAPPEDWINDOW;
@@ -900,7 +900,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow )
 	SIZE s = { GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN) };
 	SIZE w = { rc.right - rc.left, rc.bottom - rc.top };
 
-	HWND hWnd = CreateWindowExW(0, ::title, ::title, style,
+	HWND hWnd = CreateWindowEx(0, ::title, ::title, style,
 	                          (s.cx - w.cx) / 2, (s.cy - w.cy) / 2, w.cx, w.cy,
 	                          GetDesktopWindow(), NULL, hInstance, NULL);
 
