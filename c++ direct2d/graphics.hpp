@@ -84,8 +84,8 @@ class Graphics: public GraphicsTimer
 
 public:
 
-	using Color = D2D1::ColorF::Enum;
 	using Timer = GraphicsTimer;
+	using Color = D2D1::ColorF::Enum;
 
 	enum Alignment: DWORD
 	{
