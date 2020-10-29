@@ -87,17 +87,17 @@ public:
 	using Color = D2D1::ColorF::Enum;
 	using Timer = GraphicsTimer;
 
-	enum Alignment
+	enum Alignment: DWORD
 	{
-		UpLeft,
-		Up,
-		UpRight,
-		Left,
-		Center,
-		Right,
-		DownLeft,
-		Down,
-		DownRight
+		TopLeft     = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_NEAR,   DWRITE_TEXT_ALIGNMENT_LEADING),
+		Top         = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_NEAR,   DWRITE_TEXT_ALIGNMENT_CENTER),
+		TopRight    = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_NEAR,   DWRITE_TEXT_ALIGNMENT_TRAILING),
+		Left        = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_CENTER, DWRITE_TEXT_ALIGNMENT_LEADING),
+		Center      = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_CENTER, DWRITE_TEXT_ALIGNMENT_CENTER),
+		Right       = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_CENTER, DWRITE_TEXT_ALIGNMENT_TRAILING),
+		BottomLeft  = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_FAR,    DWRITE_TEXT_ALIGNMENT_LEADING),
+		Bottom      = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_FAR,    DWRITE_TEXT_ALIGNMENT_CENTER),
+		BottomRight = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_FAR,    DWRITE_TEXT_ALIGNMENT_TRAILING),
 	};
 
 	struct Rectangle
@@ -264,45 +264,8 @@ public:
 
 	void draw_layout( const D2D1_RECT_F &r, IDWriteTextFormat *f, const Color c, Alignment a, const wchar_t *t, size_t s )
 	{
-		switch (a)
-		{
-		case UpLeft:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-			break;
-		case Up:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-			break;
-		case UpRight:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-			break;
-		case Left:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-			break;
-		case Center:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-			break;
-		case Right:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-			break;
-		case DownLeft:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-			break;
-		case Down:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-			break;
-		case DownRight:
-			f->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-			f->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-			break;
-		}
+		f->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(LOWORD(a)));
+		f->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(HIWORD(a)));
 
 		target->DrawText(t, s, f, &r, get(c), D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
 	}
