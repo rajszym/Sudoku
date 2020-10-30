@@ -404,10 +404,10 @@ void GameTable::update( Graphics &gr )
 	for (auto &c: *this)
 		c.update(gr);
 
-	gr.draw_rect(TAB.x + CellSize * 3 + LowMargin * 2 + BigMargin * 1 / 2 - 1, TAB.y, 2, TAB.height, Graphics::Color::Black);
-	gr.draw_rect(TAB.x + CellSize * 6 + LowMargin * 4 + BigMargin * 3 / 2 - 1, TAB.y, 2, TAB.height, Graphics::Color::Black);
-	gr.draw_rect(TAB.x, TAB.y + CellSize * 3 + LowMargin * 2 + BigMargin * 1 / 2 - 1, TAB.width, 2,  Graphics::Color::Black);
-	gr.draw_rect(TAB.x, TAB.y + CellSize * 6 + LowMargin * 4 + BigMargin * 3 / 2 - 1, TAB.width, 2,  Graphics::Color::Black);
+	gr.fill_rect(TAB.x + CellSize * 3 + LowMargin * 3, TAB.y, LowMargin * 2, TAB.height, Graphics::Color::DimGray);
+	gr.fill_rect(TAB.x + CellSize * 6 + LowMargin * 9, TAB.y, LowMargin * 2, TAB.height, Graphics::Color::DimGray);
+	gr.fill_rect(TAB.x, TAB.y + CellSize * 3 + LowMargin * 3, TAB.width, LowMargin * 2,  Graphics::Color::DimGray);
+	gr.fill_rect(TAB.x, TAB.y + CellSize * 6 + LowMargin * 9, TAB.width, LowMargin * 2,  Graphics::Color::DimGray);
 }
 
 void GameTable::mouseMove( const int _x, const int _y )
