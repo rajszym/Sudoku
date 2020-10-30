@@ -342,7 +342,7 @@ void GameCell::update( Graphics &gr )
 		else if (h >= Assistance::Full    && GameCell::cell.allowed(n)) f = Graphics::Color::Orange;
 	}
 
-	if (GameCell::focus == this)
+	if (GameCell::focus == this || (h >= Assistance::Current && GameCell::focus != nullptr && GameCell::cell.in_lst(GameCell::focus->cell)))
 		gr.fill_rect(GameCell::r, LowMargin, Lighted);
 
 	if (!GameCell::cell.empty())
