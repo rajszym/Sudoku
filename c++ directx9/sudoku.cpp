@@ -41,6 +41,7 @@ constexpr int CellSize  { 64 };
 constexpr int Margin    {  4 };
 constexpr int SegSize   { CellSize * 3 + Margin * 2 };
 constexpr int TabSize   { SegSize  * 3 + Margin * 8 };
+constexpr int MnuSize   { 11 };
 
 const Graphics::Rectangle TAB(Margin * 2, CellSize, TabSize, TabSize);
 const Graphics::Rectangle BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
@@ -572,8 +573,8 @@ void MenuItem::update( Graphics &gr )
 		gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background, Graphics::Alignment::Left,  _T('◄'));
 		gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black, Graphics::Alignment::Right, _T('►'));
 #else
-		gr.draw_left (MenuItem::r, std::round(TabSize / 1.8 / 11.0), MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background);
-		gr.draw_right(MenuItem::r, std::round(TabSize / 1.8 / 11.0), MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black);
+		gr.draw_left (MenuItem::r, std::round(TabSize / 1.8 / MnuSize), MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background);
+		gr.draw_right(MenuItem::r, std::round(TabSize / 1.8 / MnuSize), MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black);
 #endif
 	}
 
@@ -616,8 +617,8 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 
 GameMenu::GameMenu()
 {
-	auto h = std::round(TabSize / 1.2 / 11.0);
-	auto pos = [h]( const int i ){ return MNU.y + std::round(i * (TabSize - h) / 10.0); };
+	auto h = std::round(TabSize / 1.2 / MnuSize);
+	auto pos = [h]( const int i ){ return MNU.y + std::round(i * (TabSize - h) / (MnuSize - 1.0)); };
 
 	GameMenu::emplace_back( 0, pos( 0), h, _T("Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)"));
 		GameMenu::back().emplace_back(_T("easy"));
@@ -653,7 +654,7 @@ GameMenu::GameMenu()
 
 void GameMenu::update( Graphics &gr )
 {
-	auto h = std::round(TabSize / 1.8 / GameMenu::size());
+	auto h = std::round(TabSize / 1.8 / MnuSize);
 
 	if (GameMenu::font == NULL)
 		GameMenu::font = gr.font(h, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
