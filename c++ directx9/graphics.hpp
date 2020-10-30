@@ -78,11 +78,11 @@ class Graphics: public GraphicsTimer
 	HWND                    wnd;
 	LPDIRECT3D9             d3d;
 	LPDIRECT3DDEVICE9       dev;
-	std::vector<LPD3DXFONT> fnt;
+	std::vector<ID3DXFont *> fnt;
 
 	void done()
 	{
-		for (LPD3DXFONT f: fnt) f->Release();
+		for (ID3DXFont *f: fnt) f->Release();
 		fnt.clear();
 
 		if (dev != NULL) { dev->Release(); dev = NULL; }
@@ -92,6 +92,7 @@ class Graphics: public GraphicsTimer
 public:
 
 	using Timer = GraphicsTimer;
+	using Font  = ID3DXFont;
 
 	enum Color: D3DCOLOR
 	{
@@ -303,7 +304,7 @@ public:
 		return true;
 	}
 
-	LPD3DXFONT font( const INT h, const UINT w, const BYTE p, const TCHAR *f )
+	Font *font( const INT h, const UINT w, const BYTE p, const TCHAR *f )
 	{
 		D3DXFONT_DESC desc = {};
 		desc.Height          = h;
@@ -317,7 +318,7 @@ public:
 		desc.PitchAndFamily  = p;
 		_tcscpy(desc.FaceName, f);
 
-		LPD3DXFONT font;
+		Font *font;
 		HRESULT hr = D3DXCreateFontIndirect(dev, &desc, &font);
 		if (FAILED(hr))
 			return NULL;
@@ -438,25 +439,25 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
 	}
 
-	void draw_char( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR t )
+	void draw_char( const RECT &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, &t, 1, &rc, a | DT_NOCLIP, c);
 	}
 
-	void draw_char( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR t )
+	void draw_char( const RECT &r, const int m, Font *f, const D3DCOLOR c, DWORD a, const TCHAR t )
 	{
 		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
 		draw_char(rc, f, c, a, t);
 	}
 
-	void draw_text( const RECT &r, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR *t )
+	void draw_text( const RECT &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR *t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, t, -1, &rc, a | DT_NOCLIP, c);
 	}
 
-	void draw_text( const RECT &r, const int m, LPD3DXFONT f, const D3DCOLOR c, DWORD a, const TCHAR *t )
+	void draw_text( const RECT &r, const int m, Font *f, const D3DCOLOR c, DWORD a, const TCHAR *t )
 	{
 		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
 		draw_text(rc, f, c, a, t);
