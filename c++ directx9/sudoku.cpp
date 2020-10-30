@@ -89,7 +89,7 @@ enum Command: int
 	PrevLevelCmd,
 	NextLevelCmd,
 	GenerateCmd,
-	BackLightCmd,
+	HighLightCmd,
 	TimerCmd,
 	SolveCmd,
 	UndoCmd,
@@ -613,7 +613,7 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 		{
 		case  0: return MenuItem::back ? PrevLevelCmd : NextLevelCmd;
 		case  1: return MenuItem::back ? PrevHelpCmd  : NextHelpCmd;
-		case  2: return BackLightCmd;
+		case  2: return HighLightCmd;
 		case  3: return TimerCmd;
 		case  4: return GenerateCmd;
 		case  5: return SolveCmd;
@@ -649,10 +649,10 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back(_T("available"));
 		GameMenu::back().emplace_back(_T("sure"));
 		GameMenu::back().emplace_back(_T("full"));
-	GameMenu::emplace_back( 2, pos( 2), h, _T("Backlight display on / off"));
-		GameMenu::back().emplace_back(_T("backlight off"));
-		GameMenu::back().emplace_back(_T("backlight on"));
-	GameMenu::emplace_back( 3, pos( 3), h, _T("Timer display on / off"));
+	GameMenu::emplace_back( 2, pos( 2), h, _T("Display the highlight of the entire group of cells: on / off"));
+		GameMenu::back().emplace_back(_T("highlight off"));
+		GameMenu::back().emplace_back(_T("highlight on"));
+	GameMenu::emplace_back( 3, pos( 3), h, _T("Display timer: on / off"));
 		GameMenu::back().emplace_back(_T("timer off"));
 		GameMenu::back().emplace_back(_T("timer on"));
 	GameMenu::emplace_back( 4, pos( 4), h, _T("Generate or load a new layout (keyboard shortcuts: N, Tab)"));
@@ -862,7 +862,7 @@ void Game::command( const Command _c )
 	case NextLevelCmd:  Game::mnu[0].next(prev); Sudoku::level = Game::level; /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
 	                    break;
-	case BackLightCmd:  Game::light_f = !Game::light_f; break;
+	case HighLightCmd:  Game::light_f = !Game::light_f; break;
 	case TimerCmd:      Game::timer_f = !Game::timer_f; break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
 	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
