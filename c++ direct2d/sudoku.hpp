@@ -353,7 +353,7 @@ class SudokuTimer
 	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
 	int count_;
 
-	static constexpr int STOPPED = -2;
+	static constexpr int RESETED = -2;
 	static constexpr int STARTED = -1;
 
 public:
@@ -377,12 +377,12 @@ public:
 
 	void reset()
 	{
-		count_ = STOPPED;
+		count_ = RESETED;
 	}
 
 	int get()
 	{
-		return count_ == STOPPED ? 0 :
+		return count_ == RESETED ? 0 :
 		       count_ == STARTED ? std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - start_).count() :
 		                           count_;
 	}
