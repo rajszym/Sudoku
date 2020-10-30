@@ -565,18 +565,17 @@ void MenuItem::update( Graphics &gr )
 	int i = MenuItem::idx == 0 ? static_cast<int>(Game::level) : MenuItem::idx == 1 ? static_cast<int>(Game::help) : 0;
 
 	if (MenuItem::focus == this)
-	{
 		gr.fill_rect(MenuItem::r, Lighted);
-		if (MenuItem::size() > 1)
-		{
+
+	if (MenuItem::size() > 1)
+	{
 #if defined(UNICODE)
-			gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::back ? Graphics::Color::Black : Background, Graphics::Alignment::Left,  _T('◄'));
-			gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::back ? Background : Graphics::Color::Black, Graphics::Alignment::Right, _T('►'));
+		gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background, Graphics::Alignment::Left,  _T('◄'));
+		gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black, Graphics::Alignment::Right, _T('►'));
 #else
-			gr.draw_left (MenuItem::r, MnuHeight - LowMargin * 5, MenuItem::back ? Graphics::Color::Black : Background);
-			gr.draw_right(MenuItem::r, MnuHeight - LowMargin * 5, MenuItem::back ? Background : Graphics::Color::Black);
+		gr.draw_left (MenuItem::r, MnuHeight - LowMargin * 5, MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background);
+		gr.draw_right(MenuItem::r, MnuHeight - LowMargin * 5, MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black);
 #endif
-		}
 	}
 
 	gr.draw_text(MenuItem::r, GameMenu::font, Graphics::Color::Black, Graphics::Alignment::Center, MenuItem::at(i));
