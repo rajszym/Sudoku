@@ -194,7 +194,6 @@ public:
 
 class MenuItem: public std::vector<const TCHAR *>
 {
-	const int y;
 	const int idx;
 	const Graphics::Rectangle r;
 
@@ -205,7 +204,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): y{_y}, idx{_x}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
+	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): idx{_x}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
 
 	void    next        ( bool );
 	void    update      ( Graphics & );
