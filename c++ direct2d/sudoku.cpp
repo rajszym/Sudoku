@@ -38,14 +38,13 @@
 const TCHAR *title = _T("Sudoku");
 
 constexpr int CellSize  { 64 };
-constexpr int BigMargin { CellSize /  4 };
-constexpr int LowMargin { CellSize / 16 };
-constexpr int TabSize   { CellSize *  9 + LowMargin * 6 + BigMargin * 2 };
-constexpr int MnuHeight { TabSize  / 11 };
+constexpr int Margin    {  4 };
+constexpr int SegSize   { CellSize * 3 + Margin * 2 };
+constexpr int TabSize   { SegSize  * 3 + Margin * 8 };
 
-const Graphics::Rectangle TAB(BigMargin, CellSize, TabSize, TabSize);
-const Graphics::Rectangle BTN(TAB.right + BigMargin * 2, TAB.top, CellSize, TAB.height);
-const Graphics::Rectangle MNU(BTN.right + BigMargin * 2, TAB.top, MnuHeight * 4, TAB.height);
+const Graphics::Rectangle TAB(Margin * 2, CellSize, TabSize, TabSize);
+const Graphics::Rectangle BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
+const Graphics::Rectangle MNU(BTN.right + Margin * 8, TAB.top, SegSize,  TAB.height);
 const Graphics::Rectangle HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
 const Graphics::Rectangle FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
 const Graphics::Rectangle WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
@@ -105,7 +104,7 @@ class GameHeader
 {
 public:
 
-	static IDWriteTextFormat *font;
+	static Graphics::Font *font;
 
 	GameHeader() {}
 
@@ -145,7 +144,7 @@ class GameTable: public std::vector<GameCell>
 {
 public:
 
-	static IDWriteTextFormat *font;
+	static Graphics::Font *font;
 
 	GameTable( Sudoku & );
 
@@ -180,7 +179,7 @@ class GameButtons: public std::vector<Button>
 {
 public:
 
-	static IDWriteTextFormat *font;
+	static Graphics::Font *font;
 
 	GameButtons();
 
@@ -205,7 +204,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int x, const int _y, const TCHAR *_i ): y{_y}, idx{x}, r{MNU.x, y, MNU.width, MnuHeight}, info{_i} {}
+	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): y{_y}, idx{_x}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
 
 	void    next        ( bool );
 	void    update      ( Graphics & );
@@ -219,7 +218,7 @@ class GameMenu: public std::vector<MenuItem>
 {
 public:
 
-	static IDWriteTextFormat *font;
+	static Graphics::Font *font;
 
 	GameMenu();
 
@@ -234,7 +233,7 @@ class GameFooter
 {
 public:
 
-	static IDWriteTextFormat *font;
+	static Graphics::Font *font;
 
 	GameFooter() {}
 
@@ -274,22 +273,22 @@ public:
 /*                              INITIALIZATION                               */
 /*---------------------------------------------------------------------------*/
 
-IDWriteTextFormat *GameHeader ::font  = NULL;
-IDWriteTextFormat *GameTable  ::font  = NULL;
-IDWriteTextFormat *GameButtons::font  = NULL;
-IDWriteTextFormat *GameMenu   ::font  = NULL;
-IDWriteTextFormat *GameFooter ::font  = NULL;
+Graphics::Font *GameHeader ::font  = NULL;
+Graphics::Font *GameTable  ::font  = NULL;
+Graphics::Font *GameButtons::font  = NULL;
+Graphics::Font *GameMenu   ::font  = NULL;
+Graphics::Font *GameFooter ::font  = NULL;
 
-GameCell   *GameCell   ::focus = nullptr;
+GameCell       *GameCell   ::focus = nullptr;
 
-Button     *Button     ::focus = nullptr;
-int         Button     ::cur   = 0;
+Button         *Button     ::focus = nullptr;
+int             Button     ::cur   = 0;
 
-MenuItem   *MenuItem   ::focus = nullptr;
-bool        MenuItem   ::back  = false;
+MenuItem       *MenuItem   ::focus = nullptr;
+bool            MenuItem   ::back  = false;
 
-Assistance  Game       ::help  = Assistance::None;
-Difficulty  Game       ::level = Difficulty::Easy;
+Assistance      Game       ::help  = Assistance::None;
+Difficulty      Game       ::level = Difficulty::Easy;
 
 /*---------------------------------------------------------------------------*/
 /*                                  SUDOKU                                   */
@@ -343,13 +342,13 @@ void GameCell::update( Graphics &gr )
 	}
 
 	if (GameCell::focus == this || (h >= Assistance::Current && GameCell::focus != nullptr && GameCell::cell.in_lst(GameCell::focus->cell)))
-		gr.fill_rect(GameCell::r, LowMargin, Lighted);
+		gr.fill_rect(GameCell::r, Margin, Lighted);
 
 	if (!GameCell::cell.empty())
 		gr.draw_char(GameCell::r, GameTable::font, f, Graphics::Alignment::Center, _T(" 123456789")[GameCell::cell.num]);
 	else
 	if (f != Background)
-		gr.fill_ellipse(GameCell::r, LowMargin * 5, f);
+		gr.fill_ellipse(GameCell::r, CellSize / 3, f);
 
 	gr.draw_rect(GameCell::r, Graphics::Color::Black);
 }
@@ -389,8 +388,8 @@ GameTable::GameTable( Sudoku &_s )
 {
 	for (auto &c: _s)
 	{
-		int x = TAB.x + (c.pos % 9) * (CellSize + LowMargin) + (c.pos % 9 / 3) * (BigMargin - LowMargin);
-		int y = TAB.y + (c.pos / 9) * (CellSize + LowMargin) + (c.pos / 9 / 3) * (BigMargin - LowMargin);;
+		int x = TAB.x + (c.pos % 9) * (CellSize + Margin) + (c.pos % 9 / 3) * Margin * 3;
+		int y = TAB.y + (c.pos / 9) * (CellSize + Margin) + (c.pos / 9 / 3) * Margin * 3;
 
 		GameTable::emplace_back(x, y, c);
 	}
@@ -404,10 +403,10 @@ void GameTable::update( Graphics &gr )
 	for (auto &c: *this)
 		c.update(gr);
 
-	gr.fill_rect(TAB.x + CellSize * 3 + LowMargin * 3, TAB.y, LowMargin * 2, TAB.height, Graphics::Color::DimGray);
-	gr.fill_rect(TAB.x + CellSize * 6 + LowMargin * 9, TAB.y, LowMargin * 2, TAB.height, Graphics::Color::DimGray);
-	gr.fill_rect(TAB.x, TAB.y + CellSize * 3 + LowMargin * 3, TAB.width, LowMargin * 2,  Graphics::Color::DimGray);
-	gr.fill_rect(TAB.x, TAB.y + CellSize * 6 + LowMargin * 9, TAB.width, LowMargin * 2,  Graphics::Color::DimGray);
+	gr.fill_rect(TAB.x + CellSize * 3 + Margin * 3, TAB.y, Margin * 2, TAB.height, Graphics::Color::DimGray);
+	gr.fill_rect(TAB.x + CellSize * 6 + Margin * 9, TAB.y, Margin * 2, TAB.height, Graphics::Color::DimGray);
+	gr.fill_rect(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2,  Graphics::Color::DimGray);
+	gr.fill_rect(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2,  Graphics::Color::DimGray);
 }
 
 void GameTable::mouseMove( const int _x, const int _y )
@@ -443,7 +442,7 @@ void Button::update( Graphics &gr, int count )
 	auto f = Graphics::Color::DimGray;
 
 	if (Button::focus == this)
-		gr.fill_rect(Button::r, LowMargin, Lighted);
+		gr.fill_rect(Button::r, Margin, Lighted);
 	else
 	if (Button::cur == Button::num)
 		gr.fill_rect(Button::r, Graphics::Color::White);
@@ -466,7 +465,7 @@ void Button::update( Graphics &gr, int count )
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
-		D2D1_RECT_F rc { static_cast<FLOAT>(BTN.right), static_cast<FLOAT>(Button::r.bottom - BigMargin * 2), static_cast<FLOAT>(MNU.left), static_cast<FLOAT>(Button::r.bottom) };
+		D2D1_RECT_F rc { static_cast<FLOAT>(BTN.right), static_cast<FLOAT>(Button::r.bottom - CellSize / 2), static_cast<FLOAT>(MNU.left), static_cast<FLOAT>(Button::r.bottom) };
 		gr.draw_char(rc, GameButtons::font, Graphics::Color::Gray, Graphics::Alignment::Center, count > 9 ? _T('?') : _T("0123456789")[count]);
 	}
 }
@@ -491,7 +490,7 @@ GameButtons::GameButtons()
 {
 	for (int n = 1; n <= 9; n++)
 	{
-		int y = BTN.y + (n - 1) * (CellSize + LowMargin) + ((n - 1) / 3) * (BigMargin - LowMargin);
+		int y = BTN.y + (n - 1) * (CellSize + Margin) + ((n - 1) / 3) * Margin * 3;
 
 		GameButtons::emplace_back(y, n);
 	}
@@ -612,42 +611,47 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 
 GameMenu::GameMenu()
 {
-	GameMenu::emplace_back( 0, MNU.y + (TAB.height - MnuHeight) *  0 / 10, _T("Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)"));
+	auto h = std::round(TabSize / 1.2 / 11.0);
+	auto pos = [h]( const int i ){ return MNU.y + std::round(i * (TabSize - h) / 10.0); };
+
+	GameMenu::emplace_back( 0, pos( 0), h, _T("Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)"));
 		GameMenu::back().emplace_back(_T("easy"));
 		GameMenu::back().emplace_back(_T("medium"));
 		GameMenu::back().emplace_back(_T("hard"));
 		GameMenu::back().emplace_back(_T("expert"));
 		GameMenu::back().emplace_back(_T("extreme"));
-	GameMenu::emplace_back( 1, MNU.y + (TAB.height - MnuHeight) *  1 / 10, _T("Change the assistance level: none, current, available, sure, full (keyboard shortcuts: A, Left, Right)"));
+	GameMenu::emplace_back( 1, pos( 1), h, _T("Change the assistance level: none, current, available, sure, full (keyboard shortcuts: A, Left, Right)"));
 		GameMenu::back().emplace_back(_T("none"));
 		GameMenu::back().emplace_back(_T("current"));
 		GameMenu::back().emplace_back(_T("available"));
 		GameMenu::back().emplace_back(_T("sure"));
 		GameMenu::back().emplace_back(_T("full"));
-	GameMenu::emplace_back( 2, MNU.y + (TAB.height - MnuHeight) *  2 / 10, _T("Generate or load a new layout (keyboard shortcuts: N, Tab)"));
+	GameMenu::emplace_back( 2, pos( 2), h, _T("Generate or load a new layout (keyboard shortcuts: N, Tab)"));
 		GameMenu::back().emplace_back(_T("new"));
-	GameMenu::emplace_back( 3, MNU.y + (TAB.height - MnuHeight) *  3 / 10, _T("Solve the current layout (keyboard shortcuts: S, Enter)"));
+	GameMenu::emplace_back( 3, pos( 3), h, _T("Solve the current layout (keyboard shortcuts: S, Enter)"));
 		GameMenu::back().emplace_back(_T("solve"));
-	GameMenu::emplace_back( 4, MNU.y + (TAB.height - MnuHeight) *  4 / 10, _T("Undo last move or restore the accepted layout (keyboard shortcuts: U, Backspace)"));
+	GameMenu::emplace_back( 4, pos( 4), h, _T("Undo last move or restore the accepted layout (keyboard shortcuts: U, Backspace)"));
 		GameMenu::back().emplace_back(_T("undo"));
-	GameMenu::emplace_back( 5, MNU.y + (TAB.height - MnuHeight) *  5 / 10, _T("Clear the board (keyboard shortcuts: C, Delete)"));
+	GameMenu::emplace_back( 5, pos( 5), h, _T("Clear the board (keyboard shortcuts: C, Delete)"));
 		GameMenu::back().emplace_back(_T("clear"));
-	GameMenu::emplace_back( 6, MNU.y + (TAB.height - MnuHeight) *  6 / 10, _T("Start editing the current layout (keyboard shortcuts: E, Home)"));
+	GameMenu::emplace_back( 6, pos( 6), h, _T("Start editing the current layout (keyboard shortcuts: E, Home)"));
 		GameMenu::back().emplace_back(_T("edit"));
-	GameMenu::emplace_back( 7, MNU.y + (TAB.height - MnuHeight) *  7 / 10, _T("Accept the current layout and finish editing (keyboard shortcuts: T, End)"));
+	GameMenu::emplace_back( 7, pos( 7), h, _T("Accept the current layout and finish editing (keyboard shortcuts: T, End)"));
 		GameMenu::back().emplace_back(_T("accept"));
-	GameMenu::emplace_back( 8, MNU.y + (TAB.height - MnuHeight) *  8 / 10, _T("Save the current layout to the file (keyboard shortcuts: V, Insert)"));
+	GameMenu::emplace_back( 8, pos( 8), h, _T("Save the current layout to the file (keyboard shortcuts: V, Insert)"));
 		GameMenu::back().emplace_back(_T("save"));
-	GameMenu::emplace_back( 9, MNU.y + (TAB.height - MnuHeight) *  9 / 10, _T("Load layout from the file (keyboard shortcut: L)"));
+	GameMenu::emplace_back( 9, pos( 9), h, _T("Load layout from the file (keyboard shortcut: L)"));
 		GameMenu::back().emplace_back(_T("load"));
-	GameMenu::emplace_back(10, MNU.y + (TAB.height - MnuHeight) * 10 / 10, _T("Quit the game (keyboard shortcuts: Q, Esc)"));
+	GameMenu::emplace_back(10, pos(10), h, _T("Quit the game (keyboard shortcuts: Q, Esc)"));
 		GameMenu::back().emplace_back(_T("quit"));
 }
 
 void GameMenu::update( Graphics &gr )
 {
+	auto h = std::round(TabSize / 1.8 / GameMenu::size());
+
 	if (GameMenu::font == NULL)
-		GameMenu::font = gr.font(MnuHeight - LowMargin * 4, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
+		GameMenu::font = gr.font(h, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
 
 	for (auto &m: *this)
 		m.update(gr);
@@ -679,7 +683,7 @@ Command GameMenu::mouseLButton( const int _x, const int _y )
 void GameFooter::update( Graphics &gr )
 {
 	if (GameFooter::font == NULL)
-		GameFooter::font = gr.font(FTR.height - LowMargin * 2, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
+		GameFooter::font = gr.font(std::min(FTR.height, WIN.width / 40), DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
 
 	const TCHAR *info = MenuItem::focus != nullptr ? MenuItem::focus->info : _T("Sudoku game, solver and generator");
 	gr.draw_text(FTR, GameFooter::font, Graphics::Color::Gray, Graphics::Alignment::Center, info);
