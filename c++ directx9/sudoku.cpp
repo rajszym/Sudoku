@@ -573,8 +573,8 @@ void MenuItem::update( Graphics &gr )
 			gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::back ? Graphics::Color::Black : Background, Graphics::Alignment::Left,  _T('◄'));
 			gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::back ? Background : Graphics::Color::Black, Graphics::Alignment::Right, _T('►'));
 #else
-			gr.draw_left (MenuItem::r, MenuItem::back ? Graphics::Color::Black : Background);
-			gr.draw_right(MenuItem::r, MenuItem::back ? Background : Graphics::Color::Black);
+			gr.draw_left (MenuItem::r, MnuHeight - LowMargin * 5, MenuItem::back ? Graphics::Color::Black : Background);
+			gr.draw_right(MenuItem::r, MnuHeight - LowMargin * 5, MenuItem::back ? Background : Graphics::Color::Black);
 #endif
 		}
 	}
