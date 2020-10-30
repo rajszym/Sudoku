@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    29.10.2020
+   @date    30.10.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -103,11 +103,12 @@ public:
 
 	struct Rectangle
 	{
-		const int left, top, right, bottom, x, y, width, height;
+		const int left, top, right, bottom, x, y, width, height, center, middle;
 
 		Rectangle(int _x, int _y, int _w, int _h):
 			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
-			x(_x), y(_y), width(_w), height(_h) {}
+			x(_x), y(_y), width(_w), height(_h),
+			center(_x + _w / 2), middle(_y + _h / 2) {}
 
 		operator RECT() const
 		{
@@ -122,16 +123,6 @@ public:
 		bool contains( const int _x, const int _y ) const
 		{
 			return _x >= left && _x < right && _y >= top && _y < bottom;
-		}
-
-		int Center( const int _w ) const
-		{
-			return left + (width - _w) / 2;
-		}
-
-		int Middle( const int _h ) const
-		{
-			return top + (height - _h) / 2;
 		}
 	};
 
