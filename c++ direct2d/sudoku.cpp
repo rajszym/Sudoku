@@ -41,6 +41,7 @@ constexpr int CellSize  { 64 };
 constexpr int Margin    {  4 };
 constexpr int SegSize   { CellSize * 3 + Margin * 2 };
 constexpr int TabSize   { SegSize  * 3 + Margin * 8 };
+constexpr int MnuSize   { 11 };
 
 const Graphics::Rectangle TAB(Margin * 2, CellSize, TabSize, TabSize);
 const Graphics::Rectangle BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
@@ -611,8 +612,8 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 
 GameMenu::GameMenu()
 {
-	auto h = std::round(TabSize / 1.2 / 11.0);
-	auto pos = [h]( const int i ){ return MNU.y + std::round(i * (TabSize - h) / 10.0); };
+	auto h = std::round(TabSize / 1.2 / MnuSize);
+	auto pos = [h]( const int i ){ return MNU.y + std::round(i * (TabSize - h) / (MnuSize - 1.0)); };
 
 	GameMenu::emplace_back( 0, pos( 0), h, _T("Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)"));
 		GameMenu::back().emplace_back(_T("easy"));
@@ -648,7 +649,7 @@ GameMenu::GameMenu()
 
 void GameMenu::update( Graphics &gr )
 {
-	auto h = std::round(TabSize / 1.8 / GameMenu::size());
+	auto h = std::round(TabSize / 1.8 / MnuSize);
 
 	if (GameMenu::font == NULL)
 		GameMenu::font = gr.font(h, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
