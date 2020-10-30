@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    29.10.2020
+   @date    30.10.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -347,10 +347,14 @@ public:
 	}
 };
 
+template<typename T = std::chrono::seconds>
 class SudokuTimer
 {
 	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
-	std::chrono::time_point<std::chrono::high_resolution_clock> stop_;
+	int count_;
+
+	static constexpr int STOPPED = -2;
+	static constexpr int STARTED = -1;
 
 public:
 
@@ -362,31 +366,29 @@ public:
 	void start()
 	{
 		start_ = std::chrono::high_resolution_clock::now();
-		stop_ = start_;
+		count_ = STARTED;
 	}
 
 	void stop()
 	{
-		if (stop_ == start_)
-			stop_ = std::chrono::high_resolution_clock::now();
+		if (count_ == STARTED)
+			count_ = std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - start_).count();
 	}
 
 	void reset()
 	{
-		stop_ = start_;
-		start_ = std::chrono::high_resolution_clock::now();
+		count_ = STOPPED;
 	}
 
-	template<typename T = std::chrono::seconds>
 	int get()
 	{
-		return stop_ < start_ ? 0 :
-		       stop_ > start_ ? std::chrono::duration_cast<T>(stop_ - start_).count() :
-		                        std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - start_).count();
+		return count_ == STOPPED ? 0 :
+		       count_ == STARTED ? std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - start_).count() :
+		                           count_;
 	}
 };
 
-class Sudoku: public cell_array, public SudokuTimer
+class Sudoku: public cell_array, public SudokuTimer<std::chrono::seconds>
 {
 	using Cell = SudokuCell;
 
