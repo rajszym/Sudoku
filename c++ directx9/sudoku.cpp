@@ -500,7 +500,7 @@ GameButtons::GameButtons()
 void GameButtons::update( Graphics &gr, int count )
 {
 	if (GameButtons::font == NULL)
-		GameButtons::font = gr.font(CellSize / 2, FW_NORMAL, FIXED_PITCH | FF_DECORATIVE, _T(""));
+		GameButtons::font = gr.font(CellSize / 2, FW_NORMAL, FIXED_PITCH | FF_DECORATIVE, _T("Arial"));
 
 	for (auto &b: *this)
 		b.update(gr, count);
@@ -653,7 +653,7 @@ GameMenu::GameMenu()
 void GameMenu::update( Graphics &gr )
 {
 	if (GameMenu::font == NULL)
-		GameMenu::font = gr.font(MnuHeight - LowMargin * 5, FW_NORMAL, VARIABLE_PITCH, _T(""));
+		GameMenu::font = gr.font(MnuHeight - LowMargin * 4, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	for (auto &m: *this)
 		m.update(gr);
@@ -685,7 +685,7 @@ Command GameMenu::mouseLButton( const int _x, const int _y )
 void GameFooter::update( Graphics &gr )
 {
 	if (GameFooter::font == NULL)
-		GameFooter::font = gr.font(FTR.height - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, _T(""));
+		GameFooter::font = gr.font(FTR.height - LowMargin * 2, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	const TCHAR *info = MenuItem::focus != nullptr ? MenuItem::focus->info : _T("Sudoku game, solver and generator");
 	gr.draw_text(FTR, GameFooter::font, Graphics::Color::Gray, Graphics::Alignment::Center, info);
