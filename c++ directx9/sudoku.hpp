@@ -136,11 +136,6 @@ private:
 		return s1 == s2;
 	}
 	
-	bool in_lst( const Cell &c )
-	{
-		return Cell::in_row(c) || Cell::in_col(c) || Cell::in_seg(c);
-	}
-
 	void link( Cell &c )
 	{
 		if (Cell::in_row(c)) Cell::row.push_back(std::ref(c));
@@ -150,6 +145,11 @@ private:
 	}
 
 public:
+
+	bool in_lst( const Cell &c )
+	{
+		return Cell::in_row(c) || Cell::in_col(c) || Cell::in_seg(c);
+	}
 
 	static
 	bool select_length( Cell &a, Cell &b )
