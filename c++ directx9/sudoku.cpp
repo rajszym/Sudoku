@@ -41,7 +41,7 @@ constexpr int CellSize  { 64 };
 constexpr int Margin    {  4 };
 constexpr int SegSize   { CellSize * 3 + Margin * 2 };
 constexpr int TabSize   { SegSize  * 3 + Margin * 8 };
-constexpr int MnuSize   { 11 };
+constexpr int MnuSize   { 13 };
 
 const Graphics::Rectangle TAB(Margin * 2, CellSize, TabSize, TabSize);
 const Graphics::Rectangle BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
@@ -89,6 +89,8 @@ enum Command: int
 	PrevLevelCmd,
 	NextLevelCmd,
 	GenerateCmd,
+	BackLightCmd,
+	TimerCmd,
 	SolveCmd,
 	UndoCmd,
 	ClearCmd,
@@ -254,8 +256,10 @@ class Game: public Graphics, public Sudoku
 
 public:
 
-	static Assistance help;
 	static Difficulty level;
+	static Assistance help;
+	static bool       light_f;
+	static bool       timer_f;
 
 	Game(): Graphics(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
 
@@ -287,8 +291,10 @@ int             Button     ::cur   = 0;
 MenuItem       *MenuItem   ::focus = nullptr;
 bool            MenuItem   ::back  = false;
 
-Assistance      Game       ::help  = Assistance::None;
 Difficulty      Game       ::level = Difficulty::Easy;
+Assistance      Game       ::help  = Assistance::None;
+bool            Game       ::light_f = false;
+bool            Game       ::timer_f = true;
 
 /*---------------------------------------------------------------------------*/
 /*                                  SUDOKU                                   */
@@ -320,9 +326,12 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, int time )
 	if (info != nullptr)
 		gr.draw_text(HDR, GameMenu::font, Graphics::Color::Red, Graphics::Alignment::Bottom, info);
 
-	TCHAR v[16];
-	_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
-	gr.draw_text(HDR, GameHeader::font, f, Graphics::Alignment::Right, v);
+	if (Game::timer_f)
+	{
+		TCHAR v[16];
+		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
+		gr.draw_text(HDR, GameHeader::font, f, Graphics::Alignment::Right, v);
+	}
 }
 
 /*---------------------------------------------------------------------------*/
@@ -341,7 +350,7 @@ void GameCell::update( Graphics &gr )
 		else if (h >= Assistance::Full    && GameCell::cell.allowed(n)) f = Graphics::Color::Orange;
 	}
 
-	if (GameCell::focus == this || (h >= Assistance::Current && GameCell::focus != nullptr && GameCell::cell.in_lst(GameCell::focus->cell)))
+	if (GameCell::focus == this || (Game::light_f && GameCell::focus != nullptr && GameCell::cell.in_lst(GameCell::focus->cell)))
 		gr.fill_rect(GameCell::r, Margin, Lighted);
 
 	if (!GameCell::cell.empty())
@@ -561,12 +570,19 @@ void MenuItem::next( bool prev )
 
 void MenuItem::update( Graphics &gr )
 {
-	int i = MenuItem::idx == 0 ? static_cast<int>(Game::level) : MenuItem::idx == 1 ? static_cast<int>(Game::help) : 0;
+	int i = 0;
+	switch (MenuItem::idx)
+	{
+	case 0 : i = static_cast<int>(Game::level); break;
+	case 1 : i = static_cast<int>(Game::help);  break;
+	case 2 : i = Game::light_f ? 1 : 0; break;
+	case 3 : i = Game::timer_f ? 1 : 0; break;
+	}
 
 	if (MenuItem::focus == this)
 		gr.fill_rect(MenuItem::r, Lighted);
 
-	if (MenuItem::size() > 1)
+	if (MenuItem::size() > 2)
 	{
 #if defined(UNICODE)
 		gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background, Graphics::Alignment::Left,  _T('◄'));
@@ -597,15 +613,17 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 		{
 		case  0: return MenuItem::back ? PrevLevelCmd : NextLevelCmd;
 		case  1: return MenuItem::back ? PrevHelpCmd  : NextHelpCmd;
-		case  2: return GenerateCmd;
-		case  3: return SolveCmd;
-		case  4: return UndoCmd;
-		case  5: return ClearCmd;
-		case  6: return EditCmd;
-		case  7: return AcceptCmd;
-		case  8: return SaveCmd;
-		case  9: return LoadCmd;
-		case 10: return QuitCmd;
+		case  2: return BackLightCmd;
+		case  3: return TimerCmd;
+		case  4: return GenerateCmd;
+		case  5: return SolveCmd;
+		case  6: return UndoCmd;
+		case  7: return ClearCmd;
+		case  8: return EditCmd;
+		case  9: return AcceptCmd;
+		case 10: return SaveCmd;
+		case 11: return LoadCmd;
+		case 12: return QuitCmd;
 		}
 	}
 
@@ -631,23 +649,29 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back(_T("available"));
 		GameMenu::back().emplace_back(_T("sure"));
 		GameMenu::back().emplace_back(_T("full"));
-	GameMenu::emplace_back( 2, pos( 2), h, _T("Generate or load a new layout (keyboard shortcuts: N, Tab)"));
+	GameMenu::emplace_back( 2, pos( 2), h, _T("Backlight display on / off"));
+		GameMenu::back().emplace_back(_T("backlight off"));
+		GameMenu::back().emplace_back(_T("backlight on"));
+	GameMenu::emplace_back( 3, pos( 3), h, _T("Timer display on / off"));
+		GameMenu::back().emplace_back(_T("timer off"));
+		GameMenu::back().emplace_back(_T("timer on"));
+	GameMenu::emplace_back( 4, pos( 4), h, _T("Generate or load a new layout (keyboard shortcuts: N, Tab)"));
 		GameMenu::back().emplace_back(_T("new"));
-	GameMenu::emplace_back( 3, pos( 3), h, _T("Solve the current layout (keyboard shortcuts: S, Enter)"));
+	GameMenu::emplace_back( 5, pos( 5), h, _T("Solve the current layout (keyboard shortcuts: S, Enter)"));
 		GameMenu::back().emplace_back(_T("solve"));
-	GameMenu::emplace_back( 4, pos( 4), h, _T("Undo last move or restore the accepted layout (keyboard shortcuts: U, Backspace)"));
+	GameMenu::emplace_back( 6, pos( 6), h, _T("Undo last move or restore the accepted layout (keyboard shortcuts: U, Backspace)"));
 		GameMenu::back().emplace_back(_T("undo"));
-	GameMenu::emplace_back( 5, pos( 5), h, _T("Clear the board (keyboard shortcuts: C, Delete)"));
+	GameMenu::emplace_back( 7, pos( 7), h, _T("Clear the board (keyboard shortcuts: C, Delete)"));
 		GameMenu::back().emplace_back(_T("clear"));
-	GameMenu::emplace_back( 6, pos( 6), h, _T("Start editing the current layout (keyboard shortcuts: E, Home)"));
+	GameMenu::emplace_back( 8, pos( 8), h, _T("Start editing the current layout (keyboard shortcuts: E, Home)"));
 		GameMenu::back().emplace_back(_T("edit"));
-	GameMenu::emplace_back( 7, pos( 7), h, _T("Accept the current layout and finish editing (keyboard shortcuts: T, End)"));
+	GameMenu::emplace_back( 9, pos( 9), h, _T("Accept the current layout and finish editing (keyboard shortcuts: T, End)"));
 		GameMenu::back().emplace_back(_T("accept"));
-	GameMenu::emplace_back( 8, pos( 8), h, _T("Save the current layout to the file (keyboard shortcuts: V, Insert)"));
+	GameMenu::emplace_back(10, pos(10), h, _T("Save the current layout to the file (keyboard shortcuts: V, Insert)"));
 		GameMenu::back().emplace_back(_T("save"));
-	GameMenu::emplace_back( 9, pos( 9), h, _T("Load layout from the file (keyboard shortcut: L)"));
+	GameMenu::emplace_back(11, pos(11), h, _T("Load layout from the file (keyboard shortcut: L)"));
 		GameMenu::back().emplace_back(_T("load"));
-	GameMenu::emplace_back(10, pos(10), h, _T("Quit the game (keyboard shortcuts: Q, Esc)"));
+	GameMenu::emplace_back(12, pos(12), h, _T("Quit the game (keyboard shortcuts: Q, Esc)"));
 		GameMenu::back().emplace_back(_T("quit"));
 }
 
@@ -838,6 +862,8 @@ void Game::command( const Command _c )
 	case NextLevelCmd:  Game::mnu[0].next(prev); Sudoku::level = Game::level; /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
 	                    break;
+	case BackLightCmd:  Game::light_f = !Game::light_f; break;
+	case TimerCmd:      Game::timer_f = !Game::timer_f; break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
 	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
 	                    break;
