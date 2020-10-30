@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    29.10.2020
+   @date    30.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -582,7 +582,7 @@ void MenuItem::mouseMove( const int _x, const int _y )
 	if (MenuItem::r.contains(_x, _y))
 	{
 		MenuItem::focus = this;
-		MenuItem::back = _x < MNU.Center(0);
+		MenuItem::back = _x < MNU.center;
 	}
 }
 
