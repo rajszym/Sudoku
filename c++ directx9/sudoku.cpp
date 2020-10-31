@@ -199,6 +199,8 @@ class MenuItem: public std::vector<const TCHAR *>
 	const int idx;
 	const Graphics::Rectangle r;
 
+	int click;
+
 public:
 
 	const TCHAR *info;
@@ -206,7 +208,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): idx{_x}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
+	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): idx{_x}, r{MNU.x, _y, MNU.width, _h}, click{0}, info{_i} {}
 
 	int     index       ();
 	int     prev        ();
@@ -263,7 +265,7 @@ public:
 	static bool       light_f;
 	static bool       timer_f;
 
-	Game(): Graphics(), Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
+	Game(): Graphics{}, Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
 
 	void update      ();
 	void mouseMove   ( const int, const int, HWND );
@@ -592,7 +594,12 @@ int MenuItem::next()
 void MenuItem::update( Graphics &gr )
 {
 	if (MenuItem::focus == this)
-		gr.fill_rect(MenuItem::r, Lighted);
+	{
+		gr.fill_rect(MenuItem::r, MenuItem::click, Lighted);
+
+		if (MenuItem::click > 0 && sudoku.Graphics::Timer::Expired())
+			MenuItem::click--;
+	}
 
 	if (MenuItem::size() > 1)
 	{
@@ -624,6 +631,9 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 {
 	if (MenuItem::r.contains(_x, _y))
 	{
+		sudoku.Graphics::Timer::Start(10);
+		MenuItem::click = 10;
+
 		switch (MenuItem::idx)
 		{
 		case  0: return MenuItem::back ? PrevLevelCmd : NextLevelCmd;
