@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    24.10.2020
+   @date    31.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -73,6 +73,7 @@ enum Command: int
 	Button9Cmd = 9,
 	ClearCellCmd,
 	SetCellCmd,
+	SetSureCmd,
 	PrevHelpCmd,
 	NextHelpCmd,
 	PrevLevelCmd,
@@ -121,7 +122,7 @@ public:
 	int     sure        ( int n ) { return GameCell::cell.sure(n); }
 
 	void    update      ( Console &, bool );
-	void    mouseOver   ( const int, const int );
+	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -134,7 +135,7 @@ public:
 	GameTable( Sudoku & );
 
 	void    update      ( Console &, bool );
-	void    mouseOver   ( const int, const int );
+	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	void    mouseRButton( const int, const int );
 };
@@ -154,7 +155,7 @@ public:
 	Button( const int _y, const int _n ): y{_y}, num{_n} {}
 
 	void    update      ( Console &, bool );
-	void    mouseOver   ( const int, const int );
+	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -166,7 +167,7 @@ public:
 	GameButtons();
 
 	void    update      ( Console &, bool );
-	void    mouseOver   ( const int, const int );
+	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	void    mouseRButton( const int, const int );
 };
@@ -187,9 +188,11 @@ public:
 
 	MenuItem( const int _y, const char *_k, const char *_i ): y{_y}, key{_k}, info{_i} {}
 
-	void    next        ( bool );
+	int     index       ();
+	int     prev        ();
+	int     next        ();
 	void    update      ( Console &, bool );
-	void    mouseOver   ( const int, const int );
+	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -202,7 +205,7 @@ public:
 	GameMenu();
 
 	void    update      ( Console &, bool );
-	void    mouseOver   ( const int, const int );
+	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -243,7 +246,7 @@ public:
 	void operator()() { Game::run(); }
 
 	void update      ();
-	void mouseOver   ( const int, const int );
+	void mouseMove   ( const int, const int );
 	void mouseLButton( const int, const int );
 	void mouseRButton( const int, const int );
 	void mouseWheel  ( const int );
@@ -322,7 +325,7 @@ void GameCell::update( Console &con, bool )
 	con.Put(GameCell::x, GameCell::y, "-123456789"[cell.num]);
 }
 
-void GameCell::mouseOver( const int _x, const int _y )
+void GameCell::mouseMove( const int _x, const int _y )
 {
 	if (_x == GameCell::x && _y == GameCell::y)
 		GameCell::focus = this;
@@ -335,7 +338,7 @@ Command GameCell::mouseLButton( const int _x, const int _y )
 		if (GameCell::cell.num == 0)
 		{
 			if (Button::cur == 0 && Game::help >= Assistance::Full)
-				return static_cast<Command>(GameCell::cell.sure());
+				return SetSureCmd;
 			else
 				return SetCellCmd;
 		}
@@ -377,12 +380,12 @@ void GameTable::update( Console &con, bool init )
 		c.update(con, init);
 }
 
-void GameTable::mouseOver( const int _x, const int _y )
+void GameTable::mouseMove( const int _x, const int _y )
 {
 	GameCell::focus = nullptr;
 
 	for (auto &c: *this)
-		c.mouseOver(_x, _y);
+		c.mouseMove(_x, _y);
 }
 
 Command GameTable::mouseLButton( const int _x, const int _y )
@@ -422,7 +425,7 @@ void Button::update( Console &con, bool init )
 	con.Put(BTN.x + 1, Button::y, f, b);
 }
 
-void Button::mouseOver( const int _x, const int _y )
+void Button::mouseMove( const int _x, const int _y )
 {
 	if (_x >= BTN.left && _x <= BTN.right && _y == Button::y)
 		Button::focus = this;
@@ -457,12 +460,12 @@ void GameButtons::update( Console &con, bool init )
 		b.update(con, init);
 }
 
-void GameButtons::mouseOver( const int _x, const int _y )
+void GameButtons::mouseMove( const int _x, const int _y )
 {
 	Button::focus = nullptr;
 
 	for (auto &b: *this)
-		b.mouseOver(_x, _y);
+		b.mouseMove(_x, _y);
 }
 
 Command GameButtons::mouseLButton( const int _x, const int _y )
@@ -487,28 +490,41 @@ void GameButtons::mouseRButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void MenuItem::next( bool prev )
+int MenuItem::index()
+{
+	switch (MenuItem::y - MNU.y)
+	{
+	case 1: return static_cast<int>(Game::level);
+	case 2: return static_cast<int>(Game::help);
+	}
+
+	return 0;
+}
+
+int MenuItem::prev()
 {
 	const int max = MenuItem::size() - 1;
 
-	if (max > 0)
+	switch (MenuItem::y - MNU.y)
 	{
-		if (MenuItem::y == MNU.y + 1)
-		{
-			int idx = static_cast<int>(Game::level);
-			if (prev) idx = idx == 0 ? max : idx == max ? 1 : 0;
-			else      idx = idx == max ? 0 : idx == 0 ? 1 : max;
-			Game::level = static_cast<Difficulty>(idx);
-		}
-		else
-		if (MenuItem::y == MNU.y + 2)
-		{
-			int idx = static_cast<int>(Game::help);
-			if (prev) idx = (idx + max) % (max + 1);
-			else      idx = (idx + 1)   % (max + 1);
-			Game::help = static_cast<Assistance>(idx);
-		}
+	case 1: return static_cast<int>(Game::level) == 0 ? max : static_cast<int>(Game::level) == max ? 1 : 0;
+	case 2: return (static_cast<int>(Game::help) + max) % (max + 1);
 	}
+
+	return 0;
+}
+
+int MenuItem::next()
+{
+	const int max = MenuItem::size() - 1;
+
+	switch (MenuItem::y - MNU.y)
+	{
+	case 1: return static_cast<int>(Game::level) == max ? 0 : static_cast<int>(Game::level) == 0 ? 1 : max;
+	case 2: return (static_cast<int>(Game::help) + 1) % (max + 1);
+	}
+
+	return 0;
 }
 
 void MenuItem::update( Console &con, bool init )
@@ -522,7 +538,7 @@ void MenuItem::update( Console &con, bool init )
 	if (MenuItem::size() > 1)
 	{
 		con.Put(MNU.x + 1, MenuItem::y, MenuItem::focus != this ? MenuItem::key : MenuItem::back ? "<<" : ">>");
-		auto i = MenuItem::y == MNU.y + 1 ? static_cast<int>(Game::level) : static_cast<int>(Game::help);
+		auto i = MenuItem::index();
 		auto s = std::strlen(MenuItem::at(i));
 		con.Put(MNU.x + 4, MenuItem::y, MenuItem::at(i));
 		con.Fill(MNU.x + 4 + s, MenuItem::y, MNU.width - 5 - s, 1);
@@ -534,7 +550,7 @@ void MenuItem::update( Console &con, bool init )
 		con.Fill(MNU.x + 1, MenuItem::y, MNU.width - 2, 1, Console::LightGrey);
 }
 
-void MenuItem::mouseOver( const int _x, const int _y )
+void MenuItem::mouseMove( const int _x, const int _y )
 {
 	if (_x > MNU.left && _x < MNU.right && _y == MenuItem::y)
 	{
@@ -611,12 +627,12 @@ void GameMenu::update( Console &con, bool init )
 		m.update(con, init);
 }
 
-void GameMenu::mouseOver( const int _x, const int _y )
+void GameMenu::mouseMove( const int _x, const int _y )
 {
 	MenuItem::focus = nullptr;
 
 	for (auto &m: *this)
-		m.mouseOver(_x, _y);
+		m.mouseMove(_x, _y);
 }
 
 Command GameMenu::mouseLButton( const int _x, const int _y )
@@ -680,7 +696,7 @@ void Game::run()
 				{
 				case MOUSE_MOVED:
 
-					Game::mouseOver(x, y);
+					Game::mouseMove(x, y);
 					break;
 
 				case 0: /* falls through */
@@ -751,11 +767,11 @@ void Game::update()
 	init = false;
 }
 
-void Game::mouseOver( const int _x, const int _y )
+void Game::mouseMove( const int _x, const int _y )
 {
-	tab.mouseOver(_x, _y);
-	btn.mouseOver(_x, _y);
-	mnu.mouseOver(_x, _y);
+	tab.mouseMove(_x, _y);
+	btn.mouseMove(_x, _y);
+	mnu.mouseMove(_x, _y);
 }
 
 void Game::mouseLButton( const int _x, const int _y )
@@ -771,16 +787,14 @@ void Game::mouseRButton( const int _x, const int _y )
 	btn.mouseRButton(_x, _y);
 }
 
-void Game::mouseWheel( const int _s )
+void Game::mouseWheel( const int _d )
 {
-	Game::command(static_cast<Command>(_s < 0 ? (Button::cur == 0 ? 1 : 1 + (Button::cur + 0) % 9)
+	Game::command(static_cast<Command>(_d < 0 ? (Button::cur == 0 ? 1 : 1 + (Button::cur + 0) % 9)
 	                                          : (Button::cur == 0 ? 9 : 1 + (Button::cur + 7) % 9)));
 }
 
 void Game::keyboard( const int _k )
 {
-	bool prev = false;
-
 	switch (_k)
 	{
 	case '0':       /* falls through */
@@ -793,12 +807,12 @@ void Game::keyboard( const int _k )
 	case '7':       /* falls through */
 	case '8':       /* falls through */
 	case '9':       Game::command(static_cast<Command>(_k - '0')); break;
-	case VK_LEFT:   prev = true; /* falls through */
-	case VK_RIGHT:               /* falls through */
-	case 'A':       Game::command(prev ? PrevHelpCmd : NextHelpCmd); break;
-	case VK_NEXT:   prev = true; /* falls through */ // PAGE DOWN
-	case VK_PRIOR:               /* falls through */ // PAGE UP
-	case 'D':       Game::command(prev ? PrevLevelCmd : NextLevelCmd); /* falls through */
+	case VK_LEFT:   Game::command(PrevHelpCmd);  break;
+	case VK_RIGHT:  /* falls through */
+	case 'A':       Game::command(NextHelpCmd);  break;
+	case VK_NEXT:   Game::command(PrevLevelCmd); break; // PAGE DOWN
+	case VK_PRIOR:  /* falls through */                 // PAGE UP
+	case 'D':       Game::command(NextLevelCmd); break;
 	case VK_TAB:    /* falls through */
 	case 'N':       Game::command(GenerateCmd);  break;
 	case VK_RETURN: /* falls through */
@@ -821,8 +835,6 @@ void Game::keyboard( const int _k )
 
 void Game::command( const Command _c )
 {
-	bool prev = false;
-
 	switch (_c)
 	{
 	case NoCmd:         break;
@@ -835,22 +847,28 @@ void Game::command( const Command _c )
 	case Button6Cmd:    /* falls through */
 	case Button7Cmd:    /* falls through */
 	case Button8Cmd:    /* falls through */
-	case Button9Cmd:    if (!Game::solved) Button::cur = static_cast<int>(_c);
+	case Button9Cmd:    if (Sudoku::len() < 81) Button::cur = static_cast<int>(_c);
 	                    break;
 	case ClearCellCmd:  Button::cur = GameCell::focus->get().num;
 	                    Sudoku::set(GameCell::focus->get(), 0);
 	                    break;
 	case SetCellCmd:    Sudoku::set(GameCell::focus->get(), Button::cur, Game::help <= Assistance::Current);
 	                    break;
-	case PrevHelpCmd:   prev = true; /* falls through */
-	case NextHelpCmd:   Game::mnu[1].next(prev);
+	case SetSureCmd:    Sudoku::set(GameCell::focus->get(), GameCell::focus->get().sure());
 	                    break;
-	case PrevLevelCmd:  prev = true; /* falls through */
-	case NextLevelCmd:  Game::mnu[0].next(prev); Sudoku::level = Game::level; /* falls through */
+	case PrevHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].prev());
+	                    break;
+	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
+	                    break;
+	case PrevLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].prev());
+	                    Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
+	                    break;
+	case NextLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].next());
+	                    /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
 	                    break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
-	                    if (!Sudoku::solved()) Sudoku::rating = -2;
+	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
 	                    break;
 	case UndoCmd:       Sudoku::undo();
 	                    break;
