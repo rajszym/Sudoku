@@ -582,10 +582,16 @@ void MenuItem::update( Graphics &gr )
 	if (MenuItem::focus == this)
 		gr.fill_rect(MenuItem::r, Lighted);
 
-	if (MenuItem::size() > 2)
+	if (MenuItem::size() > 1)
 	{
-		gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background, Graphics::Alignment::Left,  _T('◄'));
-		gr.draw_char(MenuItem::r, GameMenu::font, MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black, Graphics::Alignment::Right, _T('►'));
+		auto cl = MenuItem::focus == this ? Background : Lighted;
+		auto cr = MenuItem::focus == this ? Background : Lighted;
+
+		if (MenuItem::focus == this && MenuItem::size() > 2)
+			(MenuItem::back ? cl : cr) = Graphics::Color::Black;
+
+		gr.draw_char(MenuItem::r, GameMenu::font, cl, Graphics::Alignment::Left,  _T('◄'));
+		gr.draw_char(MenuItem::r, GameMenu::font, cr, Graphics::Alignment::Right, _T('►'));
 	}
 
 	gr.draw_text(MenuItem::r, GameMenu::font, Graphics::Color::Black, Graphics::Alignment::Center, MenuItem::at(i));
