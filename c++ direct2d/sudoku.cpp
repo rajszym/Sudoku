@@ -910,13 +910,13 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 	switch (msg)
 	{
-		case WM_MOUSEMOVE:   sudoku.Game::mouseMove(x, y, hWnd);                   break;
-		case WM_MOUSELEAVE:  sudoku.Game::mouseLeave();                            break;
-		case WM_LBUTTONDOWN: sudoku.Game::mouseLButton(x, y);                      break;
-		case WM_RBUTTONDOWN: sudoku.Game::mouseRButton(x, y);                      break;
-		case WM_MOUSEWHEEL:  sudoku.Game::mouseWheel(x, y, d);                     break;
-		case WM_KEYDOWN:     sudoku.Game::keyboard(k);                             break;
-		case WM_DESTROY:     PostQuitMessage(0);          break;
+		case WM_MOUSEMOVE:   sudoku.Game::mouseMove(x, y, hWnd); break;
+		case WM_MOUSELEAVE:  sudoku.Game::mouseLeave();          break;
+		case WM_LBUTTONDOWN: sudoku.Game::mouseLButton(x, y);    break;
+		case WM_RBUTTONDOWN: sudoku.Game::mouseRButton(x, y);    break;
+		case WM_MOUSEWHEEL:  sudoku.Game::mouseWheel(x, y, d);   break;
+		case WM_KEYDOWN:     sudoku.Game::keyboard(k);           break;
+		case WM_DESTROY:     PostQuitMessage(0);                 break;
 		default:      return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
