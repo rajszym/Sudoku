@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    30.10.2020
+   @date    31.10.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -208,7 +208,9 @@ public:
 
 	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): idx{_x}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
 
-	void    next        ( bool );
+	int     index       ();
+	int     prev        ();
+	int     next        ();
 	void    update      ( Graphics & );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
@@ -544,51 +546,58 @@ void GameButtons::mouseRButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void MenuItem::next( bool prev )
+int MenuItem::index()
+{
+	switch (MenuItem::idx)
+	{
+	case 0: return static_cast<int>(Game::level);
+	case 1: return static_cast<int>(Game::help);
+	case 2: return Game::light_f ? 1 : 0;
+	case 3: return Game::timer_f ? 1 : 0;
+	}
+
+	return 0;
+}
+
+int MenuItem::prev()
 {
 	const int max = MenuItem::size() - 1;
 
-	if (max > 0)
+	switch (MenuItem::idx)
 	{
-		if (MenuItem::idx == 0)
-		{
-			int i = static_cast<int>(Game::level);
-			if (prev) i = i == 0 ? max : i == max ? 1 : 0;
-			else      i = i == max ? 0 : i == 0 ? 1 : max;
-			Game::level = static_cast<Difficulty>(i);
-		}
-		else
-		if (MenuItem::idx == 1)
-		{
-			int i = static_cast<int>(Game::help);
-			if (prev) i = (i + max) % (max + 1);
-			else      i = (i + 1)   % (max + 1);
-			Game::help = static_cast<Assistance>(i);
-		}
+	case 0: return static_cast<int>(Game::level) == 0 ? max : static_cast<int>(Game::level) == max ? 1 : 0;
+	case 1: return (static_cast<int>(Game::help) + max) % (max + 1);
+	case 2: return Game::light_f ? 0 : 1;
+	case 3: return Game::timer_f ? 0 : 1;
 	}
+
+	return 0;
+}
+
+int MenuItem::next()
+{
+	const int max = MenuItem::size() - 1;
+
+	switch (MenuItem::idx)
+	{
+	case 0: return static_cast<int>(Game::level) == max ? 0 : static_cast<int>(Game::level) == 0 ? 1 : max;
+	case 1: return (static_cast<int>(Game::help) + 1) % (max + 1);
+	case 2: return Game::light_f ? 0 : 1;
+	case 3: return Game::timer_f ? 0 : 1;
+	}
+
+	return 0;
 }
 
 void MenuItem::update( Graphics &gr )
 {
-	int i = 0;
-	switch (MenuItem::idx)
-	{
-	case 0 : i = static_cast<int>(Game::level); break;
-	case 1 : i = static_cast<int>(Game::help);  break;
-	case 2 : i = Game::light_f ? 1 : 0; break;
-	case 3 : i = Game::timer_f ? 1 : 0; break;
-	}
-
 	if (MenuItem::focus == this)
 		gr.fill_rect(MenuItem::r, Lighted);
 
 	if (MenuItem::size() > 1)
 	{
-		auto cl = MenuItem::focus == this ? Background : Lighted;
-		auto cr = MenuItem::focus == this ? Background : Lighted;
-
-		if (MenuItem::focus == this && MenuItem::size() > 2)
-			(MenuItem::back ? cl : cr) = Graphics::Color::Black;
+		auto cl = MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background;
+		auto cr = MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black;
 
 #if defined(UNICODE)
 		gr.draw_char(MenuItem::r, GameMenu::font, cl, Graphics::Alignment::Left,  _T('◄'));
@@ -599,7 +608,7 @@ void MenuItem::update( Graphics &gr )
 #endif
 	}
 
-	gr.draw_text(MenuItem::r, GameMenu::font, Graphics::Color::Black, Graphics::Alignment::Center, MenuItem::at(i));
+	gr.draw_text(MenuItem::r, GameMenu::font, Graphics::Color::Black, Graphics::Alignment::Center, MenuItem::at(MenuItem::index()));
 }
 
 void MenuItem::mouseMove( const int _x, const int _y )
@@ -796,8 +805,6 @@ void Game::mouseWheel( const int, const int, const int _d )
 
 void Game::keyboard( const int _k )
 {
-	bool prev = false;
-
 	switch (_k)
 	{
 	case '0':       /* falls through */
@@ -810,12 +817,12 @@ void Game::keyboard( const int _k )
 	case '7':       /* falls through */
 	case '8':       /* falls through */
 	case '9':       Game::command(static_cast<Command>(_k - '0')); break;
-	case VK_LEFT:   prev = true; /* falls through */
-	case VK_RIGHT:               /* falls through */
-	case 'A':       Game::command(prev ? PrevHelpCmd : NextHelpCmd); break;
-	case VK_NEXT:   prev = true; /* falls through */ // PAGE DOWN
-	case VK_PRIOR:               /* falls through */ // PAGE UP
-	case 'D':       Game::command(prev ? PrevLevelCmd : NextLevelCmd); /* falls through */
+	case VK_LEFT:   Game::command(PrevHelpCmd);  break;
+	case VK_RIGHT:  /* falls through */
+	case 'A':       Game::command(NextHelpCmd);  break;
+	case VK_NEXT:   Game::command(PrevLevelCmd); break; // PAGE DOWN
+	case VK_PRIOR:  /* falls through */                 // PAGE UP
+	case 'D':       Game::command(NextLevelCmd); break;
 	case VK_TAB:    /* falls through */
 	case 'N':       Game::command(GenerateCmd);  break;
 	case VK_RETURN: /* falls through */
@@ -838,8 +845,6 @@ void Game::keyboard( const int _k )
 
 void Game::command( const Command _c )
 {
-	bool prev = false;
-
 	switch (_c)
 	{
 	case NoCmd:         break;
@@ -861,15 +866,21 @@ void Game::command( const Command _c )
 	                    break;
 	case SetSureCmd:    Sudoku::set(GameCell::focus->get(), GameCell::focus->get().sure());
 	                    break;
-	case PrevHelpCmd:   prev = true; /* falls through */
-	case NextHelpCmd:   Game::mnu[1].next(prev);
+	case PrevHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].prev());
 	                    break;
-	case PrevLevelCmd:  prev = true; /* falls through */
-	case NextLevelCmd:  Game::mnu[0].next(prev); Sudoku::level = Game::level; /* falls through */
+	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
+	                    break;
+	case PrevLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].prev());
+	                    Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
+	                    break;
+	case NextLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].next());
+	                    /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
 	                    break;
-	case HighLightCmd:  Game::light_f = !Game::light_f; break;
-	case TimerCmd:      Game::timer_f = !Game::timer_f; break;
+	case HighLightCmd:  Game::light_f = !Game::light_f;
+	                    break;
+	case TimerCmd:      Game::timer_f = !Game::timer_f;
+	                    break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
 	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
 	                    break;
