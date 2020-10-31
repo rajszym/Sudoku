@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    30.10.2020
+   @date    31.10.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -50,17 +50,32 @@ public:
 
 	GraphicsTimer( const int duration = 0 )
 	{
+		Start(duration);
+	}
+
+	void Start( const int duration )
+	{
 		tick_ = std::chrono::milliseconds(duration);
 		time_ = std::chrono::high_resolution_clock::now();
 	}
 
-	bool Waiting()
+	void Start()
+	{
+		time_ = std::chrono::high_resolution_clock::now();
+	}
+
+	bool Expired()
 	{
 		if (std::chrono::high_resolution_clock::now() - time_ < tick_)
-			return true;
+			return false;
 
 		time_ += tick_;
-		return false;
+		return true;
+	}
+
+	bool Waiting()
+	{
+		return !Expired();
 	}
 };
 
