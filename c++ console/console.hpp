@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    24.10.2020
+   @date    01.11.2020
    @brief   console class
 
 *******************************************************************************
@@ -31,38 +31,12 @@
 
 #pragma once
 
-#include <chrono>
-#include <algorithm>
 #include <windows.h>
+#include <algorithm>
 
-class ConsoleTimer
-{
-	std::chrono::milliseconds tick_;
-	std::chrono::time_point<std::chrono::high_resolution_clock> time_;
-
-public:
-
-	ConsoleTimer( const int duration = 0 )
-	{
-		tick_ = std::chrono::milliseconds(duration);
-		time_ = std::chrono::high_resolution_clock::now();
-	}
-
-	bool Waiting()
-	{
-		if (std::chrono::high_resolution_clock::now() - time_ < tick_)
-			return true;
-
-		time_ += tick_;
-		return false;
-	}
-};
-
-class Console: public ConsoleTimer
+class Console
 {
 public:
-
-	using Timer = ConsoleTimer;
 
 	enum: char
 	{
@@ -307,7 +281,7 @@ public:
 	const HANDLE &Cout;
 	const HANDLE &Cerr;
 
-	Console( LPCTSTR title = NULL, const int duration = 0 ): ConsoleTimer(duration), Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
+	Console( LPCTSTR title = NULL ): Hwnd(hwnd_), Cin(cin_), Cout(cout_), Cerr(cerr_)
 	{
 		if (!Open(title)) {
 			cerr_ = cout_ = cin_ = NULL;

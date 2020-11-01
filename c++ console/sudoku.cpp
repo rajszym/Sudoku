@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    31.10.2020
+   @date    01.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -29,10 +29,11 @@
 
 ******************************************************************************/
 
+#include <windows.h>
 #include "sudoku.hpp"
 #include "console.hpp"
+#include "gametimer.hpp"
 #include <cstring>
-#include <windows.h>
 
 const char *title = "Sudoku";
 
@@ -222,7 +223,7 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Game: public Console, public Sudoku
+class Game: public Console, public Sudoku, public GameTimer<std::chrono::seconds>
 {
 	GameHeader  hdr;
 	GameTable   tab;
@@ -661,7 +662,7 @@ void GameFooter::update( Console &con, bool init )
 
 /*---------------------------------------------------------------------------*/
 
-Game::Game( Difficulty _d ): Console(::title), Sudoku{_d}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, alive{true}
+Game::Game( Difficulty _d ): Console(::title), Sudoku{_d}, GameTimer{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, alive{true}
 {
 	Console::SetFont(56, L"Consolas");
 	Console::Center(WIN.width, WIN.height);
@@ -750,10 +751,10 @@ void Game::update()
 	if (Game::solved)
 	{
 		Button::cur = 0;
-		Sudoku::Timer::stop();
+		GameTimer::stop();
 	}
 
-	auto time  = Sudoku::Timer::get();
+	auto time  = GameTimer::counter();
 	auto count = Sudoku::count(Button::cur);
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable :(" : Sudoku::rating == -1 ? "ambiguous :/" : "")
 	                                : (Sudoku::corrupt() ? "corrupt  :(" : "solved :)");
@@ -861,26 +862,26 @@ void Game::command( const Command _c )
 	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
 	                    break;
 	case PrevLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].prev());
-	                    Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
+	                    Sudoku::generate(); Button::cur = 0; GameTimer::start();
 	                    break;
 	case NextLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].next());
 	                    /* falls through */
-	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
+	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; GameTimer::start();
 	                    break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
 	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
 	                    break;
 	case UndoCmd:       Sudoku::undo();
 	                    break;
-	case ClearCmd:      Sudoku::clear();    Button::cur = 0; Sudoku::Timer::reset();
+	case ClearCmd:      Sudoku::clear();    Button::cur = 0; GameTimer::reset();
 	                    break;
-	case EditCmd:       Sudoku::discard();  Sudoku::Timer::reset();
+	case EditCmd:       Sudoku::discard();                   GameTimer::reset();
 	                    break;
 	case AcceptCmd:     Sudoku::accept();
 	                    break;
 	case SaveCmd:       Sudoku::save();
 	                    break;
-	case LoadCmd:       if (Sudoku::load()) Button::cur = 0, Sudoku::Timer::start();
+	case LoadCmd:       if (Sudoku::load()) Button::cur = 0, GameTimer::start();
 	                    break;
 	case QuitCmd:       Game::alive = false;
 	                    break;
@@ -912,6 +913,7 @@ int main( int argc, char **argv )
 		case 'F': // find
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
+			auto timer  = GameTimer<std::chrono::seconds>();
 			auto data   = std::vector<uint32_t>();
 
 			if (--argc > 0)
@@ -933,13 +935,14 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::cerr << ::title << " find: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
+			std::cerr << ::title << " find: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
 			break;
 		}
 
 		case 'T': // test
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
+			auto timer  = GameTimer<std::chrono::seconds>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -967,13 +970,14 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " test: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
+			std::cerr << ::title << " test: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
 			break;
 		}
 
 		case 'S': // sort
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
+			auto timer  = GameTimer<std::chrono::seconds>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -1001,13 +1005,14 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " sort: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
+			std::cerr << ::title << " sort: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
 			break;
 		}
 
 		case 'R': // raise
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
+			auto timer  = GameTimer<std::chrono::seconds>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -1037,7 +1042,7 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " raise: " << data.size() << " boards found, " << sudoku.Timer::get() << 's' << std::endl;
+			std::cerr << ::title << " raise: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
 			break;
 		}
 

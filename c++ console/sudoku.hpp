@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    30.10.2020
+   @date    01.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -39,7 +39,6 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <chrono>
 #include <random>
 
 class SudokuCell;
@@ -347,48 +346,7 @@ public:
 	}
 };
 
-template<typename T = std::chrono::seconds>
-class SudokuTimer
-{
-	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
-	int count_;
-
-	static constexpr int RESETED = -2;
-	static constexpr int STARTED = -1;
-
-public:
-
-	SudokuTimer()
-	{
-		start();
-	}
-
-	void start()
-	{
-		start_ = std::chrono::high_resolution_clock::now();
-		count_ = STARTED;
-	}
-
-	void stop()
-	{
-		if (count_ == STARTED)
-			count_ = std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - start_).count();
-	}
-
-	void reset()
-	{
-		count_ = RESETED;
-	}
-
-	int get()
-	{
-		return count_ == RESETED ? 0 :
-		       count_ == STARTED ? std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - start_).count() :
-		                           count_;
-	}
-};
-
-class Sudoku: public cell_array, public SudokuTimer<std::chrono::seconds>
+class Sudoku: public cell_array
 {
 	using Cell = SudokuCell;
 
@@ -475,8 +433,6 @@ class Sudoku: public cell_array, public SudokuTimer<std::chrono::seconds>
 	};
 
 public:
-
-	using Timer = SudokuTimer;
 
 	Difficulty level;
 	int        rating;
