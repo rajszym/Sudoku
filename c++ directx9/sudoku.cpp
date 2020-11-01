@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    31.10.2020
+   @date    01.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -31,9 +31,10 @@
 
 #include <windows.h>
 #include <windowsx.h>
-#include <tchar.h>
 #include "sudoku.hpp"
 #include "graphics.hpp"
+#include "gametimer.hpp"
+#include <tchar.h>
 
 const TCHAR *title = _T("Sudoku");
 
@@ -194,12 +195,10 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class MenuItem: public std::vector<const TCHAR *>
+class MenuItem: public std::vector<const TCHAR *>, public GameTimer<std::chrono::duration<long long int, std::centi>>
 {
 	const int idx;
 	const Graphics::Rectangle r;
-
-	int click;
 
 public:
 
@@ -208,7 +207,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): idx{_x}, r{MNU.x, _y, MNU.width, _h}, click{0}, info{_i} {}
+	MenuItem( const int _x, const int _y, const int _h, const TCHAR *_i ): idx{_x}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
 
 	int     index       ();
 	int     prev        ();
@@ -248,7 +247,7 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Game: public Graphics, public Sudoku
+class Game: public Graphics, public Sudoku, public GameTimer<std::chrono::seconds>
 {
 	GameHeader  hdr;
 	GameTable   tab;
@@ -265,7 +264,7 @@ public:
 	static bool       light_f;
 	static bool       timer_f;
 
-	Game(): Graphics{}, Sudoku{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
+	Game(): Graphics{}, Sudoku{}, GameTimer{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
 
 	void update      ();
 	void mouseMove   ( const int, const int, HWND );
@@ -594,12 +593,7 @@ int MenuItem::next()
 void MenuItem::update( Graphics &gr )
 {
 	if (MenuItem::focus == this)
-	{
-		gr.fill_rect(MenuItem::r, MenuItem::click, Lighted);
-
-		if (MenuItem::click > 0 && sudoku.Graphics::Timer::Expired())
-			MenuItem::click--;
-	}
+		gr.fill_rect(MenuItem::r, GameTimer::remaining(), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
@@ -631,8 +625,7 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 {
 	if (MenuItem::r.contains(_x, _y))
 	{
-		sudoku.Graphics::Timer::Start(10);
-		MenuItem::click = 10;
+		GameTimer::start(Margin * 3);
 
 		switch (MenuItem::idx)
 		{
@@ -753,10 +746,10 @@ void Game::update()
 	{
 		Button::cur = 0;
 		if (Sudoku::solved())
-			Sudoku::Timer::stop();
+			GameTimer::stop();
 	}
 
-	auto time  = Sudoku::Timer::get();
+	auto time  = GameTimer::counter();
 	auto count = Sudoku::count(Button::cur);
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("UNSOLVABLE") : Sudoku::rating == -1 ? _T("AMBIGUOUS") : nullptr)
 	                                : (Sudoku::corrupt() ? _T("CORRUPT") : _T("SOLVED"));
@@ -881,11 +874,11 @@ void Game::command( const Command _c )
 	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
 	                    break;
 	case PrevLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].prev());
-	                    Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
+	                    Sudoku::generate(); Button::cur = 0; GameTimer::start();
 	                    break;
 	case NextLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].next());
 	                    /* falls through */
-	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; Sudoku::Timer::start();
+	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; GameTimer::start();
 	                    break;
 	case HighLightCmd:  Game::light_f = !Game::light_f;
 	                    break;
@@ -896,15 +889,15 @@ void Game::command( const Command _c )
 	                    break;
 	case UndoCmd:       Sudoku::undo();
 	                    break;
-	case ClearCmd:      Sudoku::clear();    Button::cur = 0; Sudoku::Timer::reset();
+	case ClearCmd:      Sudoku::clear();    Button::cur = 0; GameTimer::reset();
 	                    break;
-	case EditCmd:       Sudoku::discard();  Sudoku::Timer::reset();
+	case EditCmd:       Sudoku::discard();                   GameTimer::reset();
 	                    break;
 	case AcceptCmd:     Sudoku::accept();
 	                    break;
 	case SaveCmd:       Sudoku::save();
 	                    break;
-	case LoadCmd:       if (Sudoku::load()) Button::cur = 0, Sudoku::Timer::start();
+	case LoadCmd:       if (Sudoku::load()) Button::cur = 0, GameTimer::start();
 	                    break;
 	case QuitCmd:       Graphics::quit();
 	                    break;

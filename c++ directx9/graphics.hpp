@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    31.10.2020
+   @date    01.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -32,50 +32,11 @@
 #pragma once
 
 #include <windows.h>
-#include <tchar.h>
 #include <d3dx9.h>
 #include <vector>
-#include <chrono>
+#include <tchar.h>
 
-class GraphicsTimer
-{
-	std::chrono::milliseconds tick_;
-	std::chrono::time_point<std::chrono::high_resolution_clock> time_;
-
-public:
-
-	GraphicsTimer( const int duration = 0 )
-	{
-		Start(duration);
-	}
-
-	void Start( const int duration )
-	{
-		tick_ = std::chrono::milliseconds(duration);
-		time_ = std::chrono::high_resolution_clock::now();
-	}
-
-	void Start()
-	{
-		time_ = std::chrono::high_resolution_clock::now();
-	}
-
-	bool Expired()
-	{
-		if (std::chrono::high_resolution_clock::now() - time_ < tick_)
-			return false;
-
-		time_ += tick_;
-		return true;
-	}
-
-	bool Waiting()
-	{
-		return !Expired();
-	}
-};
-
-class Graphics: public GraphicsTimer
+class Graphics
 {
 	class Vertex
 	{
@@ -106,7 +67,6 @@ class Graphics: public GraphicsTimer
 
 public:
 
-	using Timer = GraphicsTimer;
 	using Font  = ID3DXFont;
 
 	enum Color: D3DCOLOR
@@ -286,7 +246,7 @@ public:
 		}
 	};
 
-	Graphics( const int duration = 0 ): Timer(duration), wnd{NULL}, d3d{NULL}, dev{NULL}, fnt{}
+	Graphics(): wnd{NULL}, d3d{NULL}, dev{NULL}, fnt{}
 	{
 	}
 
