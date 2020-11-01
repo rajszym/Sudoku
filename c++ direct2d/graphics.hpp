@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    31.10.2020
+   @date    01.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -32,54 +32,14 @@
 #pragma once
 
 #include <windows.h>
-#include <tchar.h>
 #include <d2d1.h>
 #include <d2d1helper.h>
 #include <dwrite.h>
 #include <vector>
-#include <map>
-#include <chrono>
 #include <wchar.h>
+#include <tchar.h>
 
-class GraphicsTimer
-{
-	std::chrono::milliseconds tick_;
-	std::chrono::time_point<std::chrono::high_resolution_clock> time_;
-
-public:
-
-	GraphicsTimer( const int duration = 0 )
-	{
-		Start(duration);
-	}
-
-	void Start( const int duration )
-	{
-		tick_ = std::chrono::milliseconds(duration);
-		time_ = std::chrono::high_resolution_clock::now();
-	}
-
-	void Start()
-	{
-		time_ = std::chrono::high_resolution_clock::now();
-	}
-
-	bool Expired()
-	{
-		if (std::chrono::high_resolution_clock::now() - time_ < tick_)
-			return false;
-
-		time_ += tick_;
-		return true;
-	}
-
-	bool Waiting()
-	{
-		return !Expired();
-	}
-};
-
-class Graphics: public GraphicsTimer
+class Graphics
 {
 	ID2D1Factory *factory;
 	ID2D1HwndRenderTarget *target;
@@ -100,7 +60,6 @@ class Graphics: public GraphicsTimer
 
 public:
 
-	using Timer = GraphicsTimer;
 	using Color = D2D1::ColorF::Enum;
 	using Font  = IDWriteTextFormat;
 
@@ -142,7 +101,7 @@ public:
 		}
 	};
 
-	Graphics( const int duration = 0 ): Timer(duration), factory{NULL}, target{NULL}, writer{NULL}, brush{NULL}, fnt{}
+	Graphics(): factory{NULL}, target{NULL}, writer{NULL}, brush{NULL}, fnt{}
 	{
 	}
 
