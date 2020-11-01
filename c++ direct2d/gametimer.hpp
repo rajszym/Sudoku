@@ -68,8 +68,9 @@ public:
 
 	void stop()
 	{
+		T time_ = std::chrono::duration_cast<T>(std::chrono::system_clock::now() - start_);
 		if (count_ == COUNTING)
-			count_ = std::chrono::duration_cast<T>(std::chrono::system_clock::now() - start_);
+			count_ = time_;
 	}
 
 	void reset()
