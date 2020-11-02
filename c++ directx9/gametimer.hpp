@@ -2,7 +2,7 @@
 
    @file    gametimer.hpp
    @author  Rajmund Szymanski
-   @date    01.11.2020
+   @date    02.11.2020
    @brief   GameTimer class
 
 *******************************************************************************
@@ -33,61 +33,75 @@
 
 #include <chrono>
 
-template<typename T = std::chrono::milliseconds>
+template<typename Period = std::ratio<1>>
 class GameTimer
 {
-	std::chrono::time_point<std::chrono::system_clock> start_;
-	T count_;
+	using Clock  = std::chrono::high_resolution_clock;
+	using Target = std::chrono::duration<Clock::rep, Period>;
 
-	static constexpr T COUNTING = T(-1);
+
+	Clock::time_point start_;
+	Clock::duration   count_;
+
+	static constexpr Clock::duration COUNTING{ -1 };
 
 public:
 
-	GameTimer( const int _period = -1 )
+	GameTimer()
 	{
-		start(_period);
+		start();
 	}
 
-	template<typename D = T>
-	GameTimer( const D _duration )
+	GameTimer( const int _d )
 	{
-		start(_duration);
+		start(_d);
 	}
 
-	void start( const int _period = -1 )
+	template<typename Duration>
+	GameTimer( const Duration _d )
 	{
-		start(T(_period));
+		start(_d);
 	}
 
-	template<typename D = T>
-	void start( const D _duration )
+	void start()
 	{
-		start_ = std::chrono::system_clock::now();
-		count_ = std::chrono::duration_cast<T>(_duration);
+		start(COUNTING);
+	}
+
+	void start( const int _d )
+	{
+		start(Target(_d));
+	}
+
+	template<typename Duration>
+	void start( const Duration _d )
+	{
+		start_ = Clock::now();
+		count_ = std::chrono::duration_cast<Clock::duration>(_d);
 	}
 
 	void stop()
 	{
-		T time_ = std::chrono::duration_cast<T>(std::chrono::system_clock::now() - start_);
 		if (count_ == COUNTING)
-			count_ = time_;
+			count_ = Clock::now() - start_;
 	}
 
 	void reset()
 	{
-		count_ = T::zero();
+		count_ = Clock::duration::zero();
 	}
 
-	int counter()
+	template<typename Duration = Target>
+	Duration::rep counter()
 	{
-		T time_ = std::chrono::duration_cast<T>(std::chrono::system_clock::now() - start_);
-		return (count_ == COUNTING ? time_ : count_).count();
+		auto time_ = count_ == COUNTING ? Clock::now() - start_ : count_;
+		return std::chrono::duration_cast<Duration>(time_).count();
 	}
 
 	bool expired()
 	{
-		T time_ = std::chrono::duration_cast<T>(std::chrono::system_clock::now() - start_);
-		if (count_ > time_)
+		auto time_ = Clock::now() - start_;
+		if (time_ < count_)
 			return false;
 
 		start_ += count_;
@@ -99,9 +113,10 @@ public:
 		return !expired();
 	}
 
-	int remaining()
+	template<typename Duration = Target>
+	Duration::rep remaining()
 	{
-		T time_ = std::chrono::duration_cast<T>(std::chrono::system_clock::now() - start_);
-		return count_ > time_ ? (count_ - time_).count() : 0;
+		auto time_ = Clock::now() - start_;
+		return time_ < count_ ? std::chrono::duration_cast<Duration>(count_ - time_).count() : 0;
 	}
 };
