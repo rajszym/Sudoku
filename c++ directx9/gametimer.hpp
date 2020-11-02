@@ -33,12 +33,9 @@
 
 #include <chrono>
 
-template<typename Period = std::ratio<1>>
 class GameTimer
 {
 	using Clock  = std::chrono::high_resolution_clock;
-	using Target = std::chrono::duration<Clock::rep, Period>;
-
 
 	Clock::time_point start_;
 	Clock::duration   count_;
@@ -52,6 +49,7 @@ public:
 		start();
 	}
 
+	template<typename Duration>
 	GameTimer( const int _d )
 	{
 		start(_d);
@@ -68,9 +66,10 @@ public:
 		start(COUNTING);
 	}
 
+	template<typename Duration>
 	void start( const int _d )
 	{
-		start(Target(_d));
+		start(Duration(_d));
 	}
 
 	template<typename Duration>
@@ -91,7 +90,7 @@ public:
 		count_ = Clock::duration::zero();
 	}
 
-	template<typename Duration = Target>
+	template<typename Duration = std::chrono::seconds>
 	Duration::rep counter()
 	{
 		auto time_ = count_ == COUNTING ? Clock::now() - start_ : count_;
@@ -113,7 +112,7 @@ public:
 		return !expired();
 	}
 
-	template<typename Duration = Target>
+	template<typename Duration = std::chrono::milliseconds>
 	Duration::rep remaining()
 	{
 		auto time_ = Clock::now() - start_;
