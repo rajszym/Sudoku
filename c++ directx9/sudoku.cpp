@@ -195,10 +195,12 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class MenuItem: public std::vector<const TCHAR *>, public GameTimer<std::centi>
+class MenuItem: public std::vector<const TCHAR *>, public GameTimer
 {
 	const int idx;
 	const Graphics::Rectangle r;
+
+	using Delay = std::chrono::duration<int, std::ratio<1, 100>>;
 
 public:
 
@@ -247,7 +249,7 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Game: public Graphics, public Sudoku, public GameTimer<>
+class Game: public Graphics, public Sudoku, public GameTimer
 {
 	GameHeader  hdr;
 	GameTable   tab;
@@ -256,6 +258,8 @@ class Game: public Graphics, public Sudoku, public GameTimer<>
 	GameFooter  ftr;
 	
 	bool tracking;
+
+	using Clock = std::chrono::duration<int>;
 
 public:
 
@@ -593,7 +597,7 @@ int MenuItem::next()
 void MenuItem::update( Graphics &gr )
 {
 	if (MenuItem::focus == this)
-		gr.fill_rect(MenuItem::r, (int)GameTimer::remaining(), Lighted);
+		gr.fill_rect(MenuItem::r, GameTimer::remaining<Delay>(), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
@@ -625,7 +629,7 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 {
 	if (MenuItem::r.contains(_x, _y))
 	{
-		GameTimer::start(Margin * 3);
+		GameTimer::start<Delay>(Margin * 3);
 
 		switch (MenuItem::idx)
 		{
@@ -749,7 +753,7 @@ void Game::update()
 			GameTimer::stop();
 	}
 
-	auto time  = GameTimer::counter();
+	auto time  = GameTimer::counter<Clock>();
 	auto count = Sudoku::count(Button::cur);
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("UNSOLVABLE") : Sudoku::rating == -1 ? _T("AMBIGUOUS") : nullptr)
 	                                : (Sudoku::corrupt() ? _T("CORRUPT") : _T("SOLVED"));
