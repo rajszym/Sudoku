@@ -622,7 +622,7 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 {
 	if (MenuItem::r.contains(_x, _y))
 	{
-		GameTimer::start<Delay>(Margin * 3);
+		GameTimer::start<Delay>(Margin * 4);
 
 		switch (MenuItem::idx)
 		{
