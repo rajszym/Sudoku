@@ -259,8 +259,6 @@ class Game: public Graphics, public Sudoku, public GameTimer
 	
 	bool tracking;
 
-	using Clock = std::chrono::duration<int>;
-
 public:
 
 	static Difficulty level;
@@ -753,7 +751,7 @@ void Game::update()
 			GameTimer::stop();
 	}
 
-	auto time  = GameTimer::counter<Clock>();
+	auto time  = GameTimer::counter();
 	auto count = Sudoku::count(Button::cur);
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("UNSOLVABLE") : Sudoku::rating == -1 ? _T("AMBIGUOUS") : nullptr)
 	                                : (Sudoku::corrupt() ? _T("CORRUPT") : _T("SOLVED"));

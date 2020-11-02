@@ -236,8 +236,6 @@ class Game: public Console, public Sudoku, public GameTimer
 
 	void run();
 
-	using Clock = std::chrono::duration<int>;
-
 public:
 
 	static Assistance help;
@@ -756,7 +754,7 @@ void Game::update()
 		GameTimer::stop();
 	}
 
-	auto time  = GameTimer::counter<Clock>();
+	auto time  = GameTimer::counter();
 	auto count = Sudoku::count(Button::cur);
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable :(" : Sudoku::rating == -1 ? "ambiguous :/" : "")
 	                                : (Sudoku::corrupt() ? "corrupt  :(" : "solved :)");
