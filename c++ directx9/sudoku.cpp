@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    01.11.2020
+   @date    02.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -195,7 +195,7 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class MenuItem: public std::vector<const TCHAR *>, public GameTimer<std::chrono::duration<long long int, std::centi>>
+class MenuItem: public std::vector<const TCHAR *>, public GameTimer<std::centi>
 {
 	const int idx;
 	const Graphics::Rectangle r;
@@ -247,7 +247,7 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Game: public Graphics, public Sudoku, public GameTimer<std::chrono::seconds>
+class Game: public Graphics, public Sudoku, public GameTimer<>
 {
 	GameHeader  hdr;
 	GameTable   tab;
@@ -264,7 +264,7 @@ public:
 	static bool       light_f;
 	static bool       timer_f;
 
-	Game(): Graphics{}, Sudoku{}, GameTimer{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
+	Game(): hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false} { Sudoku::generate(); }
 
 	void update      ();
 	void mouseMove   ( const int, const int, HWND );
@@ -593,7 +593,7 @@ int MenuItem::next()
 void MenuItem::update( Graphics &gr )
 {
 	if (MenuItem::focus == this)
-		gr.fill_rect(MenuItem::r, GameTimer::remaining(), Lighted);
+		gr.fill_rect(MenuItem::r, (int)GameTimer::remaining(), Lighted);
 
 	if (MenuItem::size() > 1)
 	{

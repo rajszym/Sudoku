@@ -223,7 +223,7 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Game: public Console, public Sudoku, public GameTimer<std::chrono::seconds>
+class Game: public Console, public Sudoku, public GameTimer<>
 {
 	GameHeader  hdr;
 	GameTable   tab;
@@ -662,7 +662,7 @@ void GameFooter::update( Console &con, bool init )
 
 /*---------------------------------------------------------------------------*/
 
-Game::Game( Difficulty _d ): Console(::title), Sudoku{_d}, GameTimer{}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, alive{true}
+Game::Game( Difficulty _d ): Console(::title), Sudoku{_d}, hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, solved{false}, alive{true}
 {
 	Console::SetFont(56, L"Consolas");
 	Console::Center(WIN.width, WIN.height);
@@ -913,7 +913,7 @@ int main( int argc, char **argv )
 		case 'F': // find
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer<std::chrono::seconds>();
+			auto timer  = GameTimer<>();
 			auto data   = std::vector<uint32_t>();
 
 			if (--argc > 0)
@@ -935,14 +935,14 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::cerr << ::title << " find: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
+			std::cerr << ::title << " find: " << data.size() << " boards found, " << timer.counter<std::chrono::duration<double>>() << 's' << std::endl;
 			break;
 		}
 
 		case 'T': // test
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer<std::chrono::seconds>();
+			auto timer  = GameTimer<>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -977,7 +977,7 @@ int main( int argc, char **argv )
 		case 'S': // sort
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer<std::chrono::seconds>();
+			auto timer  = GameTimer<>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -1012,7 +1012,7 @@ int main( int argc, char **argv )
 		case 'R': // raise
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer<std::chrono::seconds>();
+			auto timer  = GameTimer<>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
