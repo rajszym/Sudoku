@@ -175,17 +175,10 @@ public:
 		target->DrawLine(p1, p2, get(c), s);
 	}
 
-	void draw_line( const int x, const int y, const int w, const int h, const Color c, FLOAT s = DefaultStrokeWidth )
-	{
-		D2D1_POINT_2F p1 = { static_cast<FLOAT>(x), static_cast<FLOAT>(y) };
-		D2D1_POINT_2F p2 = { static_cast<FLOAT>(x + w - 1), static_cast<FLOAT>(y + h - 1) };
-		draw_line(p1, p2, c, s);
-	}
-
 	void draw_line( const D2D1_RECT_F &r, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		D2D1_POINT_2F p1 = { r.left, r.top };
-		D2D1_POINT_2F p2 = { r.right - 1, r.bottom - 1 };
+		D2D1_POINT_2F p2 = { r.right, r.bottom };
 		draw_line(p1, p2, c, s);
 	}
 
@@ -197,12 +190,6 @@ public:
 	void draw_rect( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		draw_rect(rc, c, s);
-	}
-
-	void draw_rect( const int x, const int y, const int w, const int h, const Color c, FLOAT s = DefaultStrokeWidth )
-	{
-		const D2D1_RECT_F rc = { static_cast<FLOAT>(x), static_cast<FLOAT>(y), static_cast<FLOAT>(x + w), static_cast<FLOAT>(y + h) };
 		draw_rect(rc, c, s);
 	}
 
@@ -248,12 +235,6 @@ public:
 	void fill_rect( const D2D1_RECT_F &r, const int m, const Color c )
 	{
 		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		fill_rect(rc, c);
-	}
-
-	void fill_rect( const int x, const int y, const int w, const int h, const Color c )
-	{
-		const D2D1_RECT_F rc = { static_cast<FLOAT>(x), static_cast<FLOAT>(y), static_cast<FLOAT>(x + w), static_cast<FLOAT>(y + h) };
 		fill_rect(rc, c);
 	}
 
