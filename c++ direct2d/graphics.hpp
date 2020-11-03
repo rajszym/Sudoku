@@ -167,74 +167,74 @@ public:
 		return brush;
 	}
 
-	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const Color c )
+	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const Color c, FLOAT s = 1.0f )
 	{
-		target->DrawLine(p1, p2, get(c));
+		target->DrawLine(p1, p2, get(c), s);
 	}
 
-	void draw_line( const int x, const int y, const int w, const int h, const Color c )
+	void draw_line( const int x, const int y, const int w, const int h, const Color c, FLOAT s = 1.0f )
 	{
 		D2D1_POINT_2F p1 = { static_cast<FLOAT>(x), static_cast<FLOAT>(y) };
 		D2D1_POINT_2F p2 = { static_cast<FLOAT>(x + w - 1), static_cast<FLOAT>(y + h - 1) };
-		draw_line(p1, p2, c);
+		draw_line(p1, p2, c, s);
 	}
 
-	void draw_line( const D2D1_RECT_F &r, const Color c )
+	void draw_line( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
 	{
 		D2D1_POINT_2F p1 = { r.left, r.top };
 		D2D1_POINT_2F p2 = { r.right - 1, r.bottom - 1 };
-		draw_line(p1, p2, c);
+		draw_line(p1, p2, c, s);
 	}
 
-	void draw_rect( const D2D1_RECT_F &r, const Color c )
+	void draw_rect( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
 	{
-		target->DrawRectangle(&r, get(c));
+		target->DrawRectangle(&r, get(c), s);
 	}
 
-	void draw_rect( const D2D1_RECT_F &r, const int m, const Color c )
+	void draw_rect( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = 1.0f )
 	{
 		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		draw_rect(rc, c);
+		draw_rect(rc, c, s);
 	}
 
-	void draw_rect( const int x, const int y, const int w, const int h, const Color c )
+	void draw_rect( const int x, const int y, const int w, const int h, const Color c, FLOAT s = 1.0f )
 	{
 		const D2D1_RECT_F rc = { static_cast<FLOAT>(x), static_cast<FLOAT>(y), static_cast<FLOAT>(x + w), static_cast<FLOAT>(y + h) };
-		draw_rect(rc, c);
+		draw_rect(rc, c, s);
 	}
 
-	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color c )
+	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color c, FLOAT s = 1.0f )
 	{
-		target->DrawRoundedRectangle(&r, get(c));
+		target->DrawRoundedRectangle(&r, get(c), s);
 	}
 
-	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color c )
+	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color c, FLOAT s = 1.0f )
 	{
 		const D2D1_ROUNDED_RECT rc = { { r.left, r.top, r.right, r.bottom }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
-		draw_rounded(rc, c);
+		draw_rounded(rc, c, s);
 	}
 
-	void draw_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c )
+	void draw_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c, FLOAT s = 1.0f )
 	{
 		const D2D1_ROUNDED_RECT rc = { { r.left + m, r.top + m, r.right - m, r.bottom- m }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
-		draw_rounded(rc, c);
+		draw_rounded(rc, c, s);
 	}
 
-	void draw_ellipse( const D2D1_ELLIPSE &e, const Color c )
+	void draw_ellipse( const D2D1_ELLIPSE &e, const Color c, FLOAT s = 1.0f )
 	{
-		target->FillEllipse(&e, get(c));
+		target->DrawEllipse(&e, get(c), s);
 	}
 
-	void draw_ellipse( const D2D1_RECT_F &r, const Color c )
+	void draw_ellipse( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
 	{
 		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2, (r.bottom - r.top) / 2 };
-		draw_ellipse(e, c);
+		draw_ellipse(e, c, s);
 	}
 
-	void draw_ellipse( const D2D1_RECT_F &r, const int m, const Color c )
+	void draw_ellipse( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = 1.0f )
 	{
 		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2 - m, (r.bottom - r.top) / 2 - m };
-		draw_ellipse(e, c);
+		draw_ellipse(e, c, s);
 	}
 
 	void fill_rect( const D2D1_RECT_F &r, const Color c )
