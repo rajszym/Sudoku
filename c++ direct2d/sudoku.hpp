@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    01.11.2020
+   @date    03.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -752,17 +752,19 @@ public:
 		return Sudoku::level == Difficulty::Easy || all || Sudoku::weight() >= 0;
 	}
 
-	void undo()
+	bool undo()
 	{
 		if (!Sudoku::mem.empty())
 		{
 			std::get<Cell *>(Sudoku::mem.back())->num = std::get<int>(Sudoku::mem.back());
 			Sudoku::mem.pop_back();
+			return false;
 		}
 		else
 		{
 			Sudoku::again();
 			Sudoku::specify_layout();
+			return true;
 		}
 	}
 
