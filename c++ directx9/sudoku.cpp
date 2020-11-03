@@ -121,8 +121,6 @@ class GameCell
 {
 	using Cell = SudokuCell;
 
-	const int x;
-	const int y;
 	const Graphics::Rect r;
 
 	Cell &cell;
@@ -131,7 +129,7 @@ public:
 
 	static GameCell *focus;
 
-	GameCell( const int _x, const int _y, Cell &_c ): x{_x}, y{_y}, r{x, y, CellSize, CellSize}, cell{_c} {}
+	GameCell( const int _x, const int _y, Cell &_c ): r{_x, _y, CellSize, CellSize}, cell{_c} {}
 
 	Cell  & get         ()        { return cell; }
 	bool    allowed     ( int n ) { return GameCell::cell.allowed(n); }
@@ -162,7 +160,6 @@ public:
 
 class Button
 {
-	const int y;
 	const Graphics::Rect r;
 	const int num;
 
@@ -171,7 +168,7 @@ public:
 	static Button *focus;
 	static int     cur;
 
-	Button( const int _y, const int _n ): y{_y}, r{BTN.x, y, BTN.width, CellSize}, num{_n} {}
+	Button( const int _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
 
 	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
