@@ -228,11 +228,11 @@ public:
 		BottomRight = DT_BOTTOM  | DT_RIGHT,
 	};
 
-	struct Rectangle
+	struct Rect
 	{
 		const int left, top, right, bottom, x, y, width, height, center, middle;
 
-		Rectangle(int _x, int _y, int _w, int _h):
+		Rect(int _x, int _y, int _w, int _h):
 			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
 			x(_x), y(_y), width(_w), height(_h),
 			center(_x + _w / 2), middle(_y + _h / 2) {}
