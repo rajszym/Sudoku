@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    01.11.2020
+   @date    03.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -30,6 +30,8 @@
 ******************************************************************************/
 
 #pragma once
+
+#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 #include <d3dx9.h>
