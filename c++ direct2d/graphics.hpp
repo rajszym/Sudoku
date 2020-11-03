@@ -49,6 +49,8 @@ class Graphics
 	ID2D1SolidColorBrush *brush;
 	std::vector<IDWriteTextFormat *> fnt;
 
+	static constexpr FLOAT DefaultStrokeWidth = 1.0f;
+
 	void done()
 	{
 		for (auto f: fnt) f->Release();
@@ -124,6 +126,7 @@ public:
 		hr = factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd, size), &target);
 		if (FAILED(hr)) return false;
 		target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+//		target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
 		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&writer));
 		if (FAILED(hr)) return false;
@@ -167,71 +170,71 @@ public:
 		return brush;
 	}
 
-	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const Color c, FLOAT s = 1.0f )
+	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		target->DrawLine(p1, p2, get(c), s);
 	}
 
-	void draw_line( const int x, const int y, const int w, const int h, const Color c, FLOAT s = 1.0f )
+	void draw_line( const int x, const int y, const int w, const int h, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		D2D1_POINT_2F p1 = { static_cast<FLOAT>(x), static_cast<FLOAT>(y) };
 		D2D1_POINT_2F p2 = { static_cast<FLOAT>(x + w - 1), static_cast<FLOAT>(y + h - 1) };
 		draw_line(p1, p2, c, s);
 	}
 
-	void draw_line( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
+	void draw_line( const D2D1_RECT_F &r, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		D2D1_POINT_2F p1 = { r.left, r.top };
 		D2D1_POINT_2F p2 = { r.right - 1, r.bottom - 1 };
 		draw_line(p1, p2, c, s);
 	}
 
-	void draw_rect( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
+	void draw_rect( const D2D1_RECT_F &r, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		target->DrawRectangle(&r, get(c), s);
 	}
 
-	void draw_rect( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = 1.0f )
+	void draw_rect( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
 		draw_rect(rc, c, s);
 	}
 
-	void draw_rect( const int x, const int y, const int w, const int h, const Color c, FLOAT s = 1.0f )
+	void draw_rect( const int x, const int y, const int w, const int h, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		const D2D1_RECT_F rc = { static_cast<FLOAT>(x), static_cast<FLOAT>(y), static_cast<FLOAT>(x + w), static_cast<FLOAT>(y + h) };
 		draw_rect(rc, c, s);
 	}
 
-	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color c, FLOAT s = 1.0f )
+	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		target->DrawRoundedRectangle(&r, get(c), s);
 	}
 
-	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color c, FLOAT s = 1.0f )
+	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		const D2D1_ROUNDED_RECT rc = { { r.left, r.top, r.right, r.bottom }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
 		draw_rounded(rc, c, s);
 	}
 
-	void draw_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c, FLOAT s = 1.0f )
+	void draw_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		const D2D1_ROUNDED_RECT rc = { { r.left + m, r.top + m, r.right - m, r.bottom- m }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
 		draw_rounded(rc, c, s);
 	}
 
-	void draw_ellipse( const D2D1_ELLIPSE &e, const Color c, FLOAT s = 1.0f )
+	void draw_ellipse( const D2D1_ELLIPSE &e, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		target->DrawEllipse(&e, get(c), s);
 	}
 
-	void draw_ellipse( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
+	void draw_ellipse( const D2D1_RECT_F &r, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2, (r.bottom - r.top) / 2 };
 		draw_ellipse(e, c, s);
 	}
 
-	void draw_ellipse( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = 1.0f )
+	void draw_ellipse( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
 		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2 - m, (r.bottom - r.top) / 2 - m };
 		draw_ellipse(e, c, s);
