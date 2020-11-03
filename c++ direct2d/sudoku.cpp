@@ -907,8 +907,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	const int h = rc.bottom - rc.top;
 	const int k = GET_KEYSTATE_WPARAM(wParam);
 	const int d = GET_WHEEL_DELTA_WPARAM(wParam);
-	const int x = w > 0 ? (GET_X_LPARAM(lParam) * WIN.width  + w / 2) / w : 0;
-	const int y = h > 0 ? (GET_Y_LPARAM(lParam) * WIN.height + h / 2) / h : 0;
+	const int x = w > 0 ? std::round(GET_X_LPARAM(lParam) * WIN.width  / w) : 0;
+	const int y = h > 0 ? std::round(GET_Y_LPARAM(lParam) * WIN.height / h) : 0;
 
 	switch (msg)
 	{
