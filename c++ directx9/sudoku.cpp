@@ -44,12 +44,12 @@ constexpr int SegSize   { CellSize * 3 + Margin * 2 };
 constexpr int TabSize   { SegSize  * 3 + Margin * 8 };
 constexpr int MnuSize   { 13 };
 
-const Graphics::Rectangle TAB(Margin * 2, CellSize, TabSize, TabSize);
-const Graphics::Rectangle BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
-const Graphics::Rectangle MNU(BTN.right + Margin * 8, TAB.top, SegSize,  TAB.height);
-const Graphics::Rectangle HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
-const Graphics::Rectangle FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
-const Graphics::Rectangle WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
+const Graphics::Rect TAB(Margin * 2, CellSize, TabSize, TabSize);
+const Graphics::Rect BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
+const Graphics::Rect MNU(BTN.right + Margin * 8, TAB.top, SegSize,  TAB.height);
+const Graphics::Rect HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
+const Graphics::Rect FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
+const Graphics::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
 
 constexpr Graphics::Color Background = Graphics::Color::Moccasin;
 constexpr Graphics::Color Lighted    = Graphics::Color::OldLace;
@@ -123,7 +123,7 @@ class GameCell
 
 	const int x;
 	const int y;
-	const Graphics::Rectangle r;
+	const Graphics::Rect r;
 
 	Cell &cell;
 
@@ -163,7 +163,7 @@ public:
 class Button
 {
 	const int y;
-	const Graphics::Rectangle r;
+	const Graphics::Rect r;
 	const int num;
 
 public:
@@ -198,7 +198,7 @@ public:
 class MenuItem: public std::vector<const TCHAR *>, public GameTimer
 {
 	const int idx;
-	const Graphics::Rectangle r;
+	const Graphics::Rect r;
 
 	using Delay = std::chrono::duration<int, std::ratio<1, 100>>;
 
@@ -417,10 +417,10 @@ void GameTable::update( Graphics &gr )
 	for (auto &c: *this)
 		c.update(gr);
 
-	gr.fill_rect(Graphics::Rectangle(TAB.x + CellSize * 3 + Margin * 3, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
-	gr.fill_rect(Graphics::Rectangle(TAB.x + CellSize * 6 + Margin * 9, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
-	gr.fill_rect(Graphics::Rectangle(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2),  Graphics::Color::DimGray);
-	gr.fill_rect(Graphics::Rectangle(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2),  Graphics::Color::DimGray);
+	gr.fill_rect(Graphics::Rect(TAB.x + CellSize * 3 + Margin * 3, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
+	gr.fill_rect(Graphics::Rect(TAB.x + CellSize * 6 + Margin * 9, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
+	gr.fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2),  Graphics::Color::DimGray);
+	gr.fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 }
 
 void GameTable::mouseMove( const int _x, const int _y )
@@ -479,7 +479,7 @@ void Button::update( Graphics &gr, int count )
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
-		RECT rc { BTN.right, Button::r.bottom - CellSize / 2, MNU.left, Button::r.bottom };
+		auto rc = Graphics::Rect(BTN.right, Button::r.bottom - CellSize / 2, MNU.left - BTN.right, Button::r.height);
 		gr.draw_char(rc, GameButtons::font, Graphics::Color::Gray, Graphics::Alignment::Center, count > 9 ? _T('?') : _T("0123456789")[count]);
 	}
 }
