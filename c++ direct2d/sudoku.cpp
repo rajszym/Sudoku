@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    02.11.2020
+   @date    03.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -28,6 +28,8 @@
    IN THE SOFTWARE.
 
 ******************************************************************************/
+
+#define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
 #include <windowsx.h>
