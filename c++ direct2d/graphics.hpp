@@ -83,11 +83,11 @@ public:
 		Wide        = MAKELONG(DWRITE_PARAGRAPH_ALIGNMENT_CENTER, DWRITE_TEXT_ALIGNMENT_JUSTIFIED),
 	};
 
-	struct Rectangle
+	struct RectU
 	{
 		const int left, top, right, bottom, x, y, width, height, center, middle;
 
-		Rectangle(int _x, int _y, int _w, int _h):
+		RectU(int _x, int _y, int _w, int _h):
 			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
 			x(_x), y(_y), width(_w), height(_h),
 			center(_x + _w / 2), middle(_y + _h / 2) {}
@@ -99,7 +99,7 @@ public:
 
 		operator D2D1_RECT_F() const
 		{
-			return { static_cast<FLOAT>(left), static_cast<FLOAT>(top), static_cast<FLOAT>(right), static_cast<FLOAT>(bottom) };
+			return { FLOAT(left), FLOAT(top), FLOAT(right), FLOAT(bottom) };
 		}
 
 		bool contains( const int _x, const int _y ) const
@@ -107,6 +107,33 @@ public:
 			return _x >= left && _x < right && _y >= top && _y < bottom;
 		}
 	};
+
+	struct RectF
+	{
+		FLOAT left, top, right, bottom, x, y, width, height, center, middle;
+
+		RectF(const FLOAT _x, const FLOAT _y, const FLOAT _w, const FLOAT _h):
+			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
+			x(_x), y(_y), width(_w), height(_h),
+			center(_x + _w / 2), middle(_y + _h / 2) {}
+
+		operator RECT() const
+		{
+			return { LONG(left), LONG(top), LONG(right), LONG(bottom) };
+		}
+
+		operator D2D1_RECT_F() const
+		{
+			return D2D1::RectF(left, top, right, bottom);
+		}
+
+		bool contains( const int _x, const int _y ) const
+		{
+			return _x >= left && _x < right && _y >= top && _y < bottom;
+		}
+	};
+
+	using Rect = Graphics::RectU;
 
 	Graphics(): factory{NULL}, target{NULL}, writer{NULL}, brush{NULL}, fnt{}
 	{
@@ -180,8 +207,8 @@ public:
 
 	void draw_line( const D2D1_RECT_F &r, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
-		D2D1_POINT_2F p1 = { r.left, r.top };
-		D2D1_POINT_2F p2 = { r.right, r.bottom };
+		auto p1 = D2D1::Point2F(r.left, r.top);
+		auto p2 = D2D1::Point2F(r.right, r.bottom);
 		draw_line(p1, p2, c, s);
 	}
 
@@ -192,7 +219,7 @@ public:
 
 	void draw_rect( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
-		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
 		draw_rect(rc, c, s);
 	}
 
@@ -203,14 +230,14 @@ public:
 
 	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
-		const D2D1_ROUNDED_RECT rc = { { r.left, r.top, r.right, r.bottom }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
+		auto rc = D2D1::RoundedRect(r, rr, rr);
 		draw_rounded(rc, c, s);
 	}
 
 	void draw_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
-		const D2D1_ROUNDED_RECT rc = { { r.left + m, r.top + m, r.right - m, r.bottom- m }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
-		draw_rounded(rc, c, s);
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
+		draw_rounded(rc, rr, c, s);
 	}
 
 	void draw_ellipse( const D2D1_ELLIPSE &e, const Color c, FLOAT s = DefaultStrokeWidth )
@@ -220,14 +247,15 @@ public:
 
 	void draw_ellipse( const D2D1_RECT_F &r, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
-		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2, (r.bottom - r.top) / 2 };
+		auto p = D2D1::Point2F((r.right + r.left) / 2, (r.bottom + r.top) / 2);
+		auto e = D2D1::Ellipse(p, (r.right - r.left) / 2, (r.bottom - r.top) / 2);
 		draw_ellipse(e, c, s);
 	}
 
 	void draw_ellipse( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = DefaultStrokeWidth )
 	{
-		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2 - m, (r.bottom - r.top) / 2 - m };
-		draw_ellipse(e, c, s);
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
+		draw_ellipse(rc, c, s);
 	}
 
 	void fill_rect( const D2D1_RECT_F &r, const Color c )
@@ -237,7 +265,7 @@ public:
 
 	void fill_rect( const D2D1_RECT_F &r, const int m, const Color c )
 	{
-		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
 		fill_rect(rc, c);
 	}
 
@@ -248,14 +276,14 @@ public:
 
 	void fill_rounded( const D2D1_RECT_F &r, const int rr, const Color c )
 	{
-		const D2D1_ROUNDED_RECT rc = { { r.left, r.top, r.right, r.bottom }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
+		auto rc = D2D1::RoundedRect(r, rr, rr);
 		fill_rounded(rc, c);
 	}
 
 	void fill_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c )
 	{
-		const D2D1_ROUNDED_RECT rc = { { r.left + m, r.top + m, r.right - m, r.bottom- m }, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr) };
-		fill_rounded(rc, c);
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
+		fill_rounded(rc, rr, c);
 	}
 
 	void fill_ellipse( const D2D1_ELLIPSE &e, const Color c )
@@ -265,14 +293,15 @@ public:
 
 	void fill_ellipse( const D2D1_RECT_F &r, const Color c )
 	{
-		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2, (r.bottom - r.top) / 2 };
+		auto p = D2D1::Point2F((r.right + r.left) / 2, (r.bottom + r.top) / 2);
+		auto e = D2D1::Ellipse(p, (r.right - r.left) / 2, (r.bottom - r.top) / 2);
 		fill_ellipse(e, c);
 	}
 
 	void fill_ellipse( const D2D1_RECT_F &r, const int m, const Color c )
 	{
-		D2D1_ELLIPSE e = { (r.right + r.left) / 2, (r.bottom + r.top) / 2, (r.right - r.left) / 2 - m, (r.bottom - r.top) / 2 - m };
-		fill_ellipse(e, c);
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
+		fill_ellipse(rc, c);
 	}
 
 	void draw_layout( const D2D1_RECT_F &r, Font *f, const Color c, Alignment a, const TCHAR *t, size_t s )
@@ -290,7 +319,7 @@ public:
 
 	void draw_char( const D2D1_RECT_F &r, const int m, Font *f, const Color c, Alignment a, const TCHAR t )
 	{
-		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
 		draw_layout(rc, f, c, a, &t, 1);
 	}
 
@@ -301,7 +330,7 @@ public:
 
 	void draw_text( const D2D1_RECT_F &r, const int m, Font *f, const Color c, Alignment a, const TCHAR *t )
 	{
-		const D2D1_RECT_F rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
+		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
 		draw_layout(rc, f, c, a, t, _tcslen(t));
 	}
 };
