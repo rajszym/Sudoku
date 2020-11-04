@@ -49,14 +49,7 @@ public:
 		start();
 	}
 
-	template<typename Duration>
-	GameTimer( const int _d )
-	{
-		start(_d);
-	}
-
-	template<typename Duration>
-	GameTimer( const Duration _d )
+	GameTimer( const auto _d )
 	{
 		start(_d);
 	}
@@ -72,8 +65,7 @@ public:
 		start(Duration(_d));
 	}
 
-	template<typename Duration>
-	void start( const Duration _d )
+	void start( const auto _d )
 	{
 		start_ = Clock::now();
 		count_ = std::chrono::duration_cast<Clock::duration>(_d);
