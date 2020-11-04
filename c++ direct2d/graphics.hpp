@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    03.11.2020
+   @date    04.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -85,8 +85,7 @@ public:
 	{
 		FLOAT x, y, width, height, left, top, right, bottom, center, middle;
 
-		template<typename X, typename Y, typename W, typename H>
-		Rect(const X _x, const Y _y, const W _width, const H _height):
+		Rect( const auto _x, const auto _y, const auto _width, const auto _height ):
 			x     {static_cast<FLOAT>(_x)},
 			y     {static_cast<FLOAT>(_y)},
 			width {static_cast<FLOAT>(_width)},
@@ -101,23 +100,31 @@ public:
 
 		operator RECT() const
 		{
-			return { static_cast<LONG>(left), static_cast<LONG>(top), static_cast<LONG>(right), static_cast<LONG>(bottom) };
+			return { static_cast<LONG>(std::round(left)),
+			         static_cast<LONG>(std::round(top)),
+			         static_cast<LONG>(std::round(right)),
+			         static_cast<LONG>(std::round(bottom)) };
 		}
 
 		operator D2D1_RECT_F() const
 		{
-			return { left, top, right - 1, bottom - 1 };
+			return { left, top, right, bottom };
 		}
 
 		operator D2D1_RECT_U() const
 		{
-			return { static_cast<UINT32>(left), static_cast<UINT32>(top), static_cast<UINT32>(right - 1), static_cast<UINT32>(bottom - 1) };
+			return { static_cast<UINT32>(std::round(left)),
+			         static_cast<UINT32>(std::round(top)),
+			         static_cast<UINT32>(std::round(right)),
+			         static_cast<UINT32>(std::round(bottom)) };
 		}
 
-		template<typename X, typename Y>
-		bool contains( const X _x, const Y _y ) const
+		bool contains( const auto _x, const auto _y ) const
 		{
-			return static_cast<FLOAT>(_x) >= left && static_cast<FLOAT>(_x) < right && static_cast<FLOAT>(_y) >= top && static_cast<FLOAT>(_y) < bottom;
+			return static_cast<FLOAT>(_x) >= left  &&
+			       static_cast<FLOAT>(_x) <  right &&
+			       static_cast<FLOAT>(_y) >= top   &&
+			       static_cast<FLOAT>(_y) <  bottom;
 		}
 	};
 
@@ -147,7 +154,7 @@ public:
 		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&writer));
 		if (FAILED(hr)) return false;
 
-		hr = target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Enum::White), &brush);
+		hr = target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Enum::Black), &brush);
 		return SUCCEEDED(hr);
     }
 

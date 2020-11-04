@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    03.11.2020
+   @date    04.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -230,21 +230,35 @@ public:
 
 	struct Rect
 	{
-		const int left, top, right, bottom, x, y, width, height, center, middle;
+		int x, y, width, height, left, top, right, bottom, center, middle;
 
-		Rect(int _x, int _y, int _w, int _h):
-			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
-			x(_x), y(_y), width(_w), height(_h),
-			center(_x + _w / 2), middle(_y + _h / 2) {}
+			Rect( const auto _x, const auto _y, const auto _width, const auto _height ):
+			x     {static_cast<int>(std::round(_x))},
+			y     {static_cast<int>(std::round(_y))},
+			width {static_cast<int>(std::round(_width))},
+			height{static_cast<int>(std::round(_height))},
+			left  {x},
+			top   {y},
+			right {x + width},
+			bottom{y + height},
+			center{static_cast<int>(std::round((left + right) / 2.0f))},
+			middle{static_cast<int>(std::round((top + bottom) / 2.0f))}
+			{}
 
 		operator RECT() const
 		{
-			return { left, top, right, bottom };
+			return { static_cast<LONG>(left),
+			         static_cast<LONG>(top),
+			         static_cast<LONG>(right),
+			         static_cast<LONG>(bottom) };
 		}
 
-		bool contains( const int _x, const int _y ) const
+		bool contains( const auto _x, const auto _y ) const
 		{
-			return _x >= left && _x < right && _y >= top && _y < bottom;
+			return static_cast<int>(_x) >= left  &&
+			       static_cast<int>(_x) <  right &&
+			       static_cast<int>(_y) >= top   &&
+			       static_cast<int>(_y) <  bottom;
 		}
 	};
 
