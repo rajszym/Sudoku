@@ -314,17 +314,7 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, int time )
 	if (GameHeader::font == NULL)
 		GameHeader::font = gr.font(HDR.height, FW_MEDIUM, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
-	static const Graphics::Color banner_color[] =
-	{
-		Graphics::Color::Blue,
-		Graphics::Color::Green,
-		Graphics::Color::Orange,
-		Graphics::Color::Crimson,
-		Graphics::Color::Crimson,
-	};
-
-	auto f = banner_color[Game::level];
-	gr.draw_text(HDR, GameHeader::font, f, Graphics::Alignment::Left, ::title);
+	gr.draw_text(HDR, GameHeader::font, Graphics::Color::Black, Graphics::Alignment::Left, ::title);
 
 	if (info != nullptr)
 		gr.draw_text(HDR, GameMenu::font, Graphics::Color::Red, Graphics::Alignment::Bottom, info);
@@ -333,7 +323,7 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, int time )
 	{
 		TCHAR v[16];
 		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
-		gr.draw_text(HDR, GameHeader::font, f, Graphics::Alignment::Right, v);
+		gr.draw_text(HDR, GameHeader::font, Graphics::Color::DimGray, Graphics::Alignment::Right, v);
 	}
 }
 
@@ -761,6 +751,18 @@ void Game::update()
 	btn.update(*this, count);
 	mnu.update(*this);
 	ftr.update(*this);
+
+	static const Graphics::Color banner_color[] =
+	{
+		Graphics::Color::Blue,
+		Graphics::Color::Green,
+		Graphics::Color::Orange,
+		Graphics::Color::Crimson,
+		Graphics::Color::Crimson,
+	};
+
+	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), banner_color[Game::level]);
+	Graphics::fill_rect(Graphics::Rect(BTN.right + Margin, TAB.y, Margin * 6, TAB.height), banner_color[Game::level]);
 
 	Graphics::end();
 }
