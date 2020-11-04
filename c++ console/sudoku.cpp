@@ -773,7 +773,7 @@ void Game::update()
 		GameTimer::stop();
 	}
 
-	auto time  = GameTimer::counter();
+	auto time  = GameTimer::now();
 	auto count = Sudoku::count(Button::cur);
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable :(" : Sudoku::rating == -1 ? "ambiguous :/" : "")
 	                                : (Sudoku::corrupt() ? "corrupt  :(" : "solved :)");
@@ -957,7 +957,7 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::cerr << ::title << " find: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
+			std::cerr << ::title << " find: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
@@ -992,7 +992,7 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " test: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
+			std::cerr << ::title << " test: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
@@ -1027,7 +1027,7 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " sort: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
+			std::cerr << ::title << " sort: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
@@ -1064,7 +1064,7 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " raise: " << data.size() << " boards found, " << timer.counter() << 's' << std::endl;
+			std::cerr << ::title << " raise: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 

@@ -82,13 +82,6 @@ public:
 		count_ = Clock::duration::zero();
 	}
 
-	template<typename Duration = std::chrono::seconds>
-	Duration::rep counter()
-	{
-		auto time_ = count_ == COUNTING ? Clock::now() - start_ : count_;
-		return std::chrono::duration_cast<Duration>(time_).count();
-	}
-
 	bool expired()
 	{
 		auto time_ = Clock::now() - start_;
@@ -102,6 +95,13 @@ public:
 	bool waiting()
 	{
 		return !expired();
+	}
+
+	template<typename Duration = std::chrono::seconds>
+	Duration::rep now()
+	{
+		auto time_ = count_ == COUNTING ? Clock::now() - start_ : count_;
+		return std::chrono::duration_cast<Duration>(time_).count();
 	}
 
 	template<typename Duration = std::chrono::milliseconds>
