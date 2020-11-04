@@ -480,8 +480,8 @@ void Button::update( Graphics &gr, int count )
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
-		auto rc = Graphics::Rect(BTN.right, Button::r.bottom - CellSize / 2, MNU.left - BTN.right, CellSize / 2);
-		gr.draw_char(rc, GameButtons::font, Graphics::Color::White, Graphics::Alignment::Center, count > 9 ? _T('?') : _T("0123456789")[count]);
+		auto rc = Graphics::Rect(BTN.right, Button::r.top, MNU.left - BTN.right, Button::r.height);
+		gr.draw_char(rc, GameButtons::font, Graphics::Color::White, Graphics::Alignment::Bottom, count > 9 ? _T('?') : _T("0123456789")[count]);
 	}
 }
 
