@@ -159,17 +159,19 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Button
+class Button: public GameTimer
 {
 	const Graphics::Rect r;
 	const int num;
+
+	using Delay = std::chrono::duration<int, std::ratio<1, 50>>;
 
 public:
 
 	static Button *focus;
 	static int     cur;
 
-	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
+	Button( const auto _y, const int _n ): GameTimer(Delay(4)), r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
 
 	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
@@ -449,13 +451,20 @@ void Button::update( Graphics &gr, int count )
 	if (Button::cur == Button::num)
 		gr.fill_rect(Button::r, Graphics::Color::White);
 
-	if (Button::cur == Button::num)
+	static const std::array<Graphics::Color, 5> colors =
 	{
-		gr.draw_rect(Button::r, 3, Graphics::Color::LightGray);
-		gr.draw_rect(Button::r, 2, Graphics::Color::Gray);
-		gr.draw_rect(Button::r, 1, Graphics::Color::DimGray);
-	}
-	gr.draw_rect(Button::r, Graphics::Color::Black);
+		Graphics::Color::Black,
+		Graphics::Color::DimGray,
+		Graphics::Color::Gray,
+		Graphics::Color::DarkGray,
+		Graphics::Color::LightGray,
+	};
+
+	if (Button::cur == Button::num)
+		for (int i = GameTimer::from<Delay>(); i >= 0; i--)
+			gr.draw_rect(Button::r, i, colors[i]);
+	else
+		gr.draw_rect(Button::r, Graphics::Color::Black);
 
 	if (GameCell::focus != nullptr)
 	{
@@ -481,7 +490,11 @@ void Button::mouseMove( const int _x, const int _y )
 Command Button::mouseLButton( const int _x, const int _y )
 {
 	if (Button::r.contains(_x, _y))
+	{
+		GameTimer::start<Delay>(4);
+
 		return static_cast<Command>(Button::num);
+	}
 
 	return NoCmd;
 }
@@ -747,7 +760,7 @@ void Game::update()
 	mnu.update(*this);
 	ftr.update(*this);
 
-	static const Graphics::Color banner_color[] =
+	static const std::array<Graphics::Color, 5> colors =
 	{
 		Graphics::Color::Blue,
 		Graphics::Color::Green,
@@ -756,8 +769,8 @@ void Game::update()
 		Graphics::Color::Crimson,
 	};
 
-	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), banner_color[Game::level]);
-	Graphics::fill_rect(Graphics::Rect(BTN.right + Margin, TAB.y, Margin * 6, TAB.height), banner_color[Game::level]);
+	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
+	Graphics::fill_rect(Graphics::Rect(BTN.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
 
 	Graphics::end();
 }
