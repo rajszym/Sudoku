@@ -172,7 +172,7 @@ public:
 	static Button *focus;
 	static int     cur;
 
-	Button( const auto _y, const int _n ): GameTimer(Delay(4)), r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
+	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
 
 	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
@@ -465,7 +465,7 @@ void Button::update( Graphics &gr, int count )
 	};
 
 	if (Button::cur == Button::num)
-		for (int i = GameTimer::from<Delay>(); i >= 0; i--)
+		for (int i = GameTimer::from(Delay(4)); i >= 0; i--)
 			gr.draw_rect(Button::r, i, colors[i]);
 	else
 		gr.draw_rect(Button::r, Graphics::Color::Black);
@@ -495,7 +495,7 @@ Command Button::mouseLButton( const int _x, const int _y )
 {
 	if (Button::r.contains(_x, _y))
 	{
-		GameTimer::start<Delay>(4);
+		GameTimer::restart();
 
 		return static_cast<Command>(Button::num);
 	}
@@ -597,7 +597,7 @@ int MenuItem::next()
 void MenuItem::update( Graphics &gr )
 {
 	if (MenuItem::focus == this)
-		gr.fill_rect(MenuItem::r, GameTimer::until<Delay>(), Lighted);
+		gr.fill_rect(MenuItem::r, GameTimer::until(Delay(Margin * 4)), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
@@ -629,7 +629,7 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 {
 	if (MenuItem::r.contains(_x, _y))
 	{
-		GameTimer::start<Delay>(Margin * 4);
+		GameTimer::restart();
 
 		switch (MenuItem::idx)
 		{
