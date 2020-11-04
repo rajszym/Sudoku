@@ -72,7 +72,7 @@ public:
 		count_ = Clock::duration::zero();
 	}
 
-	template<typename Duration>
+	template<typename Duration = std::chrono::milliseconds>
 	void start( const int _d )
 	{
 		start(Duration(_d));
