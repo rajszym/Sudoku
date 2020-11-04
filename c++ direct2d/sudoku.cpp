@@ -39,8 +39,8 @@
 const TCHAR *title = _T("Sudoku");
 
 constexpr auto Frame     {  0.5f };
-constexpr auto Margin    {  4.0f };
-constexpr auto CellSize  { 64.0f };
+constexpr auto Margin    {  4 };
+constexpr auto CellSize  { 64 };
 constexpr auto SegSize   { CellSize * 3 + Margin * 2 };
 constexpr auto TabSize   { SegSize  * 3 + Margin * 8 };
 constexpr auto MnuSize   { 13 };
