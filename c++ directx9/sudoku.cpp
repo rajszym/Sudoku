@@ -492,7 +492,7 @@ GameButtons::GameButtons()
 {
 	for (int n = 1; n <= 9; n++)
 	{
-		auto y = BTN.y + (n - 1) * (CellSize + Margin) + ((n - 1) / 3) * Margin * 3;
+		auto y = BTN.y + std::round((n - 1) * (BTN.height - CellSize) / 8);
 
 		GameButtons::emplace_back(y, n);
 	}
@@ -643,7 +643,7 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 GameMenu::GameMenu()
 {
 	static constexpr auto h = std::round(TabSize / 1.2f / MnuSize);
-	auto pos = []( const auto i ){ return MNU.y + std::round(i * (TabSize - h) / (MnuSize - 1)); };
+	auto pos = []( const auto i ){ return MNU.y + std::round(i * (MNU.height - h) / (MnuSize - 1)); };
 
 	GameMenu::emplace_back( 0, pos( 0), h, _T("Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)"));
 		GameMenu::back().emplace_back(_T("easy"));
