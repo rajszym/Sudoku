@@ -485,8 +485,8 @@ void Button::update( Graphics &gr, int count )
 
 	if (Button::cur == Button::num && Game::help > Assistance::None)
 	{
-		auto rc = Graphics::Rect(BTN.right, Button::r.bottom - CellSize / 2, MNU.left - BTN.right, Button::r.height);
-		gr.draw_char(rc, GameButtons::font, Graphics::Color::Gray, Graphics::Alignment::Center, count > 9 ? _T('?') : _T("0123456789")[count]);
+		auto rc = Graphics::Rect(BTN.right, Button::r.bottom - CellSize / 2, MNU.left - BTN.right, CellSize / 2);
+		gr.draw_char(rc, GameButtons::font, Graphics::Color::White, Graphics::Alignment::Center, count > 9 ? _T('?') : _T("0123456789")[count]);
 	}
 }
 
@@ -761,12 +761,6 @@ void Game::update()
 
 	Graphics::begin(Background);
 
-	hdr.update(*this, info, time);
-	tab.update(*this);
-	btn.update(*this, count);
-	mnu.update(*this);
-	ftr.update(*this);
-
 	static const std::array<Graphics::Color, 5> colors =
 	{
 		Graphics::Color::Blue,
@@ -778,6 +772,12 @@ void Game::update()
 
 	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
 	Graphics::fill_rect(Graphics::Rect(BTN.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
+
+	hdr.update(*this, info, time);
+	tab.update(*this);
+	btn.update(*this, count);
+	mnu.update(*this);
+	ftr.update(*this);
 
 	Graphics::end();
 }
