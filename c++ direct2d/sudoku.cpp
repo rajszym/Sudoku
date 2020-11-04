@@ -449,13 +449,13 @@ void Button::update( Graphics &gr, int count )
 	if (Button::cur == Button::num)
 		gr.fill_rect(Button::r, Graphics::Color::White);
 
-	gr.draw_rect(Button::r, Graphics::Color::Black);
 	if (Button::cur == Button::num)
 	{
-		gr.draw_rect(Button::r, 1, Graphics::Color::DimGray);
-		gr.draw_rect(Button::r, 2, Graphics::Color::Gray);
 		gr.draw_rect(Button::r, 3, Graphics::Color::LightGray);
+		gr.draw_rect(Button::r, 2, Graphics::Color::Gray);
+		gr.draw_rect(Button::r, 1, Graphics::Color::DimGray);
 	}
+	gr.draw_rect(Button::r, Graphics::Color::Black);
 
 	if (GameCell::focus != nullptr)
 	{
