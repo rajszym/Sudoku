@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    03.11.2020
+   @date    04.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -38,18 +38,19 @@
 
 const TCHAR *title = _T("Sudoku");
 
-constexpr int CellSize  { 64 };
-constexpr int Margin    {  4 };
-constexpr int SegSize   { CellSize * 3 + Margin * 2 };
-constexpr int TabSize   { SegSize  * 3 + Margin * 8 };
-constexpr int MnuSize   { 13 };
+constexpr auto Frame     {  0 };
+constexpr auto Margin    {  4 };
+constexpr auto CellSize  { 64 };
+constexpr auto SegSize   { CellSize * 3 + Margin * 2 };
+constexpr auto TabSize   { SegSize  * 3 + Margin * 8 };
+constexpr auto MnuSize   { 13 };
 
-const Graphics::Rect TAB(Margin * 2, CellSize, TabSize, TabSize);
+const Graphics::Rect TAB(Frame + Margin * 2, Frame + CellSize, TabSize, TabSize);
 const Graphics::Rect BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
 const Graphics::Rect MNU(BTN.right + Margin * 8, TAB.top, SegSize,  TAB.height);
-const Graphics::Rect HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
+const Graphics::Rect HDR(TAB.left, Frame, MNU.right - TAB.left, TAB.top - Frame);
 const Graphics::Rect FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
-const Graphics::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
+const Graphics::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom + Frame);
 
 constexpr Graphics::Color Background = Graphics::Color::Moccasin;
 constexpr Graphics::Color Lighted    = Graphics::Color::OldLace;
@@ -129,7 +130,7 @@ public:
 
 	static GameCell *focus;
 
-	GameCell( const int _x, const int _y, Cell &_c ): r{_x, _y, CellSize, CellSize}, cell{_c} {}
+	GameCell( const auto _x, const auto _y, Cell &_c ): r{_x, _y, CellSize, CellSize}, cell{_c} {}
 
 	Cell  & get         ()        { return cell; }
 	bool    allowed     ( int n ) { return GameCell::cell.allowed(n); }
@@ -168,7 +169,7 @@ public:
 	static Button *focus;
 	static int     cur;
 
-	Button( const int _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
+	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
 
 	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
@@ -206,7 +207,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int _n, const int _y, const int _h, const TCHAR *_i ): idx{_n}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
+	MenuItem( const int _n, const auto _y, const auto _h, const TCHAR *_i ): idx{_n}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
 
 	int     index       ();
 	int     prev        ();
@@ -399,8 +400,8 @@ GameTable::GameTable( Sudoku &_s )
 {
 	for (auto &c: _s)
 	{
-		int x = TAB.x + (c.pos % 9) * (CellSize + Margin) + (c.pos % 9 / 3) * Margin * 3;
-		int y = TAB.y + (c.pos / 9) * (CellSize + Margin) + (c.pos / 9 / 3) * Margin * 3;
+		auto x = TAB.x + (c.pos % 9) * (CellSize + Margin) + (c.pos % 9 / 3) * Margin * 3;
+		auto y = TAB.y + (c.pos / 9) * (CellSize + Margin) + (c.pos / 9 / 3) * Margin * 3;
 
 		GameTable::emplace_back(x, y, c);
 	}
@@ -501,7 +502,7 @@ GameButtons::GameButtons()
 {
 	for (int n = 1; n <= 9; n++)
 	{
-		int y = BTN.y + (n - 1) * (CellSize + Margin) + ((n - 1) / 3) * Margin * 3;
+		auto y = BTN.y + (n - 1) * (CellSize + Margin) + ((n - 1) / 3) * Margin * 3;
 
 		GameButtons::emplace_back(y, n);
 	}
@@ -651,8 +652,8 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 
 GameMenu::GameMenu()
 {
-	auto h = std::round(TabSize / 1.2 / MnuSize);
-	auto pos = [h]( const int i ){ return MNU.y + std::round(i * (TabSize - h) / (MnuSize - 1.0)); };
+	static constexpr auto h = std::round(TabSize / 1.2f / MnuSize);
+	auto pos = []( const auto i ){ return MNU.y + std::round(i * (TabSize - h) / (MnuSize - 1)); };
 
 	GameMenu::emplace_back( 0, pos( 0), h, _T("Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)"));
 		GameMenu::back().emplace_back(_T("easy"));
@@ -694,7 +695,7 @@ GameMenu::GameMenu()
 
 void GameMenu::update( Graphics &gr )
 {
-	auto h = std::round(TabSize / 1.8 / MnuSize);
+	static constexpr auto h = std::round(TabSize / 1.8f / MnuSize);
 
 	if (GameMenu::font == NULL)
 		GameMenu::font = gr.font(h, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
@@ -912,8 +913,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	const int h = rc.bottom - rc.top;
 	const int k = GET_KEYSTATE_WPARAM(wParam);
 	const int d = GET_WHEEL_DELTA_WPARAM(wParam);
-	const int x = w > 0 ? (GET_X_LPARAM(lParam) * WIN.width  + w / 2) / w : 0;
-	const int y = h > 0 ? (GET_Y_LPARAM(lParam) * WIN.height + h / 2) / h : 0;
+	const int x = w > 0 ? std::round(static_cast<FLOAT>(GET_X_LPARAM(lParam)) * WIN.width  / w) : 0;
+	const int y = h > 0 ? std::round(static_cast<FLOAT>(GET_Y_LPARAM(lParam)) * WIN.height / h) : 0;
 
 	switch (msg)
 	{
