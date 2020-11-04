@@ -415,11 +415,6 @@ void GameTable::update( Graphics &gr )
 
 	for (auto &c: *this)
 		c.update(gr);
-
-	gr.fill_rect(Graphics::Rect(TAB.x + CellSize * 3 + Margin * 3, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
-	gr.fill_rect(Graphics::Rect(TAB.x + CellSize * 6 + Margin * 9, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
-	gr.fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2),  Graphics::Color::DimGray);
-	gr.fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 }
 
 void GameTable::mouseMove( const int _x, const int _y )
@@ -769,6 +764,11 @@ void Game::update()
 		Graphics::Color::Crimson,
 		Graphics::Color::Crimson,
 	};
+
+	Graphics::fill_rect(Graphics::Rect(TAB.x + CellSize * 3 + Margin * 3, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
+	Graphics::fill_rect(Graphics::Rect(TAB.x + CellSize * 6 + Margin * 9, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
+	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2),  Graphics::Color::DimGray);
+	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 
 	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
 	Graphics::fill_rect(Graphics::Rect(BTN.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
