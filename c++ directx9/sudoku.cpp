@@ -43,7 +43,7 @@ constexpr auto Margin    {  4 };
 constexpr auto CellSize  { 64 };
 constexpr auto SegSize   { CellSize * 3 + Margin * 2 };
 constexpr auto TabSize   { SegSize  * 3 + Margin * 8 };
-constexpr auto MnuSize   { 13 };
+constexpr auto MnuSize   { 12 };
 
 const Graphics::Rect TAB(Frame + Margin * 2, Frame + CellSize, TabSize, TabSize);
 const Graphics::Rect BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
@@ -113,7 +113,8 @@ public:
 
 	GameHeader() {}
 
-	void update( Graphics &, const TCHAR *, int );
+	void    update      ( Graphics &, const TCHAR *, int );
+	Command mouseLButton( const int, const int );
 };
 
 /*---------------------------------------------------------------------------*/
@@ -171,7 +172,7 @@ public:
 	static Button *focus;
 	static int     cur;
 
-	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} { GameTimer::start<Delay>(4); }
+	Button( const auto _y, const int _n ): GameTimer(Delay(4)), r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
 
 	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
@@ -327,6 +328,14 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, int time )
 		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
 		gr.draw_text(HDR, GameHeader::font, Graphics::Color::DimGray, Graphics::Alignment::Right, v);
 	}
+}
+
+Command GameHeader::mouseLButton( const int _x, const int _y )
+{
+	if (HDR.contains(_x, _y))
+		return TimerCmd;
+
+	return NoCmd;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -557,7 +566,6 @@ int MenuItem::index()
 	case 0: return static_cast<int>(Game::level);
 	case 1: return static_cast<int>(Game::help);
 	case 2: return Game::light_f ? 1 : 0;
-	case 3: return Game::timer_f ? 1 : 0;
 	}
 
 	return 0;
@@ -572,7 +580,6 @@ int MenuItem::prev()
 	case 0: return static_cast<int>(Game::level) == 0 ? max : static_cast<int>(Game::level) == max ? 1 : 0;
 	case 1: return (static_cast<int>(Game::help) + max) % (max + 1);
 	case 2: return Game::light_f ? 0 : 1;
-	case 3: return Game::timer_f ? 0 : 1;
 	}
 
 	return 0;
@@ -587,7 +594,6 @@ int MenuItem::next()
 	case 0: return static_cast<int>(Game::level) == max ? 0 : static_cast<int>(Game::level) == 0 ? 1 : max;
 	case 1: return (static_cast<int>(Game::help) + 1) % (max + 1);
 	case 2: return Game::light_f ? 0 : 1;
-	case 3: return Game::timer_f ? 0 : 1;
 	}
 
 	return 0;
@@ -635,16 +641,15 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 		case  0: return MenuItem::back ? PrevLevelCmd : NextLevelCmd;
 		case  1: return MenuItem::back ? PrevHelpCmd  : NextHelpCmd;
 		case  2: return HighLightCmd;
-		case  3: return TimerCmd;
-		case  4: return GenerateCmd;
-		case  5: return SolveCmd;
-		case  6: return UndoCmd;
-		case  7: return ClearCmd;
-		case  8: return EditCmd;
-		case  9: return AcceptCmd;
-		case 10: return SaveCmd;
-		case 11: return LoadCmd;
-		case 12: return QuitCmd;
+		case  3: return GenerateCmd;
+		case  4: return SolveCmd;
+		case  5: return UndoCmd;
+		case  6: return ClearCmd;
+		case  7: return EditCmd;
+		case  8: return AcceptCmd;
+		case  9: return SaveCmd;
+		case 10: return LoadCmd;
+		case 11: return QuitCmd;
 		}
 	}
 
@@ -670,29 +675,26 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back(_T("available"));
 		GameMenu::back().emplace_back(_T("sure"));
 		GameMenu::back().emplace_back(_T("full"));
-	GameMenu::emplace_back( 2, pos( 2), h, _T("Display the highlight of the entire group of cells: on / off"));
+	GameMenu::emplace_back( 2, pos( 2), h, _T("Display the highlight of the entire group of cells: on / off (keyboard shortcut: H)"));
 		GameMenu::back().emplace_back(_T("highlight off"));
 		GameMenu::back().emplace_back(_T("highlight on"));
-	GameMenu::emplace_back( 3, pos( 3), h, _T("Display timer: on / off"));
-		GameMenu::back().emplace_back(_T("timer off"));
-		GameMenu::back().emplace_back(_T("timer on"));
-	GameMenu::emplace_back( 4, pos( 4), h, _T("Generate or load a new layout (keyboard shortcuts: N, Tab)"));
+	GameMenu::emplace_back( 3, pos( 3), h, _T("Generate or load a new layout (keyboard shortcuts: N, Tab)"));
 		GameMenu::back().emplace_back(_T("new"));
-	GameMenu::emplace_back( 5, pos( 5), h, _T("Solve the current layout (keyboard shortcuts: S, Enter)"));
+	GameMenu::emplace_back( 4, pos( 4), h, _T("Solve the current layout (keyboard shortcuts: S, Enter)"));
 		GameMenu::back().emplace_back(_T("solve"));
-	GameMenu::emplace_back( 6, pos( 6), h, _T("Undo last move or restore the accepted layout (keyboard shortcuts: U, Backspace)"));
+	GameMenu::emplace_back( 5, pos( 5), h, _T("Undo last move or restore the accepted layout (keyboard shortcuts: U, Backspace)"));
 		GameMenu::back().emplace_back(_T("undo"));
-	GameMenu::emplace_back( 7, pos( 7), h, _T("Clear the board (keyboard shortcuts: C, Delete)"));
+	GameMenu::emplace_back( 6, pos( 6), h, _T("Clear the board (keyboard shortcuts: C, Delete)"));
 		GameMenu::back().emplace_back(_T("clear"));
-	GameMenu::emplace_back( 8, pos( 8), h, _T("Start editing the current layout (keyboard shortcuts: E, Home)"));
+	GameMenu::emplace_back( 7, pos( 7), h, _T("Start editing the current layout (keyboard shortcuts: E, Home)"));
 		GameMenu::back().emplace_back(_T("edit"));
-	GameMenu::emplace_back( 9, pos( 9), h, _T("Accept the current layout and finish editing (keyboard shortcuts: T, End)"));
+	GameMenu::emplace_back( 8, pos( 8), h, _T("Accept the current layout and finish editing (keyboard shortcuts: T, End)"));
 		GameMenu::back().emplace_back(_T("accept"));
-	GameMenu::emplace_back(10, pos(10), h, _T("Save the current layout to the file (keyboard shortcuts: V, Insert)"));
+	GameMenu::emplace_back( 9, pos( 9), h, _T("Save the current layout to the file (keyboard shortcuts: V, Insert)"));
 		GameMenu::back().emplace_back(_T("save"));
-	GameMenu::emplace_back(11, pos(11), h, _T("Load layout from the file (keyboard shortcut: L)"));
+	GameMenu::emplace_back(10, pos(10), h, _T("Load layout from the file (keyboard shortcut: L)"));
 		GameMenu::back().emplace_back(_T("load"));
-	GameMenu::emplace_back(12, pos(12), h, _T("Quit the game (keyboard shortcuts: Q, Esc)"));
+	GameMenu::emplace_back(11, pos(11), h, _T("Quit the game (keyboard shortcuts: Q, Esc)"));
 		GameMenu::back().emplace_back(_T("quit"));
 }
 
@@ -804,6 +806,7 @@ void Game::mouseLeave()
 
 void Game::mouseLButton( const int _x, const int _y )
 {
+	Game::command(hdr.mouseLButton(_x, _y));
 	Game::command(tab.mouseLButton(_x, _y));
 	Game::command(btn.mouseLButton(_x, _y));
 	Game::command(mnu.mouseLButton(_x, _y));
@@ -843,6 +846,7 @@ void Game::keyboard( const int _k )
 	case 'D':       Game::command(NextLevelCmd); break;
 	case VK_TAB:    /* falls through */
 	case 'N':       Game::command(GenerateCmd);  break;
+	case 'H':       Game::command(HighLightCmd); break;
 	case VK_RETURN: /* falls through */
 	case 'S':       Game::command(SolveCmd);     break;
 	case VK_BACK:   /* falls through */
