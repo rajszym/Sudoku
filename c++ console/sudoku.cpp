@@ -80,6 +80,7 @@ enum Command: int
 	PrevLevelCmd,
 	NextLevelCmd,
 	GenerateCmd,
+	TimerCmd,
 	SolveCmd,
 	UndoCmd,
 	ClearCmd,
@@ -98,7 +99,8 @@ public:
 
 	GameHeader() {}
 
-	void update( Console &, bool, const char *, int, int );
+	void    update      ( Console &, bool, const char *, int, int );
+	Command mouseLButton( const int, const int );
 };
 
 /*---------------------------------------------------------------------------*/
@@ -240,6 +242,7 @@ public:
 
 	static Assistance help;
 	static Difficulty level;
+	static bool       timer_f;
 
 	Game( Difficulty );
 	~Game();
@@ -269,6 +272,7 @@ bool        MenuItem  ::back  = false;
 
 Assistance  Game      ::help  = Assistance::None;
 Difficulty  Game      ::level = Difficulty::Easy;
+bool        Game      ::timer_f = true;
 
 /*---------------------------------------------------------------------------*/
 /*                              IMPLEMENTATION                               */
@@ -301,9 +305,24 @@ void GameHeader::update( Console &con, bool init, const char *info, int count, i
 	auto c = Button::cur == 0 ? 0 : count;
 	con.Put(BTN.x + 1, HDR.y, n == 0 || Game::help == Assistance::None ? ' ' : c > 9 ? '?' : '0' + c);
 
-	char v[16];
-	std::snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-	con.Put(MNU.Right(std::strlen(v) + 1), HDR.y, v);
+	if (Game::timer_f)
+	{
+		char v[16];
+		std::snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
+		con.Put(MNU.Right(std::strlen(v) + 1), HDR.y, v);
+	}
+	else
+	{
+		con.Fill(HDR.right - 12, HDR.y, 12, 1);
+	}
+}
+
+Command GameHeader::mouseLButton( const int _x, const int _y )
+{
+	if (HDR.contains(_x, _y))
+		return TimerCmd;
+
+	return NoCmd;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -777,6 +796,7 @@ void Game::mouseMove( const int _x, const int _y )
 
 void Game::mouseLButton( const int _x, const int _y )
 {
+	Game::command(hdr.mouseLButton(_x, _y));
 	Game::command(tab.mouseLButton(_x, _y));
 	Game::command(btn.mouseLButton(_x, _y));
 	Game::command(mnu.mouseLButton(_x, _y));
@@ -867,6 +887,8 @@ void Game::command( const Command _c )
 	case NextLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].next());
 	                    /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Button::cur = 0; GameTimer::start();
+	                    break;
+	case TimerCmd:      Game::timer_f = !Game::timer_f;
 	                    break;
 	case SolveCmd:      Sudoku::solve();    Button::cur = 0;
 	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
