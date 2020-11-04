@@ -583,7 +583,7 @@ int MenuItem::next()
 void MenuItem::update( Graphics &gr )
 {
 	if (MenuItem::focus == this)
-		gr.fill_rect(MenuItem::r, GameTimer::remaining<Delay>(), Lighted);
+		gr.fill_rect(MenuItem::r, GameTimer::until<Delay>(), Lighted);
 
 	if (MenuItem::size() > 1)
 	{

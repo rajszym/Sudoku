@@ -2,7 +2,7 @@
 
    @file    gametimer.hpp
    @author  Rajmund Szymanski
-   @date    02.11.2020
+   @date    04.11.2020
    @brief   GameTimer class
 
 *******************************************************************************
@@ -113,9 +113,16 @@ public:
 	}
 
 	template<typename Duration = std::chrono::milliseconds>
-	Duration::rep remaining()
+	Duration::rep from()
 	{
 		auto time_ = Clock::now() - start_;
-		return time_ < count_ ? std::chrono::duration_cast<Duration>(count_ - time_).count() : 0;
+		return std::chrono::duration_cast<Duration>(std::min(time_, count_)).count();
+	}
+
+	template<typename Duration = std::chrono::milliseconds>
+	Duration::rep until()
+	{
+		auto time_ = start_ + count_ - Clock::now();
+		return std::chrono::duration_cast<Duration>(std::max(time_, Clock::duration::zero())).count();
 	}
 };
