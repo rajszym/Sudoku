@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    03.11.2020
+   @date    04.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -654,7 +654,7 @@ void GameFooter::update( Console &con, bool init )
 	if (init)
 		con.Fill(FTR, Console::Black, Console::Grey);
 
-	auto i = MenuItem::focus != nullptr ? MenuItem::focus->info : "";
+	auto i = MenuItem::focus != nullptr ? MenuItem::focus->info : "Sudoku game, solver and generator";
 	auto s = std::strlen(i);
 	con.Put(FTR.x + 1, FTR.y, i);
 	con.Fill(FTR.x + 1 + s, FTR.y, FTR.width - 2 - s, 1);
