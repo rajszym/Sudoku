@@ -170,7 +170,7 @@ public:
 	static Button *focus;
 	static int     cur;
 
-	Button( const auto _y, const int _n ): GameTimer(4), r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
+	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
 
 	void    update      ( Graphics &, int );
 	void    mouseMove   ( const int, const int );
@@ -206,7 +206,7 @@ public:
 	static MenuItem *focus;
 	static bool      back;
 
-	MenuItem( const int _n, const auto _y, const auto _h, const TCHAR *_i ): GameTimer(Margin * 4), idx{_n}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
+	MenuItem( const int _n, const auto _y, const auto _h, const TCHAR *_i ): idx{_n}, r{MNU.x, _y, MNU.width, _h}, info{_i} {}
 
 	int     index       ();
 	int     prev        ();
@@ -461,7 +461,7 @@ void Button::update( Graphics &gr, int count )
 	};
 
 	if (Button::cur == Button::num)
-		for (int i = GameTimer::from(); i >= 0; i--)
+		for (int i = GameTimer::from(4); i >= 0; i--)
 			gr.draw_rect(Button::r, i, colors[i]);
 	else
 		gr.draw_rect(Button::r, Graphics::Color::Black);
@@ -593,7 +593,7 @@ int MenuItem::next()
 void MenuItem::update( Graphics &gr )
 {
 	if (MenuItem::focus == this)
-		gr.fill_rect(MenuItem::r, GameTimer::until(), Lighted);
+		gr.fill_rect(MenuItem::r, GameTimer::until(Margin * 4), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
