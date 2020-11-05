@@ -37,12 +37,13 @@ template<typename Rep, typename Period = std::ratio<1>>
 class GameTimer
 {
 	using Clock  = std::chrono::high_resolution_clock;
+	using Source = std::chrono::high_resolution_clock::duration;
 	using Target = std::chrono::duration<Rep, Period>;
 
 	Clock::time_point start_;
 	Clock::duration   count_;
 
-	bool expired_( const Clock::duration _time, const Clock::duration _duration, const bool _reload )
+	bool expired_( const Source _time, const Source _duration, const bool _reload )
 	{
 		if (_time < _duration)
 			return false;
@@ -51,22 +52,22 @@ class GameTimer
 		return true;
 	}
 
-	bool expired_( const Clock::duration _duration, const bool _reload )
+	bool expired_( const Source _duration, const bool _reload )
 	{
 		auto _time = Clock::now() - start_;
 		return expired_(_time, _duration, _reload);
 	}
 
-	Target::rep from_( const Clock::duration _duration, const bool _reload )
+	Rep from_( const Source _duration, const bool _reload )
 	{
 		auto _time = Clock::now() - start_;
 		return std::chrono::duration_cast<Target>(expired_(_time, _duration, _reload) ? _duration : _time).count();
 	}
 
-	Target::rep until_( const Clock::duration _duration, const bool _reload )
+	Rep until_( const Source _duration, const bool _reload )
 	{
 		auto _time = Clock::now() - start_;
-		return std::chrono::duration_cast<Target>(expired_(_time, _duration, _reload) ? Clock::duration::zero() : _duration - _time).count();
+		return std::chrono::duration_cast<Target>(expired_(_time, _duration, _reload) ? Source::zero() : _duration - _time).count();
 	}
 
 public:
@@ -76,22 +77,20 @@ public:
 		start();
 	}
 
-	template <typename T>
-	GameTimer( const T _period )
+	GameTimer( const Rep _period )
 	{
 		start(_period);
 	}
 
 	void start()
 	{
-		count_ = Clock::duration::max();
+		count_ = Source::max();
 		restart();
 	}
 
-	template <typename T>
-	void start( const T _period )
+	void start( const Rep _period )
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		count_ = std::chrono::duration_cast<Source>(Target(_period));
 		restart();
 	}
 
@@ -102,7 +101,7 @@ public:
 
 	void reset()
 	{
-		count_ = Clock::duration::zero();
+		count_ = Source::zero();
 	}
 
 	void stop()
@@ -117,10 +116,9 @@ public:
 		return expired_(count_, _reload);
 	}
 
-	template <typename T>
-	bool expired( const T _period, const bool _reload = true )
+	bool expired( const Rep _period, const bool _reload = true )
 	{
-		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		auto _duration = std::chrono::duration_cast<Source>(Target(_period));
 		return expired_(_duration, _reload);
 	}
 
@@ -129,38 +127,35 @@ public:
 		return !expired_(count_, _reload);
 	}
 
-	template <typename T>
-	bool waiting( const T _period, const bool _reload = true )
+	bool waiting( const Rep _period, const bool _reload = true )
 	{
-		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		auto _duration = std::chrono::duration_cast<Source>(Target(_period));
 		return !expired_(_duration, _reload);
 	}
 
-	Target::rep from( const bool _reload = false )
+	Rep from( const bool _reload = false )
 	{
 		return from_(count_, _reload);
 	}
 
-	template <typename T>
-	Target::rep from( const T _period, const bool _reload = false )
+	Rep from( const Rep _period, const bool _reload = false )
 	{
-		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		auto _duration = std::chrono::duration_cast<Source>(Target(_period));
 		return from_(_duration, _reload);
 	}
 
-	Target::rep until( const bool _reload = false )
+	Rep until( const bool _reload = false )
 	{
 		return until_(count_, _reload);
 	}
 
-	template <typename T>
-	Target::rep until( const T _period, const bool _reload = false )
+	Rep until( const Rep _period, const bool _reload = false )
 	{
-		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		auto _duration = std::chrono::duration_cast<Source>(Target(_period));
 		return until_(_duration, _reload);
 	}
 
-	Target::rep now()
+	Rep now()
 	{
 		return from_(count_, false);
 	}
