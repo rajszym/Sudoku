@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    04.11.2020
+   @date    05.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -225,7 +225,7 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Game: public Console, public Sudoku, public GameTimer
+class Game: public Console, public Sudoku, public GameTimer<int>
 {
 	GameHeader  hdr;
 	GameTable   tab;
@@ -935,7 +935,7 @@ int main( int argc, char **argv )
 		case 'F': // find
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer();
+			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 
 			if (--argc > 0)
@@ -964,7 +964,7 @@ int main( int argc, char **argv )
 		case 'T': // test
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer();
+			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -999,7 +999,7 @@ int main( int argc, char **argv )
 		case 'S': // sort
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer();
+			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();
@@ -1034,7 +1034,7 @@ int main( int argc, char **argv )
 		case 'R': // raise
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
-			auto timer  = GameTimer();
+			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::string>();

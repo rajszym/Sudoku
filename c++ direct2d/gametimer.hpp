@@ -2,7 +2,7 @@
 
    @file    gametimer.hpp
    @author  Rajmund Szymanski
-   @date    04.11.2020
+   @date    05.11.2020
    @brief   GameTimer class
 
 *******************************************************************************
@@ -33,9 +33,11 @@
 
 #include <chrono>
 
+template<typename _Rep, typename _Period = std::ratio<1>>
 class GameTimer
 {
 	using Clock  = std::chrono::high_resolution_clock;
+	using Target = std::chrono::duration<_Rep, _Period>;
 
 	Clock::time_point start_;
 	Clock::duration   count_;
@@ -49,40 +51,9 @@ public:
 		start();
 	}
 
-	template<typename Duration>
-	GameTimer( const Duration _d )
+	GameTimer( const auto _period )
 	{
-		start(_d);
-	}
-
-	void start()
-	{
-		count_ = COUNTING;
-		start_ = Clock::now();
-	}
-
-	void stop()
-	{
-		if (count_ == COUNTING)
-			count_ = Clock::now() - start_;
-	}
-
-	void reset()
-	{
-		count_ = Clock::duration::zero();
-	}
-
-	template<typename Duration = std::chrono::milliseconds>
-	void start( const int _d )
-	{
-		start(Duration(_d));
-	}
-
-	template<typename Duration>
-	void start( const Duration _d )
-	{
-		count_ = std::chrono::duration_cast<Clock::duration>(_d);
-		start_ = Clock::now();
+		start(_period);
 	}
 
 	void restart()
@@ -90,99 +61,73 @@ public:
 		start_ = Clock::now();
 	}
 
-	template<typename Duration = std::chrono::seconds>
-	Duration::rep now()
+	void start()
 	{
-		auto time_ = count_ == COUNTING ? Clock::now() - start_ : count_;
-		return std::chrono::duration_cast<Duration>(time_).count();
+		count_ = Clock::duration::max();
+		restart();
 	}
 
-	template<typename Duration = std::chrono::milliseconds>
-	bool expired( const int _d, const bool _r = true )
+	void start( const Target _duration )
 	{
-		return expired(Duration(_d), _r);
+		count_ = std::chrono::duration_cast<Clock::duration>(_duration);
+		restart();
 	}
 
-	template<typename Duration>
-	bool expired( const Duration _d, const bool _r = true )
+	void start( const auto _period )
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(_d);
-		return expired(_r);
+		start(Target(_period));
 	}
 
-	bool expired( const bool _r = true )
+	void reset()
 	{
-		auto time_ = Clock::now() - start_;
-		if (time_ < count_)
+		count_ = Clock::duration::zero();
+	}
+
+	void stop()
+	{
+		auto _time = Clock::now() - start_;
+		if (_time < count_)
+			count_ = _time;
+	}
+
+	bool expired( Clock::duration _time, bool _reload )
+	{
+		if (_time < count_)
 			return false;
-		if (_r)
+		if (_reload)
 			start_ += count_;
 		return true;
 	}
 
-	template<typename Duration = std::chrono::milliseconds>
-	bool waiting( const int _d, const bool _r = true )
+	bool expired( bool _reload = true )
 	{
-		return waiting(Duration(_d), _r);
+		auto _time = Clock::now() - start_;
+		return expired(_time, _reload);
 	}
 
-	template<typename Duration>
-	bool waiting( const Duration _d, const bool _r = true )
+	bool waiting( bool _reload = true )
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(_d);
-		return waiting(_r);
+		return !expired(_reload);
 	}
 
-	bool waiting( const bool _r = true )
+	Target::rep from( bool _reload = false )
 	{
-		return !expired(_r);
+		auto _time = Clock::now() - start_;
+		if (expired(_time, _reload))
+			return std::chrono::duration_cast<Target>(count_).count();
+		return std::chrono::duration_cast<Target>(_time).count();
 	}
 
-	template<typename Duration = std::chrono::milliseconds>
-	Duration::rep from( const int _d, const bool _r = false )
+	Target::rep until( bool _reload = false )
 	{
-		return from(Duration(_d), _r);
+		auto _time = Clock::now() - start_;
+		if (expired(_time, _reload))
+			return static_cast<Target::rep>(0);
+		return std::chrono::duration_cast<Target>(count_ - _time).count();
 	}
 
-	template<typename Duration>
-	Duration::rep from( const Duration _d, const bool _r = false )
+	Target::rep now()
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(_d);
-		return from<Duration>(_r);
-	}
-
-	template<typename Duration = std::chrono::milliseconds>
-	Duration::rep from( const bool _r = false )
-	{
-		auto time_ = Clock::now() - start_;
-		if (time_ < count_)
-			return std::chrono::duration_cast<Duration>(time_).count();
-		if (_r)
-			start_ += count_;
-		return std::chrono::duration_cast<Duration>(count_).count();
-	}
-
-	template<typename Duration = std::chrono::milliseconds>
-	Duration::rep until( const int _d, const bool _r = false )
-	{
-		return until(Duration(_d), _r);
-	}
-
-	template<typename Duration>
-	Duration::rep until( const Duration _d, const bool _r = false )
-	{
-		count_ = std::chrono::duration_cast<Clock::duration>(_d);
-		return until<Duration>(_r);
-	}
-
-	template<typename Duration = std::chrono::milliseconds>
-	Duration::rep until( const bool _r = false )
-	{
-		auto time_ = Clock::now() - start_;
-		if (time_ < count_)
-			return std::chrono::duration_cast<Duration>(count_ - time_).count();
-		if (_r)
-			start_ += count_;
-		return static_cast<Duration::rep>(0);
+		return from(false);
 	}
 };
