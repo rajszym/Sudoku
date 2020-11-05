@@ -42,13 +42,31 @@ class GameTimer
 	Clock::time_point start_;
 	Clock::duration   count_;
 
-	bool expired( const Clock::duration _time, const bool _reload)
+	bool expired_( const Clock::duration _time, const Clock::duration _duration, const bool _reload )
 	{
-		if (_time < count_)
+		if (_time < _duration)
 			return false;
 		if (_reload)
-			start_ += count_;
+			start_ += _duration;
 		return true;
+	}
+
+	bool expired_( const Clock::duration _duration, const bool _reload )
+	{
+		auto _time = Clock::now() - start_;
+		return expired_(_time, _duration, _reload);
+	}
+
+	Target::rep from_( const Clock::duration _duration, const bool _reload )
+	{
+		auto _time = Clock::now() - start_;
+		return std::chrono::duration_cast<Target>(expired_(_time, _duration, _reload) ? _duration : _time).count();
+	}
+
+	Target::rep until_( const Clock::duration _duration, const bool _reload )
+	{
+		auto _time = Clock::now() - start_;
+		return std::chrono::duration_cast<Target>(expired_(_time, _duration, _reload) ? Clock::duration::zero() : _duration - _time).count();
 	}
 
 public:
@@ -64,11 +82,6 @@ public:
 		start(_period);
 	}
 
-	void restart()
-	{
-		start_ = Clock::now();
-	}
-
 	void start()
 	{
 		count_ = Clock::duration::max();
@@ -80,6 +93,11 @@ public:
 	{
 		count_ = std::chrono::duration_cast<Clock::duration>(Target(_period));
 		restart();
+	}
+
+	void restart()
+	{
+		start_ = Clock::now();
 	}
 
 	void reset()
@@ -96,57 +114,54 @@ public:
 
 	bool expired( const bool _reload = true )
 	{
-		auto _time = Clock::now() - start_;
-		return expired(_time, _reload);
+		return expired_(count_, _reload);
 	}
 
 	template <typename T>
 	bool expired( const T _period, const bool _reload = true )
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(Target(_period));
-		return expired(_reload);
+		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		return expired_(_duration, _reload);
 	}
 
 	bool waiting( const bool _reload = true )
 	{
-		return !expired(_reload);
+		return !expired_(count_, _reload);
 	}
 
 	template <typename T>
 	bool waiting( const T _period, const bool _reload = true )
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(Target(_period));
-		return waiting(_reload);
+		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		return !expired_(_duration, _reload);
 	}
 
 	Target::rep from( const bool _reload = false )
 	{
-		auto _time = Clock::now() - start_;
-		return std::chrono::duration_cast<Target>(expired(_time, _reload) ? count_ : _time).count();
+		return from_(count_, _reload);
 	}
 
 	template <typename T>
 	Target::rep from( const T _period, const bool _reload = false )
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(Target(_period));
-		return from(_reload);
+		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		return from_(_duration, _reload);
 	}
 
 	Target::rep until( const bool _reload = false )
 	{
-		auto _time = Clock::now() - start_;
-		return std::chrono::duration_cast<Target>(expired(_time, _reload) ? Clock::duration::zero() : count_ - _time).count();
+		return until_(count_, _reload);
 	}
 
 	template <typename T>
 	Target::rep until( const T _period, const bool _reload = false )
 	{
-		count_ = std::chrono::duration_cast<Clock::duration>(Target(_period));
-		return until(_reload);
+		auto _duration = std::chrono::duration_cast<Clock::duration>(Target(_period));
+		return until_(_duration, _reload);
 	}
 
 	Target::rep now()
 	{
-		return from(false);
+		return from_(count_, false);
 	}
 };
