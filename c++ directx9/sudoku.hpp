@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    03.11.2020
+   @date    06.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -49,6 +49,7 @@ using  cell_array = std::array<SudokuCell, 81>;
 
 enum Difficulty
 {
+	Same = -1,
 	Easy = 0,
 	Medium,
 	Hard,
@@ -671,8 +672,11 @@ public:
 		}
 	}
 
-	void generate()
+	void generate( Difficulty difficulty = Difficulty::Same )
 	{
+		if (difficulty != Difficulty::Same)
+			Sudoku::level = difficulty;
+
 		if (Sudoku::level == Difficulty::Extreme)
 		{
 			auto rnd = std::mt19937{std::random_device{}()};
