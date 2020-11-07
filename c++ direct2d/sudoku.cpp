@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    06.11.2020
+   @date    07.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -171,7 +171,6 @@ class Button: public GameTimer<int, std::ratio<1, 50>>
 public:
 
 	static Button *focus;
-	static int number;
 
 	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
 
@@ -262,6 +261,7 @@ public:
 	static Difficulty level;
 	static Assistance help;
 
+	static int  number;
 	static bool light_f;
 	static bool timer_f;
 
@@ -293,12 +293,12 @@ GameCell       *GameCell  ::focus = nullptr;
 Button         *Button    ::focus = nullptr;
 MenuItem       *MenuItem  ::focus = nullptr;
 
-int             Button    ::number = 0;
 bool            MenuItem  ::back   = false;
 
 Difficulty      Game      ::level  = Difficulty::Easy;
 Assistance      Game      ::help   = Assistance::None;
 
+int             Game      ::number  = 0;
 bool            Game      ::light_f = false;
 bool            Game      ::timer_f = true;
 
@@ -349,7 +349,7 @@ void GameCell::update( Graphics &gr )
 		GameCell::font = gr.font(CellSize, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
 
 	auto h = Game::help;
-	auto n = Button::number;
+	auto n = Game::number;
 	auto f = GameCell::cell.empty() ? (GameCell::focus == this ? Lighted : Background)
 	                                : (GameCell::cell.immutable ? Graphics::Color::Black : Graphics::Color::Green);
 
@@ -384,7 +384,7 @@ Command GameCell::mouseLButton( const int _x, const int _y )
 	{
 		if (GameCell::cell.num == 0)
 		{
-			if (Button::number == 0 && Game::help >= Assistance::Full)
+			if (Game::number == 0 && Game::help >= Assistance::Full)
 				return SetSureCmd;
 			else
 				return SetCellCmd;
@@ -442,7 +442,7 @@ Command GameTable::mouseLButton( const int _x, const int _y )
 void GameTable::mouseRButton( const int _x, const int _y )
 {
 	if (TAB.contains(_x, _y))
-		Button::number = 0;
+		Game::number = 0;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -461,7 +461,7 @@ void Button::update( Graphics &gr, int count )
 	if (Button::focus == this)
 		gr.fill_rect(Button::r, Margin, Lighted);
 	else
-	if (Button::number == Button::num)
+	if (Game::number == Button::num)
 		gr.fill_rect(Button::r, Graphics::Color::White);
 
 	static constexpr std::array<Graphics::Color, 5> colors =
@@ -473,7 +473,7 @@ void Button::update( Graphics &gr, int count )
 		Graphics::Color::LightGray,
 	};
 
-	if (Button::number == Button::num)
+	if (Game::number == Button::num)
 		for (int i = GameTimer::from(4); i >= 0; i--)
 			gr.draw_rect(Button::r, i, colors[i]);
 	else
@@ -487,7 +487,7 @@ void Button::update( Graphics &gr, int count )
 
 	gr.draw_char(Button::r, Button::font, f, Graphics::Alignment::Center, _T("0123456789")[Button::num]);
 
-	if (Button::number == Button::num && Game::help > Assistance::None)
+	if (Game::number == Button::num && Game::help > Assistance::None)
 	{
 		auto rc = Graphics::Rect(BTN.right, Button::r.top, MNU.left - BTN.right, Button::r.height);
 		gr.draw_char(rc, Button::tiny, Graphics::Color::White, Graphics::Alignment::Bottom, count > 9 ? _T('?') : _T("0123456789")[count]);
@@ -555,7 +555,7 @@ Command GameButtons::mouseLButton( const int _x, const int _y )
 void GameButtons::mouseRButton( const int _x, const int _y )
 {
 	if (BTN.contains(_x, _y))
-		Button::number = 0;
+		Game::number = 0;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -758,13 +758,13 @@ void Game::update()
 
 	if (Sudoku::len() == 81)
 	{
-		Button::number = 0;
+		Game::number = 0;
 		if (Sudoku::solved())
 			GameTimer::stop();
 	}
 
 	auto time  = GameTimer::now();
-	auto count = Sudoku::count(Button::number);
+	auto count = Sudoku::count(Game::number);
 	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("UNSOLVABLE") : Sudoku::rating == -1 ? _T("AMBIGUOUS") : nullptr)
 	                                : (Sudoku::corrupt() ? _T("CORRUPT") : _T("SOLVED"));
 
@@ -835,8 +835,8 @@ void Game::mouseRButton( const int _x, const int _y )
 
 void Game::mouseWheel( const int, const int, const int _d )
 {
-	Game::command(static_cast<Command>(_d < 0 ? (Button::number == 0 ? 1 : 1 + (Button::number + 0) % 9)
-	                                          : (Button::number == 0 ? 9 : 1 + (Button::number + 7) % 9)));
+	Game::command(static_cast<Command>(_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
+	                                          : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9)));
 }
 
 void Game::keyboard( const int _k )
@@ -894,12 +894,12 @@ void Game::command( const Command _c )
 	case Button6Cmd:    /* falls through */
 	case Button7Cmd:    /* falls through */
 	case Button8Cmd:    /* falls through */
-	case Button9Cmd:    if (Sudoku::len() < 81) Button::number = static_cast<int>(_c);
+	case Button9Cmd:    if (Sudoku::len() < 81) Game::number = static_cast<int>(_c);
 	                    break;
-	case ClearCellCmd:  Button::number = GameCell::focus->get().num;
+	case ClearCellCmd:  Game::number = GameCell::focus->get().num;
 	                    Sudoku::set(GameCell::focus->get(), 0);
 	                    break;
-	case SetCellCmd:    Sudoku::set(GameCell::focus->get(),  Button::number, Game::help <= Assistance::Current);
+	case SetCellCmd:    Sudoku::set(GameCell::focus->get(),  Game::number, Game::help <= Assistance::Current);
 	                    break;
 	case SetSureCmd:    Sudoku::set(GameCell::focus->get(),  GameCell::focus->get().sure());
 	                    break;
@@ -908,30 +908,30 @@ void Game::command( const Command _c )
 	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
 	                    break;
 	case PrevLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].prev());
-	                    Sudoku::generate(); Button::number = 0; GameTimer::start();
+	                    Sudoku::generate(); Game::number = 0; GameTimer::start();
 	                    break;
 	case NextLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].next());
 	                    /* falls through */
-	case GenerateCmd:   Sudoku::generate(); Button::number = 0; GameTimer::start();
+	case GenerateCmd:   Sudoku::generate(); Game::number = 0; GameTimer::start();
 	                    break;
 	case HighLightCmd:  Game::light_f = !Game::light_f;
 	                    break;
 	case TimerCmd:      Game::timer_f = !Game::timer_f;
 	                    break;
-	case SolveCmd:      Sudoku::solve();    Button::number = 0;
+	case SolveCmd:      Sudoku::solve();    Game::number = 0;
 	                    if (Sudoku::len() < 81) Sudoku::rating = -2;
 	                    break;
 	case UndoCmd:       Sudoku::undo();
 	                    break;
-	case ClearCmd:      Sudoku::clear();    Button::number = 0; GameTimer::reset();
+	case ClearCmd:      Sudoku::clear();    Game::number = 0; GameTimer::reset();
 	                    break;
-	case EditCmd:       Sudoku::discard();                      GameTimer::reset();
+	case EditCmd:       Sudoku::discard();                    GameTimer::reset();
 	                    break;
 	case AcceptCmd:     Sudoku::accept();
 	                    break;
 	case SaveCmd:       Sudoku::save();
 	                    break;
-	case LoadCmd:       if (Sudoku::load()) Button::number = 0, GameTimer::start();
+	case LoadCmd:       if (Sudoku::load()) Game::number = 0, GameTimer::start();
 	                    break;
 	case QuitCmd:       Graphics::quit();
 	                    break;
