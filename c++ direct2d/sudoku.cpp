@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    07.11.2020
+   @date    08.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -35,6 +35,8 @@
 #include "graphics.hpp"
 #include "gametimer.hpp"
 #include <tchar.h>
+
+using Cell = SudokuCell;
 
 const TCHAR *title = _T("Sudoku");
 
@@ -85,7 +87,6 @@ enum Command: int
 	Button9Cmd = 9,
 	ClearCellCmd,
 	SetCellCmd,
-	SetSureCmd,
 	PrevHelpCmd,
 	NextHelpCmd,
 	PrevLevelCmd,
@@ -114,7 +115,7 @@ public:
 
 	GameHeader() {}
 
-	void    update      ( Graphics &, const TCHAR *, int );
+	void    update      ( Graphics &, const TCHAR *, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -123,25 +124,21 @@ public:
 class GameCell
 {
 	const Graphics::Rect r;
+	Cell* const cell;
 
-	using Cell = SudokuCell;
-	Cell &cell;
+	bool focused;
 
 	static Graphics::Font *font;
 
 public:
 
-	static GameCell *focus;
+	GameCell( const auto _x, const auto _y, Cell *_c ): r{_x, _y, CellSize, CellSize}, cell{_c}, focused{false} {}
 
-	GameCell( const auto _x, const auto _y, Cell &_c ): r{_x, _y, CellSize, CellSize}, cell{_c} {}
-
-	Cell  & get         ()        { return cell; }
-	bool    allowed     ( int n ) { return GameCell::cell.allowed(n); }
-	int     sure        ( int n ) { return GameCell::cell.sure(n); }
-
-	void    update      ( Graphics & );
+	void    update      ( Graphics &, Cell *, const int, const bool, const Assistance );
 	void    mouseMove   ( const int, const int );
+	void    mouseLeave  ();
 	Command mouseLButton( const int, const int );
+	Cell  * getCell     ();
 };
 
 /*---------------------------------------------------------------------------*/
@@ -152,10 +149,12 @@ public:
 
 	GameTable( Sudoku & );
 
-	void    update      ( Graphics & );
+	void    update      ( Graphics &, Cell *, const int, const bool, const Assistance );
 	void    mouseMove   ( const int, const int );
+	void    mouseLeave  ();
 	Command mouseLButton( const int, const int );
-	void    mouseRButton( const int, const int );
+	Command mouseRButton( const int, const int );
+	Cell  * getCell     ();
 };
 
 /*---------------------------------------------------------------------------*/
@@ -165,17 +164,18 @@ class Button: public GameTimer<int, std::ratio<1, 50>>
 	const Graphics::Rect r;
 	const int num;
 
+	bool focused;
+
 	static Graphics::Font *font;
 	static Graphics::Font *tiny;
 
 public:
 
-	static Button *focus;
+	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n}, focused{false} {}
 
-	Button( const auto _y, const int _n ): r{BTN.x, _y, BTN.width, CellSize}, num{_n} {}
-
-	void    update      ( Graphics &, int );
+	void    update      ( Graphics &, Cell *, const int, const int, const Assistance );
 	void    mouseMove   ( const int, const int );
+	void    mouseLeave  ();
 	Command mouseLButton( const int, const int );
 };
 
@@ -186,10 +186,11 @@ public:
 
 	GameButtons();
 
-	void    update      ( Graphics &, int );
+	void    update      ( Graphics &, Cell *, const int, const int, const Assistance );
 	void    mouseMove   ( const int, const int );
+	void    mouseLeave  ();
 	Command mouseLButton( const int, const int );
-	void    mouseRButton( const int, const int );
+	Command mouseRButton( const int, const int );
 };
 
 /*---------------------------------------------------------------------------*/
@@ -197,24 +198,27 @@ public:
 class MenuItem: public std::vector<const TCHAR *>, public GameTimer<int, std::ratio<1, 100>>
 {
 	const Graphics::Rect r;
-	const int idx;
-	const TCHAR *info;
+	const TCHAR * const info;
+	const int num;
+
+	int  idx;
+	bool focused;
 
 	static Graphics::Font *font;
 
 public:
 
-	static MenuItem *focus;
-	static bool back;
+	MenuItem( const int _n, const auto _y, const auto _h, const TCHAR *_i ): r{MNU.x, _y, MNU.width, _h}, info{_i}, num{_n}, idx{0}, focused{false} {}
 
-	MenuItem( const int _n, const auto _y, const auto _h, const TCHAR *_i ): r{MNU.x, _y, MNU.width, _h}, idx{_n}, info{_i} {}
-
-	int          index       ();
-	int          prev        ();
-	int          next        ();
-	void         update      ( Graphics & );
-	const TCHAR *mouseMove   ( const int, const int );
-	Command      mouseLButton( const int, const int );
+	void    update      ( Graphics &, const int );
+	void    mouseMove   ( const int, const int );
+	void    mouseLeave  ();
+	Command mouseLButton( const int, const int );
+	const TCHAR *getInfo();
+	template<typename T>
+	void    setIndex    ( const T );
+	int     prev        ();
+	int     next        ();
 };
 
 /*---------------------------------------------------------------------------*/
@@ -225,9 +229,11 @@ public:
 
 	GameMenu();
 
-	void         update      ( Graphics & );
-	const TCHAR *mouseMove   ( const int, const int );
-	Command      mouseLButton( const int, const int );
+	void    update      ( Graphics &, const int );
+	void    mouseMove   ( const int, const int );
+	void    mouseLeave  ();
+	Command mouseLButton( const int, const int );
+	const TCHAR *getInfo();
 };
 
 /*---------------------------------------------------------------------------*/
@@ -253,21 +259,18 @@ class Game: public Graphics, public Sudoku, public GameTimer<int>
 	GameMenu    mnu;
 	GameFooter  ftr;
 	
+	int  number;
 	bool tracking;
-	const TCHAR *about;
+	bool timer_f;
+	bool light_f;
+
+	Assistance help;
 
 public:
 
-	static Difficulty level;
-	static Assistance help;
-
-	static int  number;
-	static bool light_f;
-	static bool timer_f;
-
 	Game();
 
-	void update      ();
+	void update      ( HWND );
 	void mouseMove   ( const int, const int, HWND );
 	void mouseLeave  ();
 	void mouseLButton( const int, const int );
@@ -289,19 +292,6 @@ Graphics::Font *Button    ::tiny = nullptr;
 Graphics::Font *MenuItem  ::font = nullptr;
 Graphics::Font *GameFooter::font = nullptr;
 
-GameCell       *GameCell  ::focus = nullptr;
-Button         *Button    ::focus = nullptr;
-MenuItem       *MenuItem  ::focus = nullptr;
-
-bool            MenuItem  ::back   = false;
-
-Difficulty      Game      ::level  = Difficulty::Easy;
-Assistance      Game      ::help   = Assistance::None;
-
-int             Game      ::number  = 0;
-bool            Game      ::light_f = false;
-bool            Game      ::timer_f = true;
-
 /*---------------------------------------------------------------------------*/
 /*                                  SUDOKU                                   */
 /*---------------------------------------------------------------------------*/
@@ -312,7 +302,7 @@ auto game = Game();
 /*                              IMPLEMENTATION                               */
 /*---------------------------------------------------------------------------*/
 
-void GameHeader::update( Graphics &gr, const TCHAR *info, int time )
+void GameHeader::update( Graphics &gr, const TCHAR *info, const int time )
 {
 	if (GameHeader::font == nullptr)
 		GameHeader::font = gr.font(HDR.height, DWRITE_FONT_WEIGHT_MEDIUM, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
@@ -325,7 +315,7 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, int time )
 	if (info != nullptr)
 		gr.draw_text(HDR, GameHeader::tiny, Graphics::Color::Red, Graphics::Alignment::Center, info);
 
-	if (Game::timer_f)
+	if (time >= 0)
 	{
 		TCHAR v[16];
 		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
@@ -343,28 +333,26 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void GameCell::update( Graphics &gr )
+void GameCell::update( Graphics &gr, Cell *focus, const int number, const bool light, const Assistance help )
 {
 	if (GameCell::font == nullptr)
 		GameCell::font = gr.font(CellSize, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
 
-	auto h = Game::help;
-	auto n = Game::number;
-	auto f = GameCell::cell.empty() ? (GameCell::focus == this ? Lighted : Background)
-	                                : (GameCell::cell.immutable ? Graphics::Color::Black : Graphics::Color::Green);
+	auto f = GameCell::cell->empty() ? (GameCell::focused ? Lighted : Background)
+	                                 : (GameCell::cell->immutable ? Graphics::Color::Black : Graphics::Color::Green);
 
-	if (n != 0)
+	if (number != 0)
 	{
-		if      (h >= Assistance::Current && GameCell::cell.equal(n))   f = Graphics::Color::Red;
-		else if (h >= Assistance::Full    && GameCell::cell.sure(n))    f = Graphics::Color::Green;
-		else if (h >= Assistance::Full    && GameCell::cell.allowed(n)) f = Graphics::Color::Orange;
+		if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = Graphics::Color::Red;
+		else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = Graphics::Color::Green;
+		else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = Graphics::Color::Orange;
 	}
 
-	if (GameCell::focus == this || (Game::light_f && GameCell::focus != nullptr && GameCell::cell.in_lst(GameCell::focus->cell)))
+	if (GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus)))
 		gr.fill_rect(GameCell::r, Margin, Lighted);
 
-	if (!GameCell::cell.empty())
-		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T(" 123456789")[GameCell::cell.num]);
+	if (!GameCell::cell->empty())
+		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T(" 123456789")[GameCell::cell->num]);
 	else
 	if (f != Background)
 		gr.fill_ellipse(GameCell::r, CellSize / 3, f);
@@ -374,31 +362,36 @@ void GameCell::update( Graphics &gr )
 
 void GameCell::mouseMove( const int _x, const int _y )
 {
-	if (GameCell::r.contains(_x, _y))
-		GameCell::focus = this;
+	GameCell::focused = GameCell::r.contains(_x, _y);
+}
+
+void GameCell::mouseLeave()
+{
+	GameCell::focused = false;
 }
 
 Command GameCell::mouseLButton( const int _x, const int _y )
 {
 	if (GameCell::r.contains(_x, _y))
 	{
-		if (GameCell::cell.num == 0)
-		{
-			if (Game::number == 0 && Game::help >= Assistance::Full)
-				return SetSureCmd;
-			else
-				return SetCellCmd;
-		}
+		if (GameCell::cell->num == 0)
+			return SetCellCmd;
 		else
-		{
-			if (GameCell::cell.immutable)
-				return static_cast<Command>(GameCell::cell.num);
-			else
-				return ClearCellCmd;
-		}
+		if (GameCell::cell->immutable)
+			return static_cast<Command>(GameCell::cell->num);
+		else
+			return ClearCellCmd;
 	}
 
 	return NoCmd;
+}
+
+Cell *GameCell::getCell()
+{
+	if (GameCell::focused)
+		return GameCell::cell;
+
+	return nullptr;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -410,22 +403,26 @@ GameTable::GameTable( Sudoku &_s )
 		auto x = TAB.x + (c.pos % 9) * (CellSize + Margin) + (c.pos % 9 / 3) * Margin * 3;
 		auto y = TAB.y + (c.pos / 9) * (CellSize + Margin) + (c.pos / 9 / 3) * Margin * 3;
 
-		GameTable::emplace_back(x, y, c);
+		GameTable::emplace_back(x, y, &c);
 	}
 }
 
-void GameTable::update( Graphics &gr )
+void GameTable::update( Graphics &gr, Cell *focus, const int number, const bool light, const Assistance help )
 {
 	for (auto &c: *this)
-		c.update(gr);
+		c.update(gr, focus, number, light, help);
 }
 
 void GameTable::mouseMove( const int _x, const int _y )
 {
-	GameCell::focus = nullptr;
-
 	for (auto &c: *this)
 		c.mouseMove(_x, _y);
+}
+
+void GameTable::mouseLeave()
+{
+	for (auto &c: *this)
+		c.mouseLeave();
 }
 
 Command GameTable::mouseLButton( const int _x, const int _y )
@@ -439,15 +436,26 @@ Command GameTable::mouseLButton( const int _x, const int _y )
 	return NoCmd;
 }
 
-void GameTable::mouseRButton( const int _x, const int _y )
+Command GameTable::mouseRButton( const int _x, const int _y )
 {
 	if (TAB.contains(_x, _y))
-		Game::number = 0;
+		return Button0Cmd;
+
+	return NoCmd;
+}
+
+Cell *GameTable::getCell()
+{
+	Cell *cell = nullptr;
+	for (auto &c: *this)
+		if (cell = c.getCell(), cell != nullptr)
+			break;
+	return cell;
 }
 
 /*---------------------------------------------------------------------------*/
 
-void Button::update( Graphics &gr, int count )
+void Button::update( Graphics &gr, Cell *focus, const int number, const int count, const Assistance help )
 {
 	if (Button::font == nullptr)
 		Button::font = gr.font(CellSize, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
@@ -455,13 +463,12 @@ void Button::update( Graphics &gr, int count )
 	if (Button::tiny == nullptr)
 		Button::tiny = gr.font(CellSize / 2, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL, _T("Arial"));
 
-	auto h = Game::help;
 	auto f = Graphics::Color::DimGray;
 
-	if (Button::focus == this)
+	if (Button::focused)
 		gr.fill_rect(Button::r, Margin, Lighted);
 	else
-	if (Game::number == Button::num)
+	if (number == Button::num)
 		gr.fill_rect(Button::r, Graphics::Color::White);
 
 	static constexpr std::array<Graphics::Color, 5> colors =
@@ -473,21 +480,21 @@ void Button::update( Graphics &gr, int count )
 		Graphics::Color::LightGray,
 	};
 
-	if (Game::number == Button::num)
+	if (number == Button::num)
 		for (int i = GameTimer::from(4); i >= 0; i--)
 			gr.draw_rect(Button::r, i, colors[i]);
 	else
 		gr.draw_rect(Button::r, Graphics::Color::Black);
 
-	if (GameCell::focus != nullptr)
+	if (focus != nullptr)
 	{
-		if      (h >= Assistance::Sure      && GameCell::focus->sure(Button::num))    f = Graphics::Color::Green;
-		else if (h >= Assistance::Available && GameCell::focus->allowed(Button::num)) f = Graphics::Color::Orange;
+		if      (help >= Assistance::Sure      && focus->sure(Button::num))    f = Graphics::Color::Green;
+		else if (help >= Assistance::Available && focus->allowed(Button::num)) f = Graphics::Color::Orange;
 	}
 
 	gr.draw_char(Button::r, Button::font, f, Graphics::Alignment::Center, _T("0123456789")[Button::num]);
 
-	if (Game::number == Button::num && Game::help > Assistance::None)
+	if (number == Button::num && help > Assistance::None)
 	{
 		auto rc = Graphics::Rect(BTN.right, Button::r.top, MNU.left - BTN.right, Button::r.height);
 		gr.draw_char(rc, Button::tiny, Graphics::Color::White, Graphics::Alignment::Bottom, count > 9 ? _T('?') : _T("0123456789")[count]);
@@ -496,8 +503,12 @@ void Button::update( Graphics &gr, int count )
 
 void Button::mouseMove( const int _x, const int _y )
 {
-	if (Button::r.contains(_x, _y))
-		Button::focus = this;
+	Button::focused = Button::r.contains(_x, _y);
+}
+
+void Button::mouseLeave()
+{
+	Button::focused = false;
 }
 
 Command Button::mouseLButton( const int _x, const int _y )
@@ -524,18 +535,22 @@ GameButtons::GameButtons()
 	}
 }
 
-void GameButtons::update( Graphics &gr, int count )
+void GameButtons::update( Graphics &gr, Cell *focus, const int number, const int count, const Assistance help )
 {
 	for (auto &b: *this)
-		b.update(gr, count);
+		b.update(gr, focus, number, count, help);
 }
 
 void GameButtons::mouseMove( const int _x, const int _y )
 {
-	Button::focus = nullptr;
-
 	for (auto &b: *this)
 		b.mouseMove(_x, _y);
+}
+
+void GameButtons::mouseLeave()
+{
+	for (auto &b: *this)
+		b.mouseLeave();
 }
 
 Command GameButtons::mouseLButton( const int _x, const int _y )
@@ -552,86 +567,46 @@ Command GameButtons::mouseLButton( const int _x, const int _y )
 	return NoCmd;
 }
 
-void GameButtons::mouseRButton( const int _x, const int _y )
+Command GameButtons::mouseRButton( const int _x, const int _y )
 {
 	if (BTN.contains(_x, _y))
-		Game::number = 0;
+		return Button0Cmd;
+
+	return NoCmd;
 }
 
 /*---------------------------------------------------------------------------*/
 
-int MenuItem::index()
-{
-	switch (MenuItem::idx)
-	{
-	case 0: return static_cast<int>(Game::level);
-	case 1: return static_cast<int>(Game::help);
-	case 2: return Game::light_f ? 1 : 0;
-	}
-
-	return 0;
-}
-
-int MenuItem::prev()
-{
-	const int max = MenuItem::size() - 1;
-
-	switch (MenuItem::idx)
-	{
-	case 0: return static_cast<int>(Game::level) == 0 ? max : static_cast<int>(Game::level) == max ? 1 : 0;
-	case 1: return (static_cast<int>(Game::help) + max) % (max + 1);
-	case 2: return Game::light_f ? 0 : 1;
-	}
-
-	return 0;
-}
-
-int MenuItem::next()
-{
-	const int max = MenuItem::size() - 1;
-
-	switch (MenuItem::idx)
-	{
-	case 0: return static_cast<int>(Game::level) == max ? 0 : static_cast<int>(Game::level) == 0 ? 1 : max;
-	case 1: return (static_cast<int>(Game::help) + 1) % (max + 1);
-	case 2: return Game::light_f ? 0 : 1;
-	}
-
-	return 0;
-}
-
-void MenuItem::update( Graphics &gr )
+void MenuItem::update( Graphics &gr, const int _x )
 {
 	static constexpr auto h = std::round(TabSize / 1.8f / MnuSize);
 
 	if (MenuItem::font == nullptr)
 		MenuItem::font = gr.font(h, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
 
-	if (MenuItem::focus == this)
+	if (MenuItem::focused)
 		gr.fill_rect(MenuItem::r, GameTimer::until(Margin * 4), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
-		auto cl = MenuItem::focus != this ? Lighted : MenuItem::back ? Graphics::Color::Black : Background;
-		auto cr = MenuItem::focus != this ? Lighted : MenuItem::back ? Background : Graphics::Color::Black;
+		auto cl = !MenuItem::focused ? Lighted : _x < MNU.center ? Graphics::Color::Black : Background;
+		auto cr = !MenuItem::focused ? Lighted : _x < MNU.center ? Background : Graphics::Color::Black;
 
 		gr.draw_char(MenuItem::r, MenuItem::font, cl, Graphics::Alignment::Left,  _T('◄'));
 		gr.draw_char(MenuItem::r, MenuItem::font, cr, Graphics::Alignment::Right, _T('►'));
 	}
 
-	gr.draw_text(MenuItem::r, MenuItem::font, Graphics::Color::Black, Graphics::Alignment::Center, MenuItem::at(MenuItem::index()));
+	gr.draw_text(MenuItem::r, MenuItem::font, Graphics::Color::Black, Graphics::Alignment::Center, MenuItem::at(MenuItem::idx));
 }
 
-const TCHAR *MenuItem::mouseMove( const int _x, const int _y )
+void MenuItem::mouseMove( const int _x, const int _y )
 {
-	if (MenuItem::r.contains(_x, _y))
-	{
-		MenuItem::focus = this;
-		MenuItem::back = _x < MNU.center;
-		return MenuItem::info;
-	}
+	MenuItem::focused = MenuItem::r.contains(_x, _y);
+}
 
-	return nullptr;
+void MenuItem::mouseLeave()
+{
+	MenuItem::focused = false;
 }
 
 Command MenuItem::mouseLButton( const int _x, const int _y )
@@ -640,10 +615,10 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 	{
 		GameTimer::restart();
 
-		switch (MenuItem::idx)
+		switch (MenuItem::num)
 		{
-		case  0: return MenuItem::back ? PrevLevelCmd : NextLevelCmd;
-		case  1: return MenuItem::back ? PrevHelpCmd  : NextHelpCmd;
+		case  0: return _x < MNU.center ? PrevLevelCmd : NextLevelCmd;
+		case  1: return _x < MNU.center ? PrevHelpCmd  : NextHelpCmd;
 		case  2: return HighLightCmd;
 		case  3: return GenerateCmd;
 		case  4: return SolveCmd;
@@ -658,6 +633,46 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 	}
 
 	return NoCmd;
+}
+
+const TCHAR *MenuItem::getInfo()
+{
+	if (MenuItem::focused)
+		return MenuItem::info;
+
+	return nullptr;
+}
+
+template<typename T>
+void MenuItem::setIndex( const T _i )
+{
+	MenuItem::idx = static_cast<int>(_i);
+}
+
+int MenuItem::prev()
+{
+	const int i = MenuItem::idx;
+	const int s = MenuItem::size();
+
+	if (MenuItem::num == 0)
+		MenuItem::idx = i == 0 ? s - 1 : i == s - 1 ? 1 : 0;
+	else
+		MenuItem::idx = (i + s - 1) % s;
+
+	return MenuItem::idx;
+}
+
+int MenuItem::next()
+{
+	const int i = MenuItem::idx;
+	const int s = MenuItem::size();
+
+	if (MenuItem::num == 0)
+		MenuItem::idx = i == s - 1 ? 0 : i == 0 ? 1 : s - 1;
+	else
+		MenuItem::idx = (i + 1) % s;
+
+	return MenuItem::idx;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -702,24 +717,24 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back(_T("quit"));
 }
 
-void GameMenu::update( Graphics &gr )
+void GameMenu::update( Graphics &gr, const int _x )
 {
 	for (auto &m: *this)
-		m.update(gr);
+		m.update(gr, _x);
 
 	gr.draw_rect(MNU, Graphics::Color::Black);
 }
 
-const TCHAR *GameMenu::mouseMove( const int _x, const int _y )
+void GameMenu::mouseMove( const int _x, const int _y )
 {
-	MenuItem::focus = nullptr;
-
-	const TCHAR *info = nullptr;
 	for (auto &m: *this)
-		if (info = m.mouseMove(_x, _y), info != nullptr)
-			break;
+		m.mouseMove(_x, _y);
+}
 
-	return info;
+void GameMenu::mouseLeave()
+{
+	for (auto &m: *this)
+		m.mouseLeave();
 }
 
 Command GameMenu::mouseLButton( const int _x, const int _y )
@@ -733,42 +748,46 @@ Command GameMenu::mouseLButton( const int _x, const int _y )
 	return NoCmd;
 }
 
+const TCHAR *GameMenu::getInfo()
+{
+	const TCHAR *info = nullptr;
+	for (auto &m: *this)
+		if (info = m.getInfo(), info != nullptr)
+			break;
+	return info;
+}
+
 /*---------------------------------------------------------------------------*/
 
-void GameFooter::update( Graphics &gr, const TCHAR *about )
+void GameFooter::update( Graphics &gr, const TCHAR *info )
 {
 	if (GameFooter::font == nullptr)
 		GameFooter::font = gr.font(std::min(FTR.height, WIN.width / 40), DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
 
-	if (about == nullptr)
-		about = _T("Sudoku game, solver and generator");
-	gr.draw_text(FTR, GameFooter::font, Graphics::Color::Gray, Graphics::Alignment::Center, about);
+	if (info == nullptr)
+		info = _T("Sudoku game, solver and generator");
+	gr.draw_text(FTR, GameFooter::font, Graphics::Color::Gray, Graphics::Alignment::Center, info);
 }
 
 /*---------------------------------------------------------------------------*/
 
-Game::Game(): hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, tracking{false}, about{nullptr}
+Game::Game(): hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, number{0}, tracking{false}, timer_f{true}, light_f{false}, help{Assistance::None}
 {
 	Sudoku::generate();
+
+	Game::mnu[0].setIndex(Sudoku::level);
+	Game::mnu[1].setIndex(Game::help);
+	Game::mnu[2].setIndex(Game::light_f);
 }
 
-void Game::update()
+void Game::update( HWND hWnd )
 {
-	Game::level = Sudoku::level;
-
 	if (Sudoku::len() == 81)
 	{
 		Game::number = 0;
 		if (Sudoku::solved())
 			GameTimer::stop();
 	}
-
-	auto time  = GameTimer::now();
-	auto count = Sudoku::count(Game::number);
-	auto info  = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("UNSOLVABLE") : Sudoku::rating == -1 ? _T("AMBIGUOUS") : nullptr)
-	                                : (Sudoku::corrupt() ? _T("CORRUPT") : _T("SOLVED"));
-
-	Graphics::begin(Background);
 
 	static constexpr std::array<Graphics::Color, 5> colors =
 	{
@@ -779,19 +798,31 @@ void Game::update()
 		Graphics::Color::Crimson,
 	};
 
+	auto time = Game::timer_f ? GameTimer::now() : -1;
+	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("UNSOLVABLE") : Sudoku::rating == -1 ? _T("AMBIGUOUS") : nullptr)
+	                               : (Sudoku::corrupt() ? _T("CORRUPT") : _T("SOLVED"));
+
+	POINT cursor;
+	GetCursorPos(&cursor);
+	ScreenToClient(hWnd, &cursor);
+
+	SudokuCell *focus = tab.getCell();
+
+	Graphics::begin(Background);
+
 	Graphics::fill_rect(Graphics::Rect(TAB.x + CellSize * 3 + Margin * 3, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
 	Graphics::fill_rect(Graphics::Rect(TAB.x + CellSize * 6 + Margin * 9, TAB.y, Margin * 2, TAB.height), Graphics::Color::DimGray);
 	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 
-	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
-	Graphics::fill_rect(Graphics::Rect(BTN.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Game::level]);
+	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Sudoku::level]);
+	Graphics::fill_rect(Graphics::Rect(BTN.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Sudoku::level]);
 
 	hdr.update(*this, info, time);
-	tab.update(*this);
-	btn.update(*this, count);
-	mnu.update(*this);
-	ftr.update(*this, Game::about);
+	tab.update(*this, focus, Game::number, Game::light_f, Game::help);
+	btn.update(*this, focus, Game::number, Sudoku::count(Game::number), Game::help);
+	mnu.update(*this, cursor.x);
+	ftr.update(*this, mnu.getInfo());
 
 	Graphics::end();
 }
@@ -800,7 +831,7 @@ void Game::mouseMove( const int _x, const int _y, HWND hWnd )
 {
 	tab.mouseMove(_x, _y);
 	btn.mouseMove(_x, _y);
-	Game::about = mnu.mouseMove(_x, _y);
+	mnu.mouseMove(_x, _y);
 
 	if (!Game::tracking)
 	{
@@ -812,9 +843,9 @@ void Game::mouseMove( const int _x, const int _y, HWND hWnd )
 
 void Game::mouseLeave()
 {
-	GameCell::focus = nullptr;
-	Button  ::focus = nullptr;
-	MenuItem::focus = nullptr;
+	tab.mouseLeave();
+	btn.mouseLeave();
+	mnu.mouseLeave();
 
 	Game::tracking = false;
 }
@@ -829,8 +860,8 @@ void Game::mouseLButton( const int _x, const int _y )
 
 void Game::mouseRButton( const int _x, const int _y )
 {
-	tab.mouseRButton(_x, _y);
-	btn.mouseRButton(_x, _y);
+	Game::command(tab.mouseRButton(_x, _y));
+	Game::command(btn.mouseRButton(_x, _y));
 }
 
 void Game::mouseWheel( const int, const int, const int _d )
@@ -885,7 +916,8 @@ void Game::command( const Command _c )
 	switch (_c)
 	{
 	case NoCmd:         break;
-	case Button0Cmd:    /* falls through */
+	case Button0Cmd:    Game::number = 0;
+	                    break;
 	case Button1Cmd:    /* falls through */
 	case Button2Cmd:    /* falls through */
 	case Button3Cmd:    /* falls through */
@@ -896,25 +928,28 @@ void Game::command( const Command _c )
 	case Button8Cmd:    /* falls through */
 	case Button9Cmd:    if (Sudoku::len() < 81) Game::number = static_cast<int>(_c);
 	                    break;
-	case ClearCellCmd:  Game::number = GameCell::focus->get().num;
-	                    Sudoku::set(GameCell::focus->get(), 0);
+	case ClearCellCmd:  Game::number = tab.getCell()->num;
+	                    Sudoku::set(*tab.getCell(), 0);
 	                    break;
-	case SetCellCmd:    Sudoku::set(GameCell::focus->get(),  Game::number, Game::help <= Assistance::Current);
-	                    break;
-	case SetSureCmd:    Sudoku::set(GameCell::focus->get(),  GameCell::focus->get().sure());
+	case SetCellCmd:    if (Game::number == 0 && Game::help >= Assistance::Full)
+	                    Sudoku::set(*tab.getCell(),  tab.getCell()->sure());
+	                    else
+	                    Sudoku::set(*tab.getCell(),  Game::number, Game::help <= Assistance::Current);
 	                    break;
 	case PrevHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].prev());
 	                    break;
 	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
 	                    break;
-	case PrevLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].prev());
+	case PrevLevelCmd:  Sudoku::level = static_cast<Difficulty>(Game::mnu[0].prev());
 	                    Sudoku::generate(); Game::number = 0; GameTimer::start();
+                    	Game::mnu[0].setIndex(Sudoku::level);
 	                    break;
-	case NextLevelCmd:  Sudoku::level = Game::level = static_cast<Difficulty>(Game::mnu[0].next());
+	case NextLevelCmd:  Sudoku::level = static_cast<Difficulty>(Game::mnu[0].next());
 	                    /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Game::number = 0; GameTimer::start();
+                    	Game::mnu[0].setIndex(Sudoku::level);
 	                    break;
-	case HighLightCmd:  Game::light_f = !Game::light_f;
+	case HighLightCmd:  Game::light_f = !Game::light_f; Game::mnu[2].setIndex(Game::light_f);
 	                    break;
 	case TimerCmd:      Game::timer_f = !Game::timer_f;
 	                    break;
@@ -1009,7 +1044,7 @@ int WINAPI _tWinMain( HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow )
 			continue;
 		}
 
-		game.update();
+		game.update(hWnd);
 	}
 
 	return 0;
