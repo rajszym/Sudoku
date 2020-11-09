@@ -103,7 +103,7 @@ public:
 
 	GameHeader() {}
 
-	void    update      ( Console &, bool, const TCHAR *, int );
+	void    update      ( Console &, const bool, const TCHAR *, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -118,9 +118,9 @@ class GameCell
 
 public:
 
-	GameCell( const int _x, const int _y, Cell *_c ): x{_x}, y{_y}, cell{_c}, focused{false} {}
+	GameCell( const int _x, const int _y, Cell* const _c ): x{_x}, y{_y}, cell{_c}, focused{false} {}
 
-	void    update      ( Console &, bool, Cell *, const int, const bool, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const bool, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	Cell  * getCell     ();
@@ -134,7 +134,7 @@ public:
 
 	GameTable( Sudoku & );
 
-	void    update      ( Console &, bool, Cell *, const int, const bool, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const bool, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	Command mouseRButton( const int, const int );
@@ -154,7 +154,7 @@ public:
 
 	Button( const int _y, const int _n ): x(BTN.x + 1), y{_y}, num{_n} {}
 
-	void    update      ( Console &, bool, Cell *, const int, const int, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const int, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
@@ -166,7 +166,7 @@ public:
 
 	GameButtons();
 
-	void    update      ( Console &, bool, Cell *, const int, const int, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const int, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	Command mouseRButton( const int, const int );
@@ -188,7 +188,7 @@ public:
 
 	MenuItem( const int _n, const int _y, const TCHAR *_k, const TCHAR *_i ): x{MNU.x + 1}, y{_y}, key{_k}, info{_i}, num{_n}, idx{0}, focused{false} {}
 
-	void    update      ( Console &, bool, const int );
+	void    update      ( Console &, const bool, const int );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	const TCHAR *getInfo();
@@ -206,7 +206,7 @@ public:
 
 	GameMenu();
 
-	void    update      ( Console &, bool, const int );
+	void    update      ( Console &, const bool, const int );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	const TCHAR *getInfo();
@@ -220,7 +220,7 @@ public:
 
 	GameFooter() {}
 
-	void update( Console &, bool, const TCHAR * );
+	void update( Console &, const bool, const TCHAR * );
 };
 
 /*---------------------------------------------------------------------------*/
@@ -264,7 +264,7 @@ public:
 /*                              IMPLEMENTATION                               */
 /*---------------------------------------------------------------------------*/
 
-void GameHeader::update( Console &con, bool init, const TCHAR *info, int time )
+void GameHeader::update( Console &con, const bool init, const TCHAR *info, const int time )
 {
 	if (init)
 	{
@@ -299,7 +299,7 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void GameCell::update( Console &con, bool, Cell *focus, const int number, const bool light, const Assistance help )
+void GameCell::update( Console &con, const bool, Cell* const focus, const int number, const bool light, const Assistance help )
 {
 	auto l = GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus));
 	auto f = GameCell::cell->empty() ? Console::LightGrey : GameCell::cell->immutable ? Console::White : Console::LightGreen;
@@ -358,7 +358,7 @@ GameTable::GameTable( Sudoku &_s )
 	}
 }
 
-void GameTable::update( Console &con, bool init, Cell *focus, const int number, const bool light, const Assistance help )
+void GameTable::update( Console &con, const bool init, Cell* const focus, const int number, const bool light, const Assistance help )
 {
 	if (init)
 	{
@@ -407,7 +407,7 @@ Cell *GameTable::getCell()
 
 /*---------------------------------------------------------------------------*/
 
-void Button::update( Console &con, bool init, Cell *focus, const int number, const int count, const Assistance help )
+void Button::update( Console &con, const bool init, Cell* const focus, const int number, const int count, const Assistance help )
 {
 	if (init)
 		con.Put(BTN.x + 1, Button::y, _T("0123456789")[num]);
@@ -452,7 +452,7 @@ GameButtons::GameButtons()
 	}
 }
 
-void GameButtons::update( Console &con, bool init, Cell *focus, const int number, const int count, const Assistance help )
+void GameButtons::update( Console &con, const bool init, Cell* const focus, const int number, const int count, const Assistance help )
 {
 	if (init)
 		con.DrawSingle(BTN);
@@ -494,7 +494,7 @@ Command GameButtons::mouseRButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void MenuItem::update( Console &con, bool init, const int _x )
+void MenuItem::update( Console &con, const bool init, const int _x )
 {
 	if (init)
 	{
@@ -620,7 +620,7 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back(_T("quit"));
 }
 
-void GameMenu::update( Console &con, bool init, const int _x )
+void GameMenu::update( Console &con, const bool init, const int _x )
 {
 	if (init)
 		con.DrawSingle(MNU);
@@ -657,7 +657,7 @@ const TCHAR *GameMenu::getInfo()
 
 /*---------------------------------------------------------------------------*/
 
-void GameFooter::update( Console &con, bool init, const TCHAR *info )
+void GameFooter::update( Console &con, const bool init, const TCHAR *info )
 {
 	if (init)
 		con.Fill(FTR, Console::Black, Console::Grey);
