@@ -35,20 +35,33 @@
 
 #include <windows.h>
 #include <algorithm>
+#include <tchar.h>
 
 class Console
 {
 public:
 
-	enum: char
+	enum: TCHAR
 	{
-		LightShade     = '\xB0',
-		MediumShade    = '\xB1',
-		DarkShade      = '\xB2',
-		FullBlock      = '\xDB',
-		LowerHalfBlock = '\xDC',
-		UpperHalfBlock = '\xDF',
-		BlackSquare    = '\xFE',
+#if defined(UNICODE)
+		LightShade     = _T('░'),
+		MediumShade    = _T('▒'),
+		DarkShade      = _T('▓'),
+		FullBlock      = _T('█'),
+		LeftHalfBlock  = _T('▌'),
+		RightHalfBlock = _T('▐'),
+		LowerHalfBlock = _T('▄'),
+		UpperHalfBlock = _T('▀'),
+		BlackSquare    = _T('■'),
+#else
+		LightShade     = _T('\xB0'),
+		MediumShade    = _T('\xB1'),
+		DarkShade      = _T('\xB2'),
+		FullBlock      = _T('\xDB'),
+		LowerHalfBlock = _T('\xDC'),
+		UpperHalfBlock = _T('\xDF'),
+		BlackSquare    = _T('\xFE'),
+#endif
 	};
 
 	enum Color: WORD
@@ -202,53 +215,53 @@ private:
 		return true;
 	}
 
-	bool DrawHLine( const Rect &rc, const int y, const char * const box, const Bar b = NoBar ) const
+	bool DrawHLine( const Rect &rc, const int y, const TCHAR * const box, const Bar b = NoBar ) const
 	{
 		if (y < rc.top || y >= rc.bottom || rc.width <= 1)
 			return false;
 
 		int x = rc.left;
-		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		Bar p = Bar(_tcschr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
 		if (!Put(x++, y, box[p | b | RightBar]))
 			return false;
 
 		while (x < rc.right - 1) {
-			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+			p = Bar(_tcschr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
 			if (!Put(x++, y, box[p | LeftBar | RightBar]))
 				return false;
 		}
 
-		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		p = Bar(_tcschr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
 		if (!Put(x++, y, box[p | b | LeftBar]))
 			return false;
 
 		return true;
 	}
 
-	bool DrawVLine( const Rect &rc, const int x, const char * const box, const Bar b = NoBar ) const
+	bool DrawVLine( const Rect &rc, const int x, const TCHAR * const box, const Bar b = NoBar ) const
 	{
 		if (x < rc.left || x >= rc.right || rc.height <= 1)
 			return false;
 
 		int y = rc.top;
-		Bar p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		Bar p = Bar(_tcschr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
 		if (!Put(x, y++, box[p | b | DownBar]))
 			return false;
 
 		while (y < rc.bottom - 1) {
-			p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+			p = Bar(_tcschr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
 			if (!Put(x, y++, box[p | UpBar | DownBar]))
 				return false;
 		}
 
-		p = Bar(strchr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
+		p = Bar(_tcschr(box, Get(x, y)) - box); if (p > AllBars) p = NoBar;
 		if (!Put(x, y++, box[p | b | UpBar]))
 			return false;
 
 		return true;
 	}
 
-	bool DrawFrame( const Rect &rc, const char * const box ) const
+	bool DrawFrame( const Rect &rc, const TCHAR * const box ) const
 	{
 		if (rc.width < 1 || rc.height < 1)
 			return false;
@@ -270,7 +283,7 @@ private:
 		}
 	}
 
-	bool DrawFrame( const int x, const int y, const int width, const int height, const char * const box ) const
+	bool DrawFrame( const int x, const int y, const int width, const int height, const TCHAR * const box ) const
 	{
 		const Rect rc(x, y, width, height);
 		return DrawFrame(rc, box);
@@ -506,8 +519,8 @@ public:
 		const DWORD size = sbi.dwSize.X * sbi.dwSize.Y;
 		DWORD count;
 
-		return FillConsoleOutputCharacter(Cout, ' ', size, home, &count) &&
-		       FillConsoleOutputAttribute(Cout,  a , size, home, &count) &&
+		return FillConsoleOutputCharacter(Cout, _T(' '), size, home, &count) &&
+		       FillConsoleOutputAttribute(Cout, a,       size, home, &count) &&
 		       Home();
 	}
 
@@ -612,9 +625,9 @@ public:
 		       SetTextColor(fore, back);
 	}
 
-	char Get( const int x, const int y ) const
+	TCHAR Get( const int x, const int y ) const
 	{
-		CHAR  c;
+		TCHAR c;
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		if (!ReadConsoleOutputCharacter(Cout, &c, 1, coord, &count))
@@ -623,7 +636,7 @@ public:
 		return c;
 	}
 
-	char Get( const int x, const int y, Color * const fore, Color * const back = NULL ) const
+	TCHAR Get( const int x, const int y, Color * const fore, Color * const back = NULL ) const
 	{
 		WORD  a;
 		DWORD count;
@@ -649,9 +662,9 @@ public:
 		return a == t || WriteConsoleOutputAttribute(Cout, &a, 1, coord, &count);
 	}
 
-	bool Put( const int x, const int y, const char c ) const
+	bool Put( const int x, const int y, const TCHAR c ) const
 	{
-		CHAR  t;
+		TCHAR t;
 		DWORD count;
 		const COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		if (!ReadConsoleOutputCharacter(Cout, &t, 1, coord, &count))
@@ -660,10 +673,10 @@ public:
 		return c == t || WriteConsoleOutputCharacter(Cout, &c, 1, coord, &count);
 	}
 
-	bool Put( const int x, const int y, const char * const s ) const
+	bool Put( const int x, const int y, const TCHAR * const s ) const
 	{
 		int i = x;
-		const char *p = s;
+		const TCHAR *p = s;
 		while (*p)
 			if (!Put(i++, y, *p++))
 				return false;
@@ -671,16 +684,16 @@ public:
 		return true;
 	}
 
-	bool Put( const int x, const int y, const char c, const Color fore, const Color back = Black ) const
+	bool Put( const int x, const int y, const TCHAR c, const Color fore, const Color back = Black ) const
 	{
 		return Put(x, y, fore, back) &&
 		       Put(x, y, c);
 	}
 
-	bool Put( const int x, const int y, const char * const s, const Color fore, const Color back = Black ) const
+	bool Put( const int x, const int y, const TCHAR * const s, const Color fore, const Color back = Black ) const
 	{
 		int i = x;
-		const char *p = s;
+		const TCHAR *p = s;
 		while (*p)
 			if (!Put(i++, y, *p++, fore, back))
 				return false;
@@ -688,7 +701,7 @@ public:
 		return true;
 	}
 
-	char Get() const
+	TCHAR Get() const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
@@ -697,7 +710,7 @@ public:
 		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y);
 	}
 
-	char Get( Color * const fore, Color * const back = NULL ) const
+	TCHAR Get( Color * const fore, Color * const back = NULL ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
@@ -706,7 +719,7 @@ public:
 		return Get(sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y, fore, back);
 	}
 
-	bool Put( const char c ) const
+	bool Put( const TCHAR c ) const
 	{
 		CONSOLE_SCREEN_BUFFER_INFO sbi;
 		if (!GetConsoleScreenBufferInfo(Cout, &sbi))
@@ -740,8 +753,11 @@ public:
 
 	bool DrawSingle( const Rect &rc ) const
 	{
- 		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
-		const char *box = "\x20""\x20""\x20""\xDA""\x20""\xC4""\xBF""\xC2""\x20""\xC0""\xB3""\xC3""\xD9""\xC1""\xB4""\xC5";
+#if defined(UNICODE)
+		const TCHAR box[] = _T(   " "   "╶"   "╷"   "┌"   "╴"   "─"   "┐"   "┬"   "╵"   "└"   "│"   "├"   "┘"   "┴"   "┤"   "┼");
+#else
+		const TCHAR box[] = _T("\x20""\x20""\x20""\xDA""\x20""\xC4""\xBF""\xC2""\x20""\xC0""\xB3""\xC3""\xD9""\xC1""\xB4""\xC5");
+#endif
 		return DrawFrame(rc, box);
 	}
 
@@ -753,8 +769,11 @@ public:
 
 	bool DrawDouble( const Rect &rc ) const
 	{
- 		//                 ----  ---R  ---D  --DR  -L--  -L-R  -L-D  -LDR  U---  U--R  U-D-  U-DR  UL--  UL-R  ULD-  ULDR
-		const char *box = "\x20""\x20""\x20""\xC9""\x20""\xCD""\xBB""\xCB""\x20""\xC8""\xBA""\xCC""\xBC""\xCA""\xB9""\xCE";
+#if defined(UNICODE)
+		const TCHAR box[] = _T(   " "   " "   " "   "╔"   " "   "═"   "╗"   "╦"   " "   "╚"   "║"   "╠"   "╝"   "╩"   "╣"   "╬");
+#else
+		const TCHAR box[] = _T("\x20""\x20""\x20""\xC9""\x20""\xCD""\xBB""\xCB""\x20""\xC8""\xBA""\xCC""\xBC""\xCA""\xB9""\xCE");
+#endif
 		return DrawFrame(rc, box);
 	}
 
@@ -766,7 +785,12 @@ public:
 
 	bool DrawBold( const Rect &rc ) const
 	{
-		const char *box = "\xDC\xDB\xDF\xFE";
+#if defined(UNICODE)
+		const TCHAR box[] = _T(   " "   "╺"   "╻"   "┏"   "╸"   "━"   "┓"   "┳"   "╹"   "┗"   "┃"   "┣"   "┛"   "┻"   "┫"   "╋");
+
+		return DrawFrame(rc, box);
+#else
+		const TCHAR box[] = { LowerHalfBlock, FullBlock, UpperHalfBlock, BlackSquare };
 
 		if (rc.width <= 0 || rc.height <= 0)
 			return false;
@@ -788,6 +812,7 @@ public:
 		}
 
 		return true;
+#endif
 	}
 
 	bool DrawBold( const int x, const int y, const int width, const int height ) const
@@ -815,7 +840,7 @@ public:
 		return Fill(rc.x, rc.y, rc.width, rc.height, fore, back);
 	}
 
-	bool Fill( const int x, const int y, const int width, const int height, const char c = ' ' ) const
+	bool Fill( const int x, const int y, const int width, const int height, const TCHAR c = _T(' ') ) const
 	{
 		if (width <= 0 || height <= 0)
 			return false;
@@ -829,7 +854,7 @@ public:
 		return true;
 	}
 
-	bool Fill( const Rect &rc, const char c = ' ' ) const
+	bool Fill( const Rect &rc, const TCHAR c = _T(' ') ) const
 	{
 		return Fill(rc.x, rc.y, rc.width, rc.height, c);
 	}
