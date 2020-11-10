@@ -754,9 +754,9 @@ public:
 	bool DrawSingle( const Rect &rc ) const
 	{
 #if defined(UNICODE)
-		const TCHAR box[] = _T(   " "   "╶"   "╷"   "┌"   "╴"   "─"   "┐"   "┬"   "╵"   "└"   "│"   "├"   "┘"   "┴"   "┤"   "┼");
+		constexpr TCHAR box[] = _T(   " "   "╶"   "╷"   "┌"   "╴"   "─"   "┐"   "┬"   "╵"   "└"   "│"   "├"   "┘"   "┴"   "┤"   "┼");
 #else
-		const TCHAR box[] = _T("\x20""\x20""\x20""\xDA""\x20""\xC4""\xBF""\xC2""\x20""\xC0""\xB3""\xC3""\xD9""\xC1""\xB4""\xC5");
+		constexpr TCHAR box[] = _T("\x20""\x20""\x20""\xDA""\x20""\xC4""\xBF""\xC2""\x20""\xC0""\xB3""\xC3""\xD9""\xC1""\xB4""\xC5");
 #endif
 		return DrawFrame(rc, box);
 	}
@@ -770,9 +770,9 @@ public:
 	bool DrawDouble( const Rect &rc ) const
 	{
 #if defined(UNICODE)
-		const TCHAR box[] = _T(   " "   " "   " "   "╔"   " "   "═"   "╗"   "╦"   " "   "╚"   "║"   "╠"   "╝"   "╩"   "╣"   "╬");
+		constexpr TCHAR box[] = _T(   " "   " "   " "   "╔"   " "   "═"   "╗"   "╦"   " "   "╚"   "║"   "╠"   "╝"   "╩"   "╣"   "╬");
 #else
-		const TCHAR box[] = _T("\x20""\x20""\x20""\xC9""\x20""\xCD""\xBB""\xCB""\x20""\xC8""\xBA""\xCC""\xBC""\xCA""\xB9""\xCE");
+		constexpr TCHAR box[] = _T("\x20""\x20""\x20""\xC9""\x20""\xCD""\xBB""\xCB""\x20""\xC8""\xBA""\xCC""\xBC""\xCA""\xB9""\xCE");
 #endif
 		return DrawFrame(rc, box);
 	}
@@ -786,11 +786,11 @@ public:
 	bool DrawBold( const Rect &rc ) const
 	{
 #if defined(UNICODE)
-		const TCHAR box[] = _T(   " "   "╺"   "╻"   "┏"   "╸"   "━"   "┓"   "┳"   "╹"   "┗"   "┃"   "┣"   "┛"   "┻"   "┫"   "╋");
+		constexpr TCHAR box[] = _T(   " "   "╺"   "╻"   "┏"   "╸"   "━"   "┓"   "┳"   "╹"   "┗"   "┃"   "┣"   "┛"   "┻"   "┫"   "╋");
 
 		return DrawFrame(rc, box);
 #else
-		const TCHAR box[] = { LowerHalfBlock, FullBlock, UpperHalfBlock, BlackSquare };
+		constexpr TCHAR box[] = { LowerHalfBlock, FullBlock, UpperHalfBlock, BlackSquare };
 
 		if (rc.width <= 0 || rc.height <= 0)
 			return false;
