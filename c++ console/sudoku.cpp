@@ -33,11 +33,13 @@
 #include "sudoku.hpp"
 #include "console.hpp"
 #include "gametimer.hpp"
-#include <cstring>
+#include <iostream>
+#include <iomanip>
+#include <tchar.h>
 
 using Cell = SudokuCell;
 
-const char *title = "Sudoku";
+const TCHAR *title = _T("Sudoku");
 
 const Console::Rect TAB(0, 1, 25, 13);
 const Console::Rect BTN(TAB.right, TAB.top,  3, TAB.height);
@@ -101,7 +103,7 @@ public:
 
 	GameHeader() {}
 
-	void    update      ( Console &, bool, const char *, int );
+	void    update      ( Console &, const bool, const TCHAR *, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -116,9 +118,9 @@ class GameCell
 
 public:
 
-	GameCell( const int _x, const int _y, Cell *_c ): x{_x}, y{_y}, cell{_c}, focused{false} {}
+	GameCell( const int _x, const int _y, Cell* const _c ): x{_x}, y{_y}, cell{_c}, focused{false} {}
 
-	void    update      ( Console &, bool, Cell *, const int, const bool, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const bool, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	Cell  * getCell     ();
@@ -132,7 +134,7 @@ public:
 
 	GameTable( Sudoku & );
 
-	void    update      ( Console &, bool, Cell *, const int, const bool, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const bool, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	Command mouseRButton( const int, const int );
@@ -152,7 +154,7 @@ public:
 
 	Button( const int _y, const int _n ): x(BTN.x + 1), y{_y}, num{_n} {}
 
-	void    update      ( Console &, bool, Cell *, const int, const int, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const int, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 };
@@ -164,7 +166,7 @@ public:
 
 	GameButtons();
 
-	void    update      ( Console &, bool, Cell *, const int, const int, const Assistance );
+	void    update      ( Console &, const bool, Cell* const , const int, const int, const Assistance );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
 	Command mouseRButton( const int, const int );
@@ -172,11 +174,11 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class MenuItem: public std::vector<const char *>
+class MenuItem: public std::vector<const TCHAR *>
 {
 	const int x, y;
-	const char * const key;
-	const char * const info;
+	const TCHAR * const key;
+	const TCHAR * const info;
 	const int num;
 
 	int  idx;
@@ -184,12 +186,12 @@ class MenuItem: public std::vector<const char *>
 
 public:
 
-	MenuItem( const int _n, const int _y, const char *_k, const char *_i ): x{MNU.x + 1}, y{_y}, key{_k}, info{_i}, num{_n}, idx{0}, focused{false} {}
+	MenuItem( const int _n, const int _y, const TCHAR *_k, const TCHAR *_i ): x{MNU.x + 1}, y{_y}, key{_k}, info{_i}, num{_n}, idx{0}, focused{false} {}
 
-	void    update      ( Console &, bool, const int );
+	void    update      ( Console &, const bool, const int );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
-	const char *getInfo ();
+	const TCHAR *getInfo();
 	template<typename T>
 	void    setIndex    ( const T );
 	int     prev        ();
@@ -204,10 +206,10 @@ public:
 
 	GameMenu();
 
-	void    update      ( Console &, bool, const int );
+	void    update      ( Console &, const bool, const int );
 	void    mouseMove   ( const int, const int );
 	Command mouseLButton( const int, const int );
-	const char *getInfo ();
+	const TCHAR *getInfo();
 };
 
 /*---------------------------------------------------------------------------*/
@@ -218,7 +220,7 @@ public:
 
 	GameFooter() {}
 
-	void update( Console &, bool, const char * );
+	void update( Console &, const bool, const TCHAR * );
 };
 
 /*---------------------------------------------------------------------------*/
@@ -262,7 +264,7 @@ public:
 /*                              IMPLEMENTATION                               */
 /*---------------------------------------------------------------------------*/
 
-void GameHeader::update( Console &con, bool init, const char *info, int time )
+void GameHeader::update( Console &con, const bool init, const TCHAR *info, const int time )
 {
 	if (init)
 	{
@@ -270,16 +272,16 @@ void GameHeader::update( Console &con, bool init, const char *info, int time )
 		con.Put(HDR.x + 1, HDR.y, ::title);
 	}
 
-	auto s = std::strlen(info);
+	auto s = _tcslen(info);
 	con.Fill(TAB.x + 9, HDR.y, TAB.width - 10 - s, 1);
 	con.Put(TAB.Right(s + 1), HDR.y, info);
 
 
 	if (time >= 0)
 	{
-		char v[16];
-		std::snprintf(v, sizeof(v), "%6d:%02d:%02d", time / 3600, (time / 60) % 60, time % 60);
-		con.Put(MNU.Right(std::strlen(v) + 1), HDR.y, v);
+		TCHAR v[16];
+		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
+		con.Put(MNU.Right(_tcslen(v) + 1), HDR.y, v);
 	}
 	else
 	{
@@ -297,7 +299,7 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void GameCell::update( Console &con, bool, Cell *focus, const int number, const bool light, const Assistance help )
+void GameCell::update( Console &con, const bool, Cell* const focus, const int number, const bool light, const Assistance help )
 {
 	auto l = GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus));
 	auto f = GameCell::cell->empty() ? Console::LightGrey : GameCell::cell->immutable ? Console::White : Console::LightGreen;
@@ -311,7 +313,7 @@ void GameCell::update( Console &con, bool, Cell *focus, const int number, const 
 	}
 
 	con.Put(GameCell::x, GameCell::y, f, b);
-	con.Put(GameCell::x, GameCell::y, "-123456789"[cell->num]);
+	con.Put(GameCell::x, GameCell::y, _T("-123456789")[cell->num]);
 }
 
 void GameCell::mouseMove( const int _x, const int _y )
@@ -356,7 +358,7 @@ GameTable::GameTable( Sudoku &_s )
 	}
 }
 
-void GameTable::update( Console &con, bool init, Cell *focus, const int number, const bool light, const Assistance help )
+void GameTable::update( Console &con, const bool init, Cell* const focus, const int number, const bool light, const Assistance help )
 {
 	if (init)
 	{
@@ -405,10 +407,10 @@ Cell *GameTable::getCell()
 
 /*---------------------------------------------------------------------------*/
 
-void Button::update( Console &con, bool init, Cell *focus, const int number, const int count, const Assistance help )
+void Button::update( Console &con, const bool init, Cell* const focus, const int number, const int count, const Assistance help )
 {
 	if (init)
-		con.Put(BTN.x + 1, Button::y, "0123456789"[num]);
+		con.Put(BTN.x + 1, Button::y, _T("0123456789")[num]);
 
 	auto f = number == Button::num ? Console::Black : Button::focused ? Console::White : Console::LightGrey;
 	auto b = number == Button::num ? Console::White : Button::focused ? Console::Grey  : Console::Black;
@@ -422,7 +424,7 @@ void Button::update( Console &con, bool init, Cell *focus, const int number, con
 	con.Put(Button::x, Button::y, f, b);
 
 	if (number == Button::num && help > Assistance::None)
-		con.Put(Button::x, HDR.y, count > 9 ? '?' : "0123456789"[count]);
+		con.Put(Button::x, HDR.y, count > 9 ? '?' : _T("0123456789")[count]);
 }
 
 void Button::mouseMove( const int _x, const int _y )
@@ -450,7 +452,7 @@ GameButtons::GameButtons()
 	}
 }
 
-void GameButtons::update( Console &con, bool init, Cell *focus, const int number, const int count, const Assistance help )
+void GameButtons::update( Console &con, const bool init, Cell* const focus, const int number, const int count, const Assistance help )
 {
 	if (init)
 		con.DrawSingle(BTN);
@@ -492,7 +494,7 @@ Command GameButtons::mouseRButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void MenuItem::update( Console &con, bool init, const int _x )
+void MenuItem::update( Console &con, const bool init, const int _x )
 {
 	if (init)
 	{
@@ -502,8 +504,8 @@ void MenuItem::update( Console &con, bool init, const int _x )
 
 	if (MenuItem::size() > 1)
 	{
-		con.Put(MenuItem::x, MenuItem::y, !MenuItem::focused ? MenuItem::key : _x < MNU.center ? "<<" : ">>");
-		auto s = std::strlen(MenuItem::at(MenuItem::idx));
+		con.Put(MenuItem::x, MenuItem::y, !MenuItem::focused ? MenuItem::key : _x < MNU.center ? _T("<<") : _T(">>"));
+		auto s = _tcslen(MenuItem::at(MenuItem::idx));
 		con.Put(MenuItem::x + 3, MenuItem::y, MenuItem::at(MenuItem::idx));
 		con.Fill(MenuItem::x + 3 + s, MenuItem::y, MNU.width - 5 - s, 1);
 	}
@@ -542,7 +544,7 @@ Command MenuItem::mouseLButton( const int _x, const int _y )
 	return NoCmd;
 }
 
-const char *MenuItem::getInfo()
+const TCHAR *MenuItem::getInfo()
 {
 	if (MenuItem::focused)
 		return MenuItem::info;
@@ -586,39 +588,39 @@ int MenuItem::next()
 
 GameMenu::GameMenu()
 {
-	GameMenu::emplace_back( 0, MNU.y +  1, "d:", "Change difficulty level of the game");
-		GameMenu::back().emplace_back("easy");
-		GameMenu::back().emplace_back("medium");
-		GameMenu::back().emplace_back("hard");
-		GameMenu::back().emplace_back("expert");
-		GameMenu::back().emplace_back("extreme");
-	GameMenu::emplace_back( 1, MNU.y +  2, "a:", "Change assistance level of the game");
-		GameMenu::back().emplace_back("none");
-		GameMenu::back().emplace_back("current");
-		GameMenu::back().emplace_back("available");
-		GameMenu::back().emplace_back("sure");
-		GameMenu::back().emplace_back("full");
-	GameMenu::emplace_back( 2, MNU.y +  3, "n:", "Generate or load a new layout");
-		GameMenu::back().emplace_back("new");
-	GameMenu::emplace_back( 3, MNU.y +  4, "s:", "Solve the current layout");
-		GameMenu::back().emplace_back("solve");
-	GameMenu::emplace_back( 4, MNU.y +  5, "u:", "Undo last move / restore accepted layout");
-		GameMenu::back().emplace_back("undo");
-	GameMenu::emplace_back( 5, MNU.y +  6, "c:", "Clear the board");
-		GameMenu::back().emplace_back("clear");
-	GameMenu::emplace_back( 6, MNU.y +  7, "e:", "Start editing the current layout");
-		GameMenu::back().emplace_back("edit");
-	GameMenu::emplace_back( 7, MNU.y +  8, "t:", "Accept the layout and finish editing");
-		GameMenu::back().emplace_back("accept");
-	GameMenu::emplace_back( 8, MNU.y +  9, "v:", "Save the current layout to the file");
-		GameMenu::back().emplace_back("save");
-	GameMenu::emplace_back( 9, MNU.y + 10, "l:", "Load layout from the file");
-		GameMenu::back().emplace_back("load");
-	GameMenu::emplace_back(10, MNU.y + 11, "q:", "Quit the game");
-		GameMenu::back().emplace_back("quit");
+	GameMenu::emplace_back( 0, MNU.y +  1, _T("d:"), _T("Change difficulty level of the game"));
+		GameMenu::back().emplace_back(_T("easy"));
+		GameMenu::back().emplace_back(_T("medium"));
+		GameMenu::back().emplace_back(_T("hard"));
+		GameMenu::back().emplace_back(_T("expert"));
+		GameMenu::back().emplace_back(_T("extreme"));
+	GameMenu::emplace_back( 1, MNU.y +  2, _T("a:"), _T("Change assistance level of the game"));
+		GameMenu::back().emplace_back(_T("none"));
+		GameMenu::back().emplace_back(_T("current"));
+		GameMenu::back().emplace_back(_T("available"));
+		GameMenu::back().emplace_back(_T("sure"));
+		GameMenu::back().emplace_back(_T("full"));
+	GameMenu::emplace_back( 2, MNU.y +  3, _T("n:"), _T("Generate or load a new layout"));
+		GameMenu::back().emplace_back(_T("new"));
+	GameMenu::emplace_back( 3, MNU.y +  4, _T("s:"), _T("Solve the current layout"));
+		GameMenu::back().emplace_back(_T("solve"));
+	GameMenu::emplace_back( 4, MNU.y +  5, _T("u:"), _T("Undo last move / restore accepted layout"));
+		GameMenu::back().emplace_back(_T("undo"));
+	GameMenu::emplace_back( 5, MNU.y +  6, _T("c:"), _T("Clear the board"));
+		GameMenu::back().emplace_back(_T("clear"));
+	GameMenu::emplace_back( 6, MNU.y +  7, _T("e:"), _T("Start editing the current layout"));
+		GameMenu::back().emplace_back(_T("edit"));
+	GameMenu::emplace_back( 7, MNU.y +  8, _T("t:"), _T("Accept the layout and finish editing"));
+		GameMenu::back().emplace_back(_T("accept"));
+	GameMenu::emplace_back( 8, MNU.y +  9, _T("v:"), _T("Save the current layout to the file"));
+		GameMenu::back().emplace_back(_T("save"));
+	GameMenu::emplace_back( 9, MNU.y + 10, _T("l:"), _T("Load layout from the file"));
+		GameMenu::back().emplace_back(_T("load"));
+	GameMenu::emplace_back(10, MNU.y + 11, _T("q:"), _T("Quit the game"));
+		GameMenu::back().emplace_back(_T("quit"));
 }
 
-void GameMenu::update( Console &con, bool init, const int _x )
+void GameMenu::update( Console &con, const bool init, const int _x )
 {
 	if (init)
 		con.DrawSingle(MNU);
@@ -644,9 +646,9 @@ Command GameMenu::mouseLButton( const int _x, const int _y )
 	return NoCmd;
 }
 
-const char *GameMenu::getInfo()
+const TCHAR *GameMenu::getInfo()
 {
-	const char *info = nullptr;
+	const TCHAR *info = nullptr;
 	for (auto &m: *this)
 		if (info = m.getInfo(), info != nullptr)
 			break;
@@ -655,14 +657,14 @@ const char *GameMenu::getInfo()
 
 /*---------------------------------------------------------------------------*/
 
-void GameFooter::update( Console &con, bool init, const char *info )
+void GameFooter::update( Console &con, const bool init, const TCHAR *info )
 {
 	if (init)
 		con.Fill(FTR, Console::Black, Console::Grey);
 
 	if (info == nullptr)
-		info = "Sudoku game, solver and generator";
-	auto s = std::strlen(info);
+		info = _T("Sudoku game, solver and generator");
+	auto s = _tcslen(info);
 	con.Put(FTR.x + 1, FTR.y, info);
 	con.Fill(FTR.x + 1 + s, FTR.y, FTR.width - 2 - s, 1);
 }
@@ -772,8 +774,8 @@ void Game::update()
 	};
 
 	auto time = Game::timer_f ? GameTimer::now() : -1;
-	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? "unsolvable" : Sudoku::rating == -1 ? "ambiguous" : "")
-	                               : (Sudoku::corrupt() ? "corrupt" : "solved");
+	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("unsolvable") : Sudoku::rating == -1 ? _T("ambiguous") : _T(""))
+	                               : (Sudoku::corrupt() ? _T("corrupt") : _T("solved"));
 
 	Console::Fill(HDR, Console::White, colors[Sudoku::level]);
 
@@ -920,18 +922,29 @@ void Game::command( const Command _c )
 	}
 }
 
-int main( int argc, char **argv )
+static inline
+std::string cstring( TCHAR *str )
 {
-	int  cnt  = 0;
-	char cmd  = 'g';
-	auto file = std::string(*argv) + ".board";
+#if defined(UNICODE)
+	auto wsv = std::wstring_view(str);
+	return std::string(wsv.begin(), wsv.end());
+#else
+	return std::string(str);
+#endif
+}
 
-	if (--argc > 0 && (**++argv == '/' || **argv == '-'))
+int _tmain( int argc, TCHAR **argv )
+{
+	int   cnt = 0;
+	TCHAR cmd = _T('g');
+	auto file = cstring(*argv) + ".board";
+
+	if (--argc > 0 && (++argv, **argv == _T('/') || **argv == _T('-')))
 		cmd = *++*argv;
 
 	switch (std::toupper(cmd))
 	{
-		case 'G': // game
+		case _T('G'): // game
 		{
 			auto sudoku = Game();
 			LONG style = GetWindowLong(sudoku.Console::Hwnd, GWL_STYLE);
@@ -942,16 +955,16 @@ int main( int argc, char **argv )
 			break;
 		}
 
-		case 'F': // find
+		case _T('F'): // find
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 
 			if (--argc > 0)
-				file = *++argv;
+				file = cstring(*++argv);
 
-			std::cerr << ::title << " find" << std::endl;
+			std::wcerr << ::title << " find" << std::endl;
 
 			GetAsyncKeyState(VK_ESCAPE);
 			while (!GetAsyncKeyState(VK_ESCAPE))
@@ -967,11 +980,11 @@ int main( int argc, char **argv )
 				}
 			}
 
-			std::cerr << ::title << " find: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
+			std::wcerr << ::title << " find: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
-		case 'T': // test
+		case _T('T'): // test
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
@@ -980,15 +993,15 @@ int main( int argc, char **argv )
 			auto lst    = std::vector<std::string>();
 
 			while (--argc > 0)
-				Sudoku::load(lst, *++argv);
+				Sudoku::load(lst, cstring(*++argv));
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
-			std::cerr << ::title << " test: " << lst.size() << " boards loaded" << std::endl;
+			std::wcerr << ::title << " test: " << lst.size() << " boards loaded" << std::endl;
 
 			for (std::string &i: lst)
 			{
-				std::cerr << ' ' << ++cnt << '\r';
+				std::wcerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
@@ -1002,11 +1015,11 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " test: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
+			std::wcerr << ::title << " test: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
-		case 'S': // sort
+		case _T('S'): // sort
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
@@ -1015,15 +1028,15 @@ int main( int argc, char **argv )
 			auto lst    = std::vector<std::string>();
 
 			while (--argc > 0)
-				Sudoku::load(lst, *++argv);
+				Sudoku::load(lst, cstring(*++argv));
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
-			std::cerr << ::title << " sort: " << lst.size() << " boards loaded" << std::endl;
+			std::wcerr << ::title << " sort: " << lst.size() << " boards loaded" << std::endl;
 
 			for (std::string &i: lst)
 			{
-				std::cerr << ' ' << ++cnt << '\r';
+				std::wcerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
 				{
@@ -1037,11 +1050,11 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " sort: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
+			std::wcerr << ::title << " sort: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
-		case 'R': // raise
+		case _T('R'): // raise
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
@@ -1051,15 +1064,15 @@ int main( int argc, char **argv )
 
 
 			while (--argc > 0)
-				Sudoku::load(lst, *++argv);
+				Sudoku::load(lst, cstring(*++argv));
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
-			std::cerr << ::title << " raise: " << lst.size() << " boards loaded" << std::endl;
+			std::wcerr << ::title << " raise: " << lst.size() << " boards loaded" << std::endl;
 
 			for (std::string &i: lst)
 			{
-				std::cerr << ' ' << ++cnt << '\r';
+				std::wcerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				sudoku.raise();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
@@ -1074,14 +1087,14 @@ int main( int argc, char **argv )
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
 
-			std::cerr << ::title << " raise: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
+			std::wcerr << ::title << " raise: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
-		case '?': /* falls through */
-		case 'H': // help
+		case _T('?'): /* falls through */
+		case _T('H'): // help
 		{
-			std::cerr << "\n"
+			std::wcerr << "\n"
 			             "Sudoku game, solver and generator\n"
 			             "\n"
 			             "Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved.\n"
@@ -1106,8 +1119,10 @@ int main( int argc, char **argv )
 
 		default:
 		{
-			std::cerr << ::title << ": unknown command" << std::endl;
+			std::wcerr << ::title << ": unknown command" << std::endl;
 			break;
 		}
 	}
+
+	return 0;
 }
