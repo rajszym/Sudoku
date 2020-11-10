@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    09.11.2020
+   @date    10.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
