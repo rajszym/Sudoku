@@ -59,6 +59,12 @@ class Graphics
 		return c ^ (~a << 24);
 	}
 
+	static
+	D3DCOLOR Alpha( const D3DCOLOR c, const FLOAT a )
+	{
+		return Alpha(c, static_cast<DWORD>(std::round(0xFF * a)));
+	}
+
 	HWND                    wnd;
 	LPDIRECT3D9             d3d;
 	LPDIRECT3DDEVICE9       dev;
