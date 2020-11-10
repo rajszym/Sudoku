@@ -48,6 +48,9 @@ const Console::Rect HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
 const Console::Rect FTR(HDR.left, TAB.bottom, HDR.width, HDR.height);
 const Console::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
 
+constexpr Console::Color Background = Console::Black;
+constexpr Console::Color Lighted    = Console::Gray;
+
 /*---------------------------------------------------------------------------*/
 /*                                GAME CLASSES                               */
 /*---------------------------------------------------------------------------*/
@@ -302,21 +305,21 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 void GameCell::update( Console &con, const bool, Cell* const focus, const int number, const bool light, const Assistance help )
 {
 	auto l = GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus));
-	auto f = GameCell::cell->empty() ? Console::LightGrey : GameCell::cell->immutable ? Console::White : Console::LightGreen;
-	auto b = l ? Console::Grey : Console::Black;
+	auto f = GameCell::cell->empty() ? Console::LightGray : GameCell::cell->immutable ? Console::White : l ? Console::LightGreen : Console::Green;
+	auto b = l ? Lighted : Background;
 
 	if (number != 0)
 	{
-		if      (help >= Assistance::Current && GameCell::cell->equal(number))   b = l ? Console::LightRed   : Console::Red;
-		else if (help >= Assistance::Full    && GameCell::cell->sure(number))    b = l ? Console::LightGreen : Console::Green;
-		else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) b = l ? Console::Yellow     : Console::Orange;
+		if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = l ? Console::LightRed   : Console::Red;
+		else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = l ? Console::LightGreen : Console::Green;
+		else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = l ? Console::Yellow     : Console::Orange;
 	}
 
 	con.Put(GameCell::x, GameCell::y, f, b);
 #if defined(UNICODE)
-	con.Put(GameCell::x, GameCell::y, _T("·123456789")[cell->num]);
+	con.Put(GameCell::x, GameCell::y, (f == Console::LightGray ? _T("·123456789") : _T("□123456789"))[cell->num]);
 #else
-	con.Put(GameCell::x, GameCell::y, _T("-123456789")[cell->num]);
+	con.Put(GameCell::x, GameCell::y, (f == Console::LightGray ? _T("-123456789") : _T("\xFE""123456789"))[cell->num]);
 #endif
 }
 
@@ -416,8 +419,8 @@ void Button::update( Console &con, const bool init, Cell* const focus, const int
 	if (init)
 		con.Put(BTN.x + 1, Button::y, _T("0123456789")[num]);
 
-	auto f = number == Button::num ? Console::Black : Button::focused ? Console::White : Console::LightGrey;
-	auto b = number == Button::num ? Console::White : Button::focused ? Console::Grey  : Console::Black;
+	auto f = number == Button::num ? Console::Black : Button::focused ? Console::White : Console::LightGray;
+	auto b = number == Button::num ? Console::White : Button::focused ? Lighted  : Background;
 
 	if (focus != nullptr)
 	{
@@ -515,9 +518,9 @@ void MenuItem::update( Console &con, const bool init, const int _x )
 	}
 
 	if (MenuItem::focused)
-		con.Fill(MenuItem::x, MenuItem::y, MNU.width - 2, 1, Console::White, Console::Grey);
+		con.Fill(MenuItem::x, MenuItem::y, MNU.width - 2, 1, Console::White, Lighted);
 	else
-		con.Fill(MenuItem::x, MenuItem::y, MNU.width - 2, 1, Console::LightGrey);
+		con.Fill(MenuItem::x, MenuItem::y, MNU.width - 2, 1, Console::LightGray);
 }
 
 void MenuItem::mouseMove( const int _x, const int _y )
@@ -664,7 +667,7 @@ const TCHAR *GameMenu::getInfo()
 void GameFooter::update( Console &con, const bool init, const TCHAR *info )
 {
 	if (init)
-		con.Fill(FTR, Console::Black, Console::Grey);
+		con.Fill(FTR, Background, Lighted);
 
 	if (info == nullptr)
 		info = _T("Sudoku game, solver and generator");

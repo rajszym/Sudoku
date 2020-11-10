@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    09.11.2020
+   @date    10.11.2020
    @brief   console class
 
 *******************************************************************************
@@ -73,8 +73,8 @@ public:
 		Red         = 0x4,
 		Purple      = 0x5,
 		Orange      = 0x6,
-		LightGrey   = 0x7,
-		Grey        = 0x8,
+		LightGray   = 0x7,
+		Gray        = 0x8,
 		LightBlue   = 0x9,
 		LightGreen  = 0xA,
 		LightCyan   = 0xB,
@@ -82,7 +82,7 @@ public:
 		LightPurple = 0xD,
 		Yellow      = 0xE,
 		White       = 0xF,
-		Default     = LightGrey,
+		Default     = LightGray,
 	};
 
 	struct Rect

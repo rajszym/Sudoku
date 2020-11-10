@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    08.11.2020
+   @date    10.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -355,7 +355,7 @@ void GameCell::update( Graphics &gr, Cell *focus, const int number, const bool l
 		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T(" 123456789")[GameCell::cell->num]);
 	else
 	if (f != Background)
-		gr.fill_ellipse(GameCell::r, CellSize / 3, f);
+		gr.draw_rect(GameCell::r, CellSize / 3, f, 2);
 
 	gr.draw_rect(GameCell::r, Graphics::Color::Black);
 }
