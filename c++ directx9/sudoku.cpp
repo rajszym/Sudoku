@@ -338,15 +338,13 @@ void GameCell::update( Graphics &gr, Cell *focus, const int number, const bool l
 	if (GameCell::font == nullptr)
 		GameCell::font = gr.font(CellSize, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
-	auto f = GameCell::cell->empty() ? (GameCell::focused ? Lighted : Background)
-	                                 : (GameCell::cell->immutable ? Graphics::Color::Black : Graphics::Color::Green);
+	auto f = Background;
 
-	if (number != 0)
-	{
-		if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = Graphics::Color::Red;
-		else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = Graphics::Color::Green;
-		else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = Graphics::Color::Orange;
-	}
+	if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = Graphics::Color::Red;
+	else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = Graphics::Color::Green;
+	else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = Graphics::Color::Orange;
+	else if (                               GameCell::cell->immutable)       f = Graphics::Color::Black;
+	else if (                              !GameCell::cell->empty())         f = Graphics::Color::Green;
 
 	if (GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus)))
 		gr.fill_rect(GameCell::r, Margin, Lighted);
@@ -597,8 +595,8 @@ void MenuItem::update( Graphics &gr, const int _x )
 		gr.draw_char(MenuItem::r, MenuItem::font, cl, Graphics::Alignment::Left,  _T('◄'));
 		gr.draw_char(MenuItem::r, MenuItem::font, cr, Graphics::Alignment::Right, _T('►'));
 #else
-		gr.draw_left (MenuItem::r, std::round(TabSize / 1.8 / MnuSize), cl);
-		gr.draw_right(MenuItem::r, std::round(TabSize / 1.8 / MnuSize), cr);
+		gr.draw_char(MenuItem::r, Margin, MenuItem::font, cl, Graphics::Alignment::Left,  _T('<'));
+		gr.draw_char(MenuItem::r, Margin, MenuItem::font, cr, Graphics::Alignment::Right, _T('>'));
 #endif
 	}
 

@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    04.11.2020
+   @date    10.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -52,6 +52,12 @@ class Graphics
 		Vertex(FLOAT _x, FLOAT _y, D3DCOLOR _c):           v{_x, _y, 0, 1}, c{_c}           {}
 		Vertex(FLOAT _x, FLOAT _y, D3DCOLOR _c, DWORD _a): v{_x, _y, 0, 1}, c{_c^(~_a<<24)} {}
 	};
+
+	static
+	D3DCOLOR Alpha( const D3DCOLOR c, const DWORD a )
+	{
+		return c ^ (~a << 24);
+	}
 
 	HWND                    wnd;
 	LPDIRECT3D9             d3d;
@@ -335,99 +341,54 @@ public:
 		dev->Present(NULL, NULL, NULL, NULL);
 	}
 
-	void draw_line( const int x, const int y, const int w, const int h, const D3DCOLOR c, const DWORD a = 0xFF )
+	void draw_line( const RECT &r, const D3DCOLOR c )
 	{
 		Vertex v[] =
 		{
-			Vertex(x,         y,         c, a),
-			Vertex(x + w - 1, y + h - 1, c, a),
+			Vertex(r.left,      r.top,        c),
+			Vertex(r.right - 1, r.bottom - 1, c),
 		};
 
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 1, v, sizeof(Vertex));
 	}
 
-	void draw_line( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
-	{
-		draw_line(r.left, r.right, r.right - r.left, r.bottom - r.top, c, a);
-	}
-
-	void draw_rect( const int x, const int y, const int w, const int h, const D3DCOLOR c, const DWORD a = 0xFF )
+	void draw_rect( const RECT &r, const D3DCOLOR c )
 	{
 		Vertex v[] =
 		{
-			Vertex(x,         y,         c, a),
-			Vertex(x + w - 1, y,         c, a),
-			Vertex(x + w - 1, y + h - 1, c, a),
-			Vertex(x,         y + h - 1, c, a),
-			Vertex(x,         y,         c, a),
+			Vertex(r.left,      r.top,        c),
+			Vertex(r.right - 1, r.top,        c),
+			Vertex(r.right - 1, r.bottom - 1, c),
+			Vertex(r.left,      r.bottom - 1, c),
+			Vertex(r.left,      r.top,        c),
 		};
 
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
 	}
 
-	void draw_rect( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
+	void draw_rect( const RECT &r, const int m, const D3DCOLOR c )
 	{
-		draw_rect(r.left, r.top, r.right - r.left, r.bottom - r.top, c, a);
+		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
+		draw_rect(rc, c);
 	}
 
-	void draw_rect( const RECT &r, const int m, const D3DCOLOR c, const DWORD a = 0xFF )
-	{
-		draw_rect(r.left + m, r.top + m, r.right - r.left - m * 2, r.bottom - r.top - m * 2, c, a);
-	}
-
-	void fill_rect( const int x, const int y, const int w, const int h, const D3DCOLOR c, const DWORD a = 0xFF )
+	void fill_rect( const RECT &r, const D3DCOLOR c )
 	{
 		Vertex v[] =
 		{
-			Vertex(x,     y,     c, a),
-			Vertex(x + w, y,     c, a),
-			Vertex(x + w, y + h, c, a),
-			Vertex(x,     y + h, c, a),
+			Vertex(r.left,  r.top,    c),
+			Vertex(r.right, r.top,    c),
+			Vertex(r.right, r.bottom, c),
+			Vertex(r.left,  r.bottom, c),
 		};
 
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, v, sizeof(Vertex));
 	}
 
-	void fill_rect( const RECT &r, const D3DCOLOR c, const DWORD a = 0xFF )
+	void fill_rect( const RECT &r, const int m, const D3DCOLOR c )
 	{
-		fill_rect(r.left, r.top, r.right - r.left, r.bottom - r.top, c, a);
-	}
-
-	void fill_rect( const RECT &r, const int m, const D3DCOLOR c, const DWORD a = 0xFF )
-	{
-		fill_rect(r.left + m, r.top + m, r.right - r.left - m * 2, r.bottom - r.top - m * 2, c, a);
-	}
-
-	void draw_left( const RECT &r, const int h, const D3DCOLOR c, const DWORD a = 0xFF )
-	{
-		int y = (r.bottom + r.top) / 2;
-		int x = r.left + h / 6;
-		int d = h * 4 / 6;
-
-		Vertex v[] =
-		{
-			Vertex(x,     y,         c, a),
-			Vertex(x + d, y - d / 2, c, a),
-			Vertex(x + d, y + d / 2, c, a),
-		};
-
-		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
-	}
-
-	void draw_right( const RECT &r, const int h, const D3DCOLOR c, const DWORD a = 0xFF )
-	{
-		int y = (r.bottom + r.top) / 2;
-		int x = r.right - h / 6;
-		int d = h * 4 / 6;
-
-		Vertex v[] =
-		{
-			Vertex(x - d, y - d / 2, c, a),
-			Vertex(x,     y,         c, a),
-			Vertex(x - d, y + d / 2, c, a),
-		};
-
-		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 1, v, sizeof(Vertex));
+		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
+		fill_rect(rc, c);
 	}
 
 	void draw_char( const RECT &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR t )

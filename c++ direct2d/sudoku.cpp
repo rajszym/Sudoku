@@ -338,15 +338,13 @@ void GameCell::update( Graphics &gr, Cell *focus, const int number, const bool l
 	if (GameCell::font == nullptr)
 		GameCell::font = gr.font(CellSize, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
 
-	auto f = GameCell::cell->empty() ? (GameCell::focused ? Lighted : Background)
-	                                 : (GameCell::cell->immutable ? Graphics::Color::Black : Graphics::Color::Green);
+	auto f = Background;
 
-	if (number != 0)
-	{
-		if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = Graphics::Color::Red;
-		else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = Graphics::Color::Green;
-		else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = Graphics::Color::Orange;
-	}
+	if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = Graphics::Color::Red;
+	else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = Graphics::Color::Green;
+	else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = Graphics::Color::Orange;
+	else if (                               GameCell::cell->immutable)       f = Graphics::Color::Black;
+	else if (                              !GameCell::cell->empty())         f = Graphics::Color::Green;
 
 	if (GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus)))
 		gr.fill_rect(GameCell::r, Margin, Lighted);

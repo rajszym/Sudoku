@@ -305,15 +305,14 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 void GameCell::update( Console &con, const bool, Cell* const focus, const int number, const bool light, const Assistance help )
 {
 	auto l = GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus));
-	auto f = GameCell::cell->empty() ? Console::LightGray : GameCell::cell->immutable ? Console::White : l ? Console::LightGreen : Console::Green;
 	auto b = l ? Lighted : Background;
+	auto f = Console::LightGray;
 
-	if (number != 0)
-	{
-		if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = l ? Console::LightRed   : Console::Red;
-		else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = l ? Console::LightGreen : Console::Green;
-		else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = l ? Console::Yellow     : Console::Orange;
-	}
+	if      (help >= Assistance::Current && GameCell::cell->equal(number))   f = l ? Console::LightRed   : Console::Red;
+	else if (help >= Assistance::Full    && GameCell::cell->sure(number))    f = l ? Console::LightGreen : Console::Green;
+	else if (help >= Assistance::Full    && GameCell::cell->allowed(number)) f = l ? Console::Yellow     : Console::Orange;
+	else if (                               GameCell::cell->immutable)       f =     Console::White;
+	else if (                              !GameCell::cell->empty())         f = l ? Console::LightGreen : Console::Green;
 
 	con.Put(GameCell::x, GameCell::y, f, b);
 #if defined(UNICODE)
