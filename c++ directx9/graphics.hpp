@@ -358,24 +358,27 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 1, v, sizeof(Vertex));
 	}
 
-	void draw_rect( const RECT &r, const D3DCOLOR c )
+	void draw_rect( const RECT &r, const D3DCOLOR c, const int s = 1 )
 	{
-		Vertex v[] =
+		for (int i = (0 - s) / 2; i < (1 + s) / 2; ++i)
 		{
-			Vertex(r.left,      r.top,        c),
-			Vertex(r.right - 1, r.top,        c),
-			Vertex(r.right - 1, r.bottom - 1, c),
-			Vertex(r.left,      r.bottom - 1, c),
-			Vertex(r.left,      r.top,        c),
-		};
+			Vertex v[] =
+			{
+				Vertex(r.left  + i,     r.top    + i,     c),
+				Vertex(r.right - i - 1, r.top    + i,     c),
+				Vertex(r.right - i - 1, r.bottom - i - 1, c),
+				Vertex(r.left  + i,     r.bottom - i - 1, c),
+				Vertex(r.left  + i,     r.top    + i,     c),
+			};
 
-		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
+			dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
+		}
 	}
 
-	void draw_rect( const RECT &r, const int m, const D3DCOLOR c )
+	void draw_rect( const RECT &r, const int m, const D3DCOLOR c, const int s = 1 )
 	{
 		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		draw_rect(rc, c);
+		draw_rect(rc, c, s);
 	}
 
 	void fill_rect( const RECT &r, const D3DCOLOR c )

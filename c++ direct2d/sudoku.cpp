@@ -353,7 +353,7 @@ void GameCell::update( Graphics &gr, Cell *focus, const int number, const bool l
 		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T(" 123456789")[GameCell::cell->num]);
 	else
 	if (f != Background)
-		gr.draw_rect(GameCell::r, CellSize / 3, f, 2);
+		gr.draw_rect(GameCell::r, CellSize / 3, f, Margin);
 
 	gr.draw_rect(GameCell::r, Graphics::Color::Black);
 }
