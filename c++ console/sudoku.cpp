@@ -35,6 +35,8 @@
 #include "gametimer.hpp"
 #include <iostream>
 #include <iomanip>
+#include <codecvt>
+#include <locale>
 #include <tchar.h>
 
 using Cell = SudokuCell;
@@ -926,8 +928,7 @@ static inline
 std::string cstring( TCHAR *str )
 {
 #if defined(UNICODE)
-	auto wsv = std::wstring_view(str);
-	return std::string(wsv.begin(), wsv.end());
+	return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(str);
 #else
 	return std::string(str);
 #endif
@@ -935,6 +936,8 @@ std::string cstring( TCHAR *str )
 
 int _tmain( int argc, TCHAR **argv )
 {
+	std::setlocale(LC_ALL, "");
+
 	int   cnt = 0;
 	TCHAR cmd = _T('g');
 	auto file = cstring(*argv) + ".board";
