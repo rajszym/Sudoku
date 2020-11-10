@@ -313,7 +313,11 @@ void GameCell::update( Console &con, const bool, Cell* const focus, const int nu
 	}
 
 	con.Put(GameCell::x, GameCell::y, f, b);
+#if defined(UNICODE)
+	con.Put(GameCell::x, GameCell::y, _T("·123456789")[cell->num]);
+#else
 	con.Put(GameCell::x, GameCell::y, _T("-123456789")[cell->num]);
+#endif
 }
 
 void GameCell::mouseMove( const int _x, const int _y )
