@@ -804,8 +804,8 @@ void Game::update( HWND hWnd )
 	};
 
 	auto time = Game::timer_f ? GameTimer::now() : -1;
-	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("UNSOLVABLE") : Sudoku::rating == -1 ? _T("AMBIGUOUS") : nullptr)
-	                               : (Sudoku::corrupt() ? _T("CORRUPT") : _T("SOLVED"));
+	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("unsolvable") : Sudoku::rating == -1 ? _T("ambiguous") : nullptr)
+	                               : (Sudoku::corrupt() ? _T("corrupt") : _T("solved"));
 
 	POINT cursor;
 	GetCursorPos(&cursor);

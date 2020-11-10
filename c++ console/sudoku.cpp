@@ -35,8 +35,6 @@
 #include "gametimer.hpp"
 #include <iostream>
 #include <iomanip>
-#include <codecvt>
-#include <locale>
 #include <tchar.h>
 
 using Cell = SudokuCell;
@@ -924,23 +922,12 @@ void Game::command( const Command _c )
 	}
 }
 
-static inline
-std::string cstring( TCHAR *str )
-{
-#if defined(UNICODE)
-	return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(str);
-#else
-	return std::string(str);
-#endif
-}
-
 int _tmain( int argc, TCHAR **argv )
 {
-	std::setlocale(LC_ALL, "");
-
 	int   cnt = 0;
 	TCHAR cmd = _T('g');
-	auto file = cstring(*argv) + ".board";
+	auto  tmp = std::basic_string<TCHAR>(*argv) + _T(".board");
+	const TCHAR *file = tmp.c_str();
 
 	if (--argc > 0 && (++argv, **argv == _T('/') || **argv == _T('-')))
 		cmd = *++*argv;
@@ -965,7 +952,7 @@ int _tmain( int argc, TCHAR **argv )
 			auto data   = std::vector<uint32_t>();
 
 			if (--argc > 0)
-				file = cstring(*++argv);
+				file = *++argv;
 
 			std::wcerr << ::title << " find" << std::endl;
 
@@ -993,18 +980,18 @@ int _tmain( int argc, TCHAR **argv )
 			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
-			auto lst    = std::vector<std::string>();
+			auto lst    = std::vector<std::basic_string<TCHAR>>();
 
 			while (--argc > 0)
-				Sudoku::load(lst, cstring(*++argv));
+				Sudoku::load(lst, *++argv);
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
 			std::wcerr << ::title << " test: " << lst.size() << " boards loaded" << std::endl;
 
-			for (std::string &i: lst)
+			for (std::basic_string<TCHAR> &i: lst)
 			{
-				std::wcerr << ' ' << ++cnt << '\r';
+				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(false))
 				{
@@ -1028,18 +1015,18 @@ int _tmain( int argc, TCHAR **argv )
 			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
-			auto lst    = std::vector<std::string>();
+			auto lst    = std::vector<std::basic_string<TCHAR>>();
 
 			while (--argc > 0)
-				Sudoku::load(lst, cstring(*++argv));
+				Sudoku::load(lst, *++argv);
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
 			std::wcerr << ::title << " sort: " << lst.size() << " boards loaded" << std::endl;
 
-			for (std::string &i: lst)
+			for (std::basic_string<TCHAR> &i: lst)
 			{
-				std::wcerr << ' ' << ++cnt << '\r';
+				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(true))
 				{
@@ -1063,19 +1050,19 @@ int _tmain( int argc, TCHAR **argv )
 			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
 			auto coll   = std::vector<Sudoku>();
-			auto lst    = std::vector<std::string>();
+			auto lst    = std::vector<std::basic_string<TCHAR>>();
 
 
 			while (--argc > 0)
-				Sudoku::load(lst, cstring(*++argv));
+				Sudoku::load(lst, *++argv);
 			if (lst.size() == 0)
 				Sudoku::load(lst, file);
 
 			std::wcerr << ::title << " raise: " << lst.size() << " boards loaded" << std::endl;
 
-			for (std::string &i: lst)
+			for (std::basic_string<TCHAR> &i: lst)
 			{
-				std::wcerr << ' ' << ++cnt << '\r';
+				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				sudoku.raise();
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
@@ -1097,7 +1084,7 @@ int _tmain( int argc, TCHAR **argv )
 		case _T('?'): /* falls through */
 		case _T('H'): // help
 		{
-			std::wcerr << "\n"
+			std::cerr << "\n"
 			             "Sudoku game, solver and generator\n"
 			             "\n"
 			             "Copyright (c) 2018 - 2020 Rajmund Szymanski. All rights reserved.\n"
