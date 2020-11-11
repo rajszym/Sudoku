@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    10.11.2020
+   @date    11.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -137,6 +137,11 @@ private:
 		return s1 == s2;
 	}
 	
+	bool in_lst( const Cell &c )
+	{
+		return Cell::in_row(c) || Cell::in_col(c) || Cell::in_seg(c);
+	}
+
 	void link( Cell &c )
 	{
 		if (Cell::in_row(c)) Cell::row.push_back(std::ref(c));
@@ -147,9 +152,12 @@ private:
 
 public:
 
-	bool in_lst( const Cell &c )
+	bool linked( Cell *c )
 	{
-		return Cell::in_row(c) || Cell::in_col(c) || Cell::in_seg(c);
+		if (c == nullptr)
+			return false;
+
+		return in_lst(*c);
 	}
 
 	static

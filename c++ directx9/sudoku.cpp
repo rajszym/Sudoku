@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    10.11.2020
+   @date    11.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -52,7 +52,7 @@ const Graphics::Rect BTN(TAB.right + Margin * 8, TAB.top, CellSize, TAB.height);
 const Graphics::Rect MNU(BTN.right + Margin * 8, TAB.top, SegSize,  TAB.height);
 const Graphics::Rect HDR(TAB.left, Frame, MNU.right - TAB.left, TAB.top - Frame);
 const Graphics::Rect FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
-const Graphics::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom + Frame);
+const Graphics::Rect WIN(0, 0, HDR.left + HDR.right + 1, FTR.bottom + Frame + 1);
 
 constexpr Graphics::Color Background = Graphics::Color::Moccasin;
 constexpr Graphics::Color Lighted    = Graphics::Color::OldLace;
@@ -346,14 +346,14 @@ void GameCell::update( Graphics &gr, Cell *focus, const int number, const bool l
 	else if (                               GameCell::cell->immutable)       f = Graphics::Color::Black;
 	else if (                              !GameCell::cell->empty())         f = Graphics::Color::Green;
 
-	if (GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus)))
+	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
 		gr.fill_rect(GameCell::r, Margin, Lighted);
 
 	if (!GameCell::cell->empty())
 		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T(" 123456789")[GameCell::cell->num]);
 	else
 	if (f != Background)
-		gr.draw_rect(GameCell::r, CellSize / 3, f, Margin);
+		gr.draw_rect(GameCell::r, CellSize / 3, f, Margin - 1);
 
 	gr.draw_rect(GameCell::r, Graphics::Color::Black);
 }

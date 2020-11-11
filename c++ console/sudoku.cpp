@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    10.11.2020
+   @date    11.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -304,7 +304,7 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 
 void GameCell::update( Console &con, const bool, Cell* const focus, const int number, const bool light, const Assistance help )
 {
-	auto l = GameCell::focused || (light && focus != nullptr && GameCell::cell->in_lst(*focus));
+	auto l = GameCell::focused || (light && GameCell::cell->linked(focus));
 	auto b = l ? Lighted : Background;
 	auto f = Console::LightGray;
 

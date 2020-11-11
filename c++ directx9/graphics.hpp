@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    10.11.2020
+   @date    11.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -351,8 +351,8 @@ public:
 	{
 		Vertex v[] =
 		{
-			Vertex(r.left,      r.top,        c),
-			Vertex(r.right - 1, r.bottom - 1, c),
+			Vertex(r.left,  r.top,    c),
+			Vertex(r.right, r.bottom, c),
 		};
 
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 1, v, sizeof(Vertex));
@@ -364,11 +364,11 @@ public:
 		{
 			Vertex v[] =
 			{
-				Vertex(r.left  + i,     r.top    + i,     c),
-				Vertex(r.right - i - 1, r.top    + i,     c),
-				Vertex(r.right - i - 1, r.bottom - i - 1, c),
-				Vertex(r.left  + i,     r.bottom - i - 1, c),
-				Vertex(r.left  + i,     r.top    + i,     c),
+				Vertex(r.left  + i, r.top    + i, c),
+				Vertex(r.right - i, r.top    + i, c),
+				Vertex(r.right - i, r.bottom - i, c),
+				Vertex(r.left  + i, r.bottom - i, c),
+				Vertex(r.left  + i, r.top    + i, c),
 			};
 
 			dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
@@ -389,9 +389,11 @@ public:
 			Vertex(r.right, r.top,    c),
 			Vertex(r.right, r.bottom, c),
 			Vertex(r.left,  r.bottom, c),
+			Vertex(r.left,  r.top,    c),
 		};
 
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, v, sizeof(Vertex));
+		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
 	}
 
 	void fill_rect( const RECT &r, const int m, const D3DCOLOR c )
