@@ -242,19 +242,19 @@ public:
 
 	struct Rect
 	{
-		int x, y, width, height, left, top, right, bottom, center, middle;
+		FLOAT x, y, width, height, left, top, right, bottom, center, middle;
 
-			Rect( const auto _x, const auto _y, const auto _width, const auto _height ):
-			x     {static_cast<int>(std::round(_x))},
-			y     {static_cast<int>(std::round(_y))},
-			width {static_cast<int>(std::round(_width))},
-			height{static_cast<int>(std::round(_height))},
+		Rect( const auto _x, const auto _y, const auto _width, const auto _height ):
+			x     {static_cast<FLOAT>(_x)},
+			y     {static_cast<FLOAT>(_y)},
+			width {static_cast<FLOAT>(_width)},
+			height{static_cast<FLOAT>(_height)},
 			left  {x},
 			top   {y},
 			right {x + width},
 			bottom{y + height},
-			center{static_cast<int>(std::round((left + right) / 2.0f))},
-			middle{static_cast<int>(std::round((top + bottom) / 2.0f))}
+			center{(left + right) / 2},
+			middle{(top + bottom) / 2}
 			{}
 
 		Rect operator()( const auto m )
@@ -264,18 +264,18 @@ public:
 
 		operator RECT() const
 		{
-			return { static_cast<LONG>(left),
-			         static_cast<LONG>(top),
-			         static_cast<LONG>(right),
-			         static_cast<LONG>(bottom) };
+			return { static_cast<LONG>(std::round(left)),
+			         static_cast<LONG>(std::round(top)),
+			         static_cast<LONG>(std::round(right)),
+			         static_cast<LONG>(std::round(bottom)) };
 		}
 
 		bool contains( const auto _x, const auto _y ) const
 		{
-			return static_cast<int>(_x) >= left  &&
-			       static_cast<int>(_x) <  right &&
-			       static_cast<int>(_y) >= top   &&
-			       static_cast<int>(_y) <  bottom;
+			return static_cast<FLOAT>(_x) >= left  &&
+			       static_cast<FLOAT>(_x) <  right &&
+			       static_cast<FLOAT>(_y) >= top   &&
+			       static_cast<FLOAT>(_y) <  bottom;
 		}
 	};
 
@@ -352,7 +352,7 @@ public:
 		dev->Present(NULL, NULL, NULL, NULL);
 	}
 
-	void draw_line( const RECT &r, const D3DCOLOR c )
+	void draw_line( const Rect &r, const D3DCOLOR c )
 	{
 		Vertex v[] =
 		{
@@ -363,7 +363,7 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 1, v, sizeof(Vertex));
 	}
 
-	void draw_rect( const RECT &r, const D3DCOLOR c, const int s = 1 )
+	void draw_rect( const Rect &r, const D3DCOLOR c, const int s = 1 )
 	{
 		for (int i = (0 - s) / 2; i < (1 + s) / 2; ++i)
 		{
@@ -380,13 +380,7 @@ public:
 		}
 	}
 
-	void draw_rect( const RECT &r, const int m, const D3DCOLOR c, const int s = 1 )
-	{
-		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		draw_rect(rc, c, s);
-	}
-
-	void fill_rect( const RECT &r, const D3DCOLOR c )
+	void fill_rect( const Rect &r, const D3DCOLOR c )
 	{
 		Vertex v[] =
 		{
@@ -401,33 +395,15 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
 	}
 
-	void fill_rect( const RECT &r, const int m, const D3DCOLOR c )
-	{
-		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		fill_rect(rc, c);
-	}
-
-	void draw_char( const RECT &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR t )
+	void draw_char( const Rect &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, &t, 1, &rc, a | DT_NOCLIP, c);
 	}
 
-	void draw_char( const RECT &r, const int m, Font *f, const D3DCOLOR c, DWORD a, const TCHAR t )
-	{
-		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		draw_char(rc, f, c, a, t);
-	}
-
-	void draw_text( const RECT &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR *t )
+	void draw_text( const Rect &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR *t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, t, -1, &rc, a | DT_NOCLIP, c);
-	}
-
-	void draw_text( const RECT &r, const int m, Font *f, const D3DCOLOR c, DWORD a, const TCHAR *t )
-	{
-		RECT rc = { r.left + m, r.top + m, r.right - m, r.bottom - m };
-		draw_text(rc, f, c, a, t);
 	}
 };
