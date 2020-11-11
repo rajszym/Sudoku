@@ -257,6 +257,11 @@ public:
 			middle{static_cast<int>(std::round((top + bottom) / 2.0f))}
 			{}
 
+		Rect operator()( const auto m )
+		{
+			return { x + m, y + m, width - m * 2, height - m * 2 };
+		}
+
 		operator RECT() const
 		{
 			return { static_cast<LONG>(left),

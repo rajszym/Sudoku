@@ -123,7 +123,7 @@ public:
 
 class GameCell
 {
-	const Graphics::Rect r;
+	Graphics::Rect r;
 	Cell* const cell;
 
 	bool focused;
@@ -161,7 +161,7 @@ public:
 
 class Button: public GameTimer<int, std::ratio<1, 50>>
 {
-	const Graphics::Rect r;
+	Graphics::Rect r;
 	const int num;
 
 	bool focused;
@@ -197,7 +197,7 @@ public:
 
 class MenuItem: public std::vector<const TCHAR *>, public GameTimer<int, std::ratio<1, 100>>
 {
-	const Graphics::Rect r;
+	Graphics::Rect r;
 	const TCHAR * const info;
 	const int num;
 
@@ -347,13 +347,13 @@ void GameCell::update( Graphics &gr, Cell *focus, const int number, const bool l
 	else if (                              !GameCell::cell->empty())         f = Graphics::Color::Green;
 
 	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
-		gr.fill_rect(GameCell::r, Margin, Lighted);
+		gr.fill_rect(GameCell::r(Margin), Lighted);
 
 	if (!GameCell::cell->empty())
 		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T(" 123456789")[GameCell::cell->num]);
 	else
 	if (f != Background)
-		gr.draw_rect(GameCell::r, CellSize / 3, f, Margin - 1);
+		gr.draw_rect(GameCell::r(CellSize / 3), f, Margin - 1);
 
 	gr.draw_rect(GameCell::r, Graphics::Color::Black);
 }
@@ -464,7 +464,7 @@ void Button::update( Graphics &gr, Cell *focus, const int number, const int coun
 	auto f = Graphics::Color::DimGray;
 
 	if (Button::focused)
-		gr.fill_rect(Button::r, Margin, Lighted);
+		gr.fill_rect(Button::r(Margin), Lighted);
 	else
 	if (number == Button::num)
 		gr.fill_rect(Button::r, Graphics::Color::White);
@@ -480,7 +480,7 @@ void Button::update( Graphics &gr, Cell *focus, const int number, const int coun
 
 	if (number == Button::num)
 		for (int i = GameTimer::from(4); i >= 0; i--)
-			gr.draw_rect(Button::r, i, colors[i]);
+			gr.draw_rect(Button::r(i), colors[i]);
 	else
 		gr.draw_rect(Button::r, Graphics::Color::Black);
 
@@ -583,7 +583,7 @@ void MenuItem::update( Graphics &gr, const int _x )
 		MenuItem::font = gr.font(h, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	if (MenuItem::focused)
-		gr.fill_rect(MenuItem::r, GameTimer::until(Margin * 4), Lighted);
+		gr.fill_rect(MenuItem::r(GameTimer::until(Margin * 4)), Lighted);
 
 	if (MenuItem::size() > 1)
 	{

@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    04.11.2020
+   @date    11.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -97,6 +97,11 @@ public:
 			center{(left + right) / 2},
 			middle{(top + bottom) / 2}
 			{}
+
+		Rect operator()( const auto m )
+		{
+			return { x + m, y + m, width - m * 2, height - m * 2 };
+		}
 
 		operator RECT() const
 		{
@@ -210,12 +215,6 @@ public:
 		target->DrawRectangle(&r, get(c), s);
 	}
 
-	void draw_rect( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = 1.0f )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		draw_rect(rc, c, s);
-	}
-
 	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color c, FLOAT s = 1.0f )
 	{
 		target->DrawRoundedRectangle(&r, get(c), s);
@@ -225,12 +224,6 @@ public:
 	{
 		auto rc = D2D1::RoundedRect(r, rr, rr);
 		draw_rounded(rc, c, s);
-	}
-
-	void draw_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c, FLOAT s = 1.0f )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		draw_rounded(rc, rr, c, s);
 	}
 
 	void draw_ellipse( const D2D1_ELLIPSE &e, const Color c, FLOAT s = 1.0f )
@@ -245,22 +238,10 @@ public:
 		draw_ellipse(e, c, s);
 	}
 
-	void draw_ellipse( const D2D1_RECT_F &r, const int m, const Color c, FLOAT s = 1.0f )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		draw_ellipse(rc, c, s);
-	}
-
 	void fill_rect( const D2D1_RECT_F &r, const Color c )
 	{
 		target->FillRectangle(&r, get(c));
 		target->DrawRectangle(&r, get(c));
-	}
-
-	void fill_rect( const D2D1_RECT_F &r, const int m, const Color c )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		fill_rect(rc, c);
 	}
 
 	void fill_rounded( const D2D1_ROUNDED_RECT &r, const Color c )
@@ -273,12 +254,6 @@ public:
 	{
 		auto rc = D2D1::RoundedRect(r, rr, rr);
 		fill_rounded(rc, c);
-	}
-
-	void fill_rounded( const D2D1_RECT_F &r, const int rr, const int m, const Color c )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		fill_rounded(rc, rr, c);
 	}
 
 	void fill_ellipse( const D2D1_ELLIPSE &e, const Color c )
@@ -294,12 +269,6 @@ public:
 		fill_ellipse(e, c);
 	}
 
-	void fill_ellipse( const D2D1_RECT_F &r, const int m, const Color c )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		fill_ellipse(rc, c);
-	}
-
 	void draw_layout( const D2D1_RECT_F &r, Font *f, const Color c, Alignment a, const TCHAR *t, size_t s )
 	{
 		f->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(LOWORD(a)));
@@ -313,20 +282,8 @@ public:
 		draw_layout(r, f, c, a, &t, 1);
 	}
 
-	void draw_char( const D2D1_RECT_F &r, const int m, Font *f, const Color c, Alignment a, const TCHAR t )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		draw_layout(rc, f, c, a, &t, 1);
-	}
-
 	void draw_text( const D2D1_RECT_F &r, Font *f, const Color c, Alignment a, const TCHAR *t )
 	{
 		draw_layout(r, f, c, a, t, _tcslen(t));
-	}
-
-	void draw_text( const D2D1_RECT_F &r, const int m, Font *f, const Color c, Alignment a, const TCHAR *t )
-	{
-		auto rc = D2D1::RectF(r.left + m, r.top + m, r.right - m, r.bottom - m);
-		draw_layout(rc, f, c, a, t, _tcslen(t));
 	}
 };

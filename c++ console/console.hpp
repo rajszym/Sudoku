@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    10.11.2020
+   @date    11.11.2020
    @brief   console class
 
 *******************************************************************************
@@ -93,6 +93,11 @@ public:
 			x(_x), y(_y), width(_w), height(_h),
 			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
 			center((left + right) / 2), middle((top + bottom) / 2) {}
+
+		Rect operator()( const int _m )
+		{
+			return { x + _m, y + _m, width - _m * 2, height - _m * 2 };
+		}
 
 		bool contains( const int _x, const int _y ) const
 		{
