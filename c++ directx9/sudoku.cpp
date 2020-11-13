@@ -796,15 +796,15 @@ void Game::keyboard( const int _k )
 	}
 }
 
-bool Game::set( int n )
+bool Game::set( int num )
 {
-	if (n == 0)
-		n = Game::number;
+	if (num == 0)
+		num = Game::number;
 
-	return n == 0                         ? false :
-	       Game::help == Assistance::None ? Sudoku::set(tab.getCell(), n) :
-	       Game::help != Assistance::Full ? Sudoku::set(tab.getCell(), n, Force::Careful) :
-                                            Sudoku::set(tab.getCell(), n, Force::Safe);
+	return num == 0                       ? false :
+	       Game::help == Assistance::None ? Sudoku::set(tab.getCell(), num, Force::Direct) :
+	       Game::help != Assistance::Full ? Sudoku::set(tab.getCell(), num, Force::Careful) :
+                                            Sudoku::set(tab.getCell(), num, Force::Safe);
 }
 
 void Game::command( const Command _c )
