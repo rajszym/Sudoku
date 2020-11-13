@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    11.11.2020
+   @date    13.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -276,6 +276,11 @@ public:
 			       static_cast<FLOAT>(_x) <  right &&
 			       static_cast<FLOAT>(_y) >= top   &&
 			       static_cast<FLOAT>(_y) <  bottom;
+		}
+
+		bool contains( POINT _p ) const
+		{
+			return contains(_p.x, _p.y);
 		}
 	};
 

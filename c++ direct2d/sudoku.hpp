@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    11.11.2020
+   @date    13.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -56,6 +56,13 @@ enum Difficulty
 	Hard,
 	Expert,
 	Extreme,
+};
+
+enum class Force
+{
+	Direct,
+	Careful,
+	Safe,
 };
 
 class SudokuCell
@@ -203,6 +210,17 @@ public:
 	bool equal( int n )
 	{
 		return Cell::num != 0 && Cell::num == n;
+	}
+
+	bool passable( int n )
+	{
+		if (Cell::num != 0)
+			return false;
+
+		if (n == 0)
+			return true;
+
+		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell &c ){ return n == c.num; });
 	}
 
 	bool corrupt()
@@ -479,24 +497,35 @@ public:
 		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.empty() || c.corrupt(); });
 	}
 
-	bool set( Cell &cell, int n, bool force = true )
+	bool set( Cell *cell, int n, Force force = Force::Direct )
 	{
-		int t = cell.num;
+		if (cell == nullptr)
+			return false;
 
-		if (force)
+		int t = cell->num;
+
+		if (t == n)
+			return false;
+
+		switch (force)
 		{
-			if (cell.immutable || cell.num == n)
+		case Force::Direct:
+			if (cell->immutable)
 				return false;
-
-			cell.num = n;
-		}
-		else
-		{
-			if (!cell.set(n))
+			cell->num = n;
+			break;
+		case Force::Careful:
+			if (!cell->passable(n))
 				return false;
+			cell->num = n;
+			break;
+		case Force::Safe:
+			if (!cell->set(n))
+				return false;
+			break;
 		}
 
-		Sudoku::mem.emplace_back(&cell, t);
+		Sudoku::mem.emplace_back(cell, t);
 		Sudoku::rating = 0;
 		return true;
 	}
