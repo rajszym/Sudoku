@@ -479,8 +479,8 @@ void MenuItem::update( Graphics &gr, const int _x )
 
 	if (MenuItem::size() > 1)
 	{
-		auto cl = !MenuItem::focused ? Lighted : _x < MNU.center ? Graphics::Color::Black : Background;
-		auto cr = !MenuItem::focused ? Lighted : _x < MNU.center ? Background : Graphics::Color::Black;
+		auto cl = !MenuItem::focused ? Lighted : (_x < MNU.center || MenuItem::size() == 2) ? Graphics::Color::Black : Background;
+		auto cr = !MenuItem::focused ? Lighted : (_x < MNU.center && MenuItem::size() != 2) ? Background : Graphics::Color::Black;
 
 		gr.draw_char(MenuItem::r, MenuItem::font, cl, Graphics::Alignment::Left,  _T('◄'));
 		gr.draw_char(MenuItem::r, MenuItem::font, cr, Graphics::Alignment::Right, _T('►'));
