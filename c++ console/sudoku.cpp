@@ -263,7 +263,7 @@ public:
 	void mouseMove   ( const int, const int );
 	void mouseLButton( const int, const int );
 	void mouseRButton( const int, const int );
-	void mouseWheel  ( const int );
+	void mouseWheel  ( const int, const int, const int );
 	void keyboard    ( const int );
 };
 
@@ -311,32 +311,33 @@ void GameCell::update( Console &con, const bool, const int number, const Assista
 	auto l = GameCell::focused || (light && GameCell::cell->linked(focus));
 	auto b = l ? Lighted : Background;
 	auto f = Console::LightGray;
+	auto sure = GameCell::cell->sure();
 
 	if (GameCell::cell->num != 0)
 	{
-		f = help >= Assistance::Current && GameCell::cell->equal(number) ? (l ? Console::LightRed   : Console::Red) :
+		f = help >= Assistance::Current && GameCell::cell->equal(number) ? (l ? Console::LightRed : Console::Red) :
 		    GameCell::cell->immutable                                    ?      Console::White :
-		                                                                   (l ? Console::LightGreen : Console::Green);
+		                                                                   (l ? Console::Blue     : Console::LightBlue);
 		con.Put(GameCell::x, GameCell::y, _T("0123456789")[cell->num]);
 	}
 	else
 	if ((GameCell::focused || help > Assistance::Current) && GameCell::allowed(number, help))
 	{
 		f = help >= Assistance::Sure && GameCell::cell->sure(number) ? (l ? Console::LightGreen : Console::Green) :
-		    help <= Assistance::Current                              ?      Console::LightGray :
+		    help <= Assistance::Current                              ? (l ? Console::White      : Console::LightGray) :
 		                                                               (l ? Console::Yellow     : Console::Orange);
 	#if defined(UNICODE)
-		con.Put(GameCell::x, GameCell::y, (f == Console::LightGray ? _T('·') : _T('□')));
+		con.Put(GameCell::x, GameCell::y, _T("⁰¹²³⁴⁵⁶⁷⁸⁹")[number]);
 	#else
 		con.Put(GameCell::x, GameCell::y, (f == Console::LightGray ? _T('-') : _T('\xFE')));
 	#endif
 	}
 	else
-	if (help == Assistance::Full && number == 0 && GameCell::cell->sure() != 0)
+	if (help == Assistance::Full && number == 0 && sure != 0)
 	{
 		f = l ? Console::LightGreen : Console::Green;
 	#if defined(UNICODE)
-		con.Put(GameCell::x, GameCell::y, _T('□'));
+		con.Put(GameCell::x, GameCell::y, _T("⁰¹²³⁴⁵⁶⁷⁸⁹")[sure]);
 	#else
 		con.Put(GameCell::x, GameCell::y, _T('\xFE'));
 	#endif
@@ -799,10 +800,11 @@ void Game::mouseRButton( const int _x, const int _y )
 	Game::command(Game::tab.mouseRButton(_x, _y));
 }
 
-void Game::mouseWheel( const int _d )
+void Game::mouseWheel( const int _x, const int _y, const int _d )
 {
-	Game::number = _d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
-	                      : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9);
+	if (TAB.contains(_x, _y) || BTN.contains(_x, _y))
+		Game::command(static_cast<Command>(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
+		                                                        : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
 }
 
 void Game::keyboard( const int _k )
@@ -889,7 +891,7 @@ void Game::run()
 
 					s = static_cast<int>(input.Event.MouseEvent.dwButtonState);
 
-					Game::mouseWheel(s);
+					Game::mouseWheel(x, y, s);
 					break;
 				}
 			

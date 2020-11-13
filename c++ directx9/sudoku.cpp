@@ -316,7 +316,7 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 	{
 		auto f = help >= Assistance::Current && GameCell::cell->equal(number) ? Graphics::Color::Red :
 		         GameCell::cell->immutable                                    ? Graphics::Color::Black :
-		                                                                        Graphics::Color::Green;
+		                                                                        Graphics::Color::Navy;
 
 		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T("0123456789")[GameCell::cell->num]);
 	}
@@ -753,8 +753,8 @@ void Game::mouseWheel( const int _x, const int _y, const int _d, const HWND hWnd
 	ScreenToClient(hWnd, &cursor);
 
 	if ((Game::help != Assistance::None && TAB.contains(cursor)) || (cell != nullptr && cell->empty()))
-		Game::number = _d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
-		                      : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9);
+		Game::command(static_cast<Command>(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
+		                                                        : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
 }
 
 void Game::keyboard( const int _k )
