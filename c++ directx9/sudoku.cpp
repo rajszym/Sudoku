@@ -367,7 +367,7 @@ Command GameCell::mouseLButton( const int, const int, const int number, const As
 
 Command GameCell::mouseRButton( const int, const int )
 {
-	if (GameCell::focused)
+	if (GameCell::focused && GameCell::cell->num != 0)
 		return ClearCellCmd;
 
 	return NoCmd;
