@@ -135,9 +135,9 @@ class GameCell
 
 public:
 
-	GameCell( const auto _x, const auto _y, Cell *_c ): r{_x, _y, CellSize, CellSize}, cell{_c}, focused{false} {}
+	GameCell( const auto _x, const auto _y, Cell* const _c ): r{_x, _y, CellSize, CellSize}, cell{_c}, focused{false} {}
 
-	void    update      ( Graphics &, const int, const Assistance, Cell *, const bool );
+	void    update      ( Graphics &, const int, const Assistance, Cell* const, const bool );
 	void    mouseMove   ( const int, const int );
 	void    mouseLeave  ();
 	Command mouseLButton( const int, const int, const int, const Assistance );
@@ -153,7 +153,7 @@ public:
 
 	GameTable( Sudoku & );
 
-	void    update      ( Graphics &, const int, const Assistance, Cell *, const bool );
+	void    update      ( Graphics &, const int, const Assistance, Cell* const, const bool );
 	void    mouseMove   ( const int, const int );
 	void    mouseLeave  ();
 	Command mouseLButton( const int, const int, const int, const Assistance );
@@ -301,7 +301,7 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void GameCell::update( Graphics &gr, const int number, const Assistance help, Cell *focus, const bool light )
+void GameCell::update( Graphics &gr, const int number, const Assistance help, Cell* const focus, const bool light )
 {
 	if (GameCell::font == nullptr)
 		GameCell::font = gr.font(CellSize, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
@@ -309,7 +309,6 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 	if (GameCell::tiny == nullptr)
 		GameCell::tiny = gr.font(CellSize / 2, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
 
-	gr.draw_rect(GameCell::r, Graphics::Color::Black);
 	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
 		gr.fill_rect(GameCell::r(Margin), Lighted);
 
@@ -318,6 +317,7 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 		auto f = help >= Assistance::Current && GameCell::cell->equal(number) ? Graphics::Color::Red :
 		         GameCell::cell->immutable                                    ? Graphics::Color::Black :
 		                                                                        Graphics::Color::Green;
+
 		gr.draw_char(GameCell::r, GameCell::font, f, Graphics::Alignment::Center, _T("0123456789")[GameCell::cell->num]);
 	}
 	else
@@ -336,6 +336,8 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 		if (num != 0)
 			gr.draw_char(GameCell::r, GameCell::tiny, Graphics::Color::Green, Graphics::Alignment::Center, _T("0123456789")[num]);
 	}
+
+	gr.draw_rect(GameCell::r, Graphics::Color::Black);
 }
 
 void GameCell::mouseMove( const int _x, const int _y )
@@ -411,7 +413,7 @@ GameTable::GameTable( Sudoku &_s )
 	}
 }
 
-void GameTable::update( Graphics &gr, const int number, const Assistance help, Cell *focus, const bool light )
+void GameTable::update( Graphics &gr, const int number, const Assistance help, Cell* const focus, const bool light )
 {
 	for (auto &c: *this)
 		c.update(gr, number, help, focus, light);

@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    11.11.2020
+   @date    13.11.2020
    @brief   console class
 
 *******************************************************************************
@@ -102,6 +102,11 @@ public:
 		bool contains( const int _x, const int _y ) const
 		{
 			return _x >= left && _x < right && _y >= top && _y < bottom;
+		}
+
+		bool contains( const POINT _p ) const
+		{
+			return contains(_p.x, _p.y);
 		}
 
 		int Center( const int _w ) const

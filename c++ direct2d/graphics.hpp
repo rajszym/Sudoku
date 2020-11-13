@@ -132,12 +132,12 @@ public:
 			       static_cast<FLOAT>(_y) <  bottom;
 		}
 
-		bool contains( POINT _p ) const
+		bool contains( const POINT _p ) const
 		{
 			return contains(_p.x, _p.y);
 		}
 
-		bool contains( D2D1_POINT_2F _p ) const
+		bool contains( const D2D1_POINT_2F _p ) const
 		{
 			return contains(_p.x, _p.y);
 		}
