@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    13.11.2020
+   @date    14.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -307,7 +307,7 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 		GameCell::font = gr.font(CellSize, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
 	if (GameCell::tiny == nullptr)
-		GameCell::tiny = gr.font(CellSize / 2, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
+		GameCell::tiny = gr.font(CellSize / 3, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
 	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
 		gr.fill_rect(GameCell::r(Margin), Lighted);
@@ -330,11 +330,10 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 		gr.draw_char(GameCell::r, GameCell::tiny, f, Graphics::Alignment::Center, _T("0123456789")[number]);
 	}
 	else
-	if (help == Assistance::Full && number == 0)
 	{
-		int num = GameCell::cell->sure();
-		if (num != 0)
-			gr.draw_char(GameCell::r, GameCell::tiny, Graphics::Color::Green, Graphics::Alignment::Center, _T("0123456789")[num]);
+		auto sure = help == Assistance::Full ? GameCell::cell->sure(number) : 0;
+		if (sure != 0)
+			gr.draw_char(GameCell::r, GameCell::tiny, Graphics::Color::Green, Graphics::Alignment::Center, _T("0123456789")[sure]);
 	}
 
 	gr.draw_rect(GameCell::r, Graphics::Color::Black);
