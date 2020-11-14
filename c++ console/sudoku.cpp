@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    13.11.2020
+   @date    14.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -311,43 +311,36 @@ void GameCell::update( Console &con, const bool, const int number, const Assista
 	auto l = GameCell::focused || (light && GameCell::cell->linked(focus));
 	auto b = l ? Lighted : Background;
 	auto f = Console::LightGray;
-	auto sure = GameCell::cell->sure();
 
 	if (GameCell::cell->num != 0)
 	{
 		f = help >= Assistance::Current && GameCell::cell->equal(number) ? (l ? Console::LightRed : Console::Red) :
 		    GameCell::cell->immutable                                    ?      Console::White :
-		                                                                   (l ? Console::Blue     : Console::LightBlue);
+		                                                                   (l ? Console::White    : Console::Gray);
 		con.Put(GameCell::x, GameCell::y, _T("0123456789")[cell->num]);
 	}
 	else
 	if ((GameCell::focused || help > Assistance::Current) && GameCell::allowed(number, help))
 	{
 		f = help >= Assistance::Sure && GameCell::cell->sure(number) ? (l ? Console::LightGreen : Console::Green) :
-		    help <= Assistance::Current                              ? (l ? Console::White      : Console::LightGray) :
+		    help <= Assistance::Current                              ?      Console::Black :
 		                                                               (l ? Console::Yellow     : Console::Orange);
 	#if defined(UNICODE)
-		con.Put(GameCell::x, GameCell::y, _T("⁰¹²³⁴⁵⁶⁷⁸⁹")[number]);
+		con.Put(GameCell::x, GameCell::y, _T("·¹²³⁴⁵⁶⁷⁸⁹")[number]);
 	#else
-		con.Put(GameCell::x, GameCell::y, (f == Console::LightGray ? _T('-') : _T('\xFE')));
-	#endif
-	}
-	else
-	if (help == Assistance::Full && number == 0 && sure != 0)
-	{
-		f = l ? Console::LightGreen : Console::Green;
-	#if defined(UNICODE)
-		con.Put(GameCell::x, GameCell::y, _T("⁰¹²³⁴⁵⁶⁷⁸⁹")[sure]);
-	#else
-		con.Put(GameCell::x, GameCell::y, _T('\xFE'));
+		con.Put(GameCell::x, GameCell::y, _T("-123456789")[number]);
 	#endif
 	}
 	else
 	{
+		auto sure = help == Assistance::Full ? GameCell::cell->sure(number) : 0;
+		if (sure != 0)
+			f = l ? Console::LightGreen : Console::Green;
+
 	#if defined(UNICODE)
-		con.Put(GameCell::x, GameCell::y, _T('·'));
+		con.Put(GameCell::x, GameCell::y, _T("·¹²³⁴⁵⁶⁷⁸⁹")[sure]);
 	#else
-		con.Put(GameCell::x, GameCell::y, _T('-'));
+		con.Put(GameCell::x, GameCell::y, _T("-123456789")[sure]);
 	#endif
 	}
 
@@ -564,7 +557,7 @@ void MenuItem::update( Console &con, const bool init, const int _x )
 	if (MenuItem::focused)
 		con.Fill(MenuItem::x, MenuItem::y, MNU.width - 2, 1, Console::White, Lighted);
 	else
-		con.Fill(MenuItem::x, MenuItem::y, MNU.width - 2, 1, Console::LightGray);
+		con.Fill(MenuItem::x, MenuItem::y, MNU.width - 2, 1, Console::LightGray, Background);
 }
 
 void MenuItem::mouseMove( const int _x, const int _y )
