@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    13.11.2020
+   @date    15.11.2020
    @brief   console class
 
 *******************************************************************************
@@ -94,9 +94,37 @@ public:
 			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
 			center((left + right) / 2), middle((top + bottom) / 2) {}
 
-		Rect operator()( const int _m )
+		void inflate( const int _d )
 		{
-			return { x + _m, y + _m, width - _m * 2, height - _m * 2 };
+			x -= _d; y -= _d; width += _d * 2, height += _d * 2;
+		}
+
+		void inflate( const int _dx, const int _dy )
+		{
+			x -= _dx; y -= _dy; width += _dx * 2; height += _dy * 2;
+		}
+
+		void inflate( const int _dx, const int _dy, const int _dw, const int _dh )
+		{
+			x -= _dx; y -= _dy; width += _dx + _dw; height += _dy + _dh;
+		}
+
+		static
+		Rect inflate( const Rect &r, const int _d )
+		{
+			return { r.x - _d, r.y - _d, r.width + _d * 2, r.height + _d * 2 };
+		}
+
+		static
+		Rect inflate( const Rect &r, const int _dx, const int _dy )
+		{
+			return { r.x - _dx, r.y - _dy, r.width + _dx * 2, r.height + _dy * 2 };
+		}
+
+		static
+		Rect inflate( const Rect &r, const int _dx, const int _dy, const int _dw, const int _dh )
+		{
+			return { r.x - _dx, r.y - _dy, r.width + _dx + _dw, r.height + _dy + _dh };
 		}
 
 		bool contains( const int _x, const int _y ) const
