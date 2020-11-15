@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    13.11.2020
+   @date    15.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -257,17 +257,54 @@ public:
 			middle{(top + bottom) / 2}
 			{}
 
-		Rect operator()( const auto m )
-		{
-			return { x + m, y + m, width - m * 2, height - m * 2 };
-		}
-
 		operator RECT() const
 		{
 			return { static_cast<LONG>(std::round(left)),
 			         static_cast<LONG>(std::round(top)),
 			         static_cast<LONG>(std::round(right)),
 			         static_cast<LONG>(std::round(bottom)) };
+		}
+
+		void inflate( const auto _d )
+		{
+			x      -= static_cast<FLOAT>(_d);
+			y      -= static_cast<FLOAT>(_d);
+			width  += static_cast<FLOAT>(_d * 2);
+			height += static_cast<FLOAT>(_d * 2);
+		}
+
+		void inflate( const auto _dx, const auto _dy )
+		{
+			x      -= static_cast<FLOAT>(_dx);
+			y      -= static_cast<FLOAT>(_dy);
+			width  += static_cast<FLOAT>(_dx * 2);
+			height += static_cast<FLOAT>(_dy * 2);
+		}
+
+		void inflate( const auto _dx, const auto _dy, const auto _dw, const auto _dh )
+		{
+			x      -= static_cast<FLOAT>(_dx);
+			y      -= static_cast<FLOAT>(_dy);
+			width  += static_cast<FLOAT>(_dx + _dw);
+			height += static_cast<FLOAT>(_dy + _dh);
+		}
+
+		static
+		Rect inflate( const Rect &r, const auto _d )
+		{
+			return { r.x - _d, r.y - _d, r.width + _d * 2, r.height + _d * 2 };
+		}
+
+		static
+		Rect inflate( const Rect &r, const auto _dx, const auto _dy )
+		{
+			return { r.x - _dx, r.y - _dy, r.width + _dx * 2, r.height + _dy * 2 };
+		}
+
+		static
+		Rect inflate( const Rect &r, const auto _dx, const auto _dy, const auto _dw, const auto _dh )
+		{
+			return { r.x - _dx, r.y - _dy, r.width + _dx + _dw, r.height + _dy + _dh };
 		}
 
 		bool contains( const auto _x, const auto _y ) const
