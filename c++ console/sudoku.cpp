@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    14.11.2020
+   @date    15.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -501,7 +501,7 @@ GameButtons::GameButtons()
 {
 	for (int n = 1; n <= 9; n++)
 	{
-		int y = BTN.y + n + (n - 1) / 3;
+		int y = BTN.y + 2 + n;
 
 		GameButtons::emplace_back(y, n);
 	}
@@ -510,7 +510,7 @@ GameButtons::GameButtons()
 void GameButtons::update( Console &con, const bool init, const int number )
 {
 	if (init)
-		con.DrawSingle(BTN);
+		con.DrawSingle(Console::Rect::inflate(BTN, 0, -2, 0, 0));
 
 	for (auto &b: *this)
 		b.update(con, init, number);
@@ -761,14 +761,18 @@ void Game::update()
 	if (Game::number != 0 && help > Assistance::None)
 	{
 		int count = Sudoku::count(Game::number);
-		Console::Put(BTN.x + 1, HDR.y, count > 9 ? '?' : _T("0123456789")[count]);
+		Console::Put(BTN.x + 1, BTN.y + 1, count > 9 ? '?' : _T("0123456789")[count]);
 	}
 	else
 	{
-		Console::Put(BTN.x + 1, HDR.y, ' ');
+		Console::Put(BTN.x + 1, BTN.y + 1, ' ');
 	}
 
-	init = false;
+	if (init)
+	{
+		Console::DrawSingle(Console::Rect(BTN.x - 1, BTN.y, 5, 1));
+		init = false;
+	}
 }
 
 void Game::mouseMove( const int _x, const int _y )
