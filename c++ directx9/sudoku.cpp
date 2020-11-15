@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    14.11.2020
+   @date    15.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -310,7 +310,7 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 		GameCell::tiny = gr.font(CellSize / 3, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
 	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
-		gr.fill_rect(GameCell::r(Margin), Lighted);
+		gr.fill_rect(Graphics::Rect::inflate(GameCell::r, -Margin), Lighted);
 
 	if (GameCell::cell->num != 0)
 	{
@@ -476,7 +476,7 @@ void MenuItem::update( Graphics &gr, const int _x )
 		MenuItem::font = gr.font(h, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	if (MenuItem::focused)
-		gr.fill_rect(MenuItem::r(GameTimer::until(Margin * 4)), Lighted);
+		gr.fill_rect(Graphics::Rect::inflate(MenuItem::r, -GameTimer::until(Margin * 4)), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
@@ -487,8 +487,8 @@ void MenuItem::update( Graphics &gr, const int _x )
 		gr.draw_char(MenuItem::r, MenuItem::font, cl, Graphics::Alignment::Left,  _T('◄'));
 		gr.draw_char(MenuItem::r, MenuItem::font, cr, Graphics::Alignment::Right, _T('►'));
 #else
-		gr.draw_char(MenuItem::r(Margin), MenuItem::font, cl, Graphics::Alignment::Left,  _T('<'));
-		gr.draw_char(MenuItem::r(Margin), MenuItem::font, cr, Graphics::Alignment::Right, _T('>'));
+		gr.draw_char(Graphics::Rect::inflate(MenuItem::r, -Margin), MenuItem::font, cl, Graphics::Alignment::Left,  _T('<'));
+		gr.draw_char(Graphics::Rect::inflate(MenuItem::r, -Margin), MenuItem::font, cr, Graphics::Alignment::Right, _T('>'));
 #endif
 	}
 
