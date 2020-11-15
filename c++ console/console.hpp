@@ -94,6 +94,26 @@ public:
 			left(_x), top(_y), right(_x + _w), bottom(_y + _h),
 			center((left + right) / 2), middle((top + bottom) / 2) {}
 
+		int Center( const int _w ) const
+		{
+			return (left + right - _w) / 2;
+		}
+
+		int Right( const int _w ) const
+		{
+			return right - _w;
+		}
+
+		int Middle( const int _h ) const
+		{
+			return (top + bottom - _h) / 2;
+		}
+
+		int Bottom( const int _h ) const
+		{
+			return bottom - _h;
+		}
+
 		void inflate( const int _d )
 		{
 			x -= _d; y -= _d; width += _d * 2, height += _d * 2;
@@ -135,26 +155,6 @@ public:
 		bool contains( const POINT _p ) const
 		{
 			return contains(_p.x, _p.y);
-		}
-
-		int Center( const int _w ) const
-		{
-			return (left + right - _w) / 2;
-		}
-
-		int Right( const int _w ) const
-		{
-			return right - _w;
-		}
-
-		int Middle( const int _h ) const
-		{
-			return (top + bottom - _h) / 2;
-		}
-
-		int Bottom( const int _h ) const
-		{
-			return bottom - _h;
 		}
 	};
 
