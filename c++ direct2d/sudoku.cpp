@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    14.11.2020
+   @date    15.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -310,7 +310,7 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 		GameCell::tiny = gr.font(CellSize / 3, DWRITE_FONT_WEIGHT_BLACK, DWRITE_FONT_STRETCH_NORMAL, _T("Tahoma"));
 
 	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
-		gr.fill_rect(GameCell::r(Margin), Lighted);
+		gr.fill_rect(Graphics::Rect::inflate(GameCell::r, -Margin), Lighted);
 
 	if (GameCell::cell->num != 0)
 	{
@@ -476,7 +476,7 @@ void MenuItem::update( Graphics &gr, const int _x )
 		MenuItem::font = gr.font(h, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
 
 	if (MenuItem::focused)
-		gr.fill_rect(MenuItem::r(GameTimer::until(Margin * 4)), Lighted);
+		gr.fill_rect(Graphics::Rect::inflate(MenuItem::r, -GameTimer::until(Margin * 4)), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
