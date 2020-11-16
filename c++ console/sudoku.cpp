@@ -42,8 +42,7 @@ using Cell = SudokuCell;
 const TCHAR *title = _T("Sudoku");
 
 const Console::Rect TAB(0, 1, 25, 13);
-const Console::Rect BAR(TAB.right, TAB.top + 1, 2, TAB.height - 2);
-const Console::Rect MNU(BAR.right, TAB.top, 14, TAB.height);
+const Console::Rect MNU(TAB.right, TAB.top, 14, TAB.height);
 const Console::Rect HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
 const Console::Rect FTR(HDR.left, TAB.bottom, HDR.width, HDR.height);
 const Console::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
@@ -653,7 +652,7 @@ void Game::update()
 	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("unsolvable") : Sudoku::rating == -1 ? _T("ambiguous") : _T(""))
 	                               : (Sudoku::corrupt() ? _T("corrupt") : _T("solved"));
 
-	Console::Fill(BAR, Console::White, colors[Sudoku::level]);
+	Console::Fill(HDR, Console::White, colors[Sudoku::level]);
 
 	Game::hdr.update(*this, init, info, time);
 	Game::tab.update(*this, init, Game::number, Game::help, Game::tab.getCell(), Game::light_f);
