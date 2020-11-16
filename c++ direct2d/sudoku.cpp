@@ -47,10 +47,9 @@ constexpr auto SegSize   { CellSize * 3 + Margin * 2 };
 constexpr auto TabSize   { SegSize  * 3 + Margin * 8 };
 constexpr auto MnuSize   { 12 };
 
-const Graphics::Rect TAB(Frame + Margin * 2, Frame + CellSize, TabSize, TabSize);
-const Graphics::Rect BAR(TAB.right + Margin, TAB.top + Margin, Margin * 6, TAB.height - Margin * 2);
-const Graphics::Rect MNU(BAR.right + Margin, TAB.top, SegSize,  TAB.height);
-const Graphics::Rect HDR(TAB.left, Frame, MNU.right - TAB.left, TAB.top - Frame);
+const Graphics::Rect TAB(Frame + Margin * 2, Frame + Margin * 2 + CellSize, TabSize, TabSize);
+const Graphics::Rect MNU(TAB.right + Margin, TAB.top, SegSize,  TAB.height);
+const Graphics::Rect HDR(TAB.left, Frame + Margin, MNU.right - TAB.left, TAB.top - Frame - Margin * 2);
 const Graphics::Rect FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
 const Graphics::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom + Frame);
 
@@ -279,16 +278,17 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, const int time )
 	if (GameHeader::tiny == nullptr)
 		GameHeader::tiny = gr.font(HDR.height / 2, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_CONDENSED, _T("Arial"));
 
-	gr.draw_text(HDR, GameHeader::font, Graphics::Color::Black, Graphics::Alignment::Left, ::title);
+	auto rc = Graphics::Rect::inflate(HDR, -Margin);
+	gr.draw_text(rc, GameHeader::font, Graphics::Color::White, Graphics::Alignment::Left, ::title);
 
 	if (info != nullptr)
-		gr.draw_text(HDR, GameHeader::tiny, Graphics::Color::Red, Graphics::Alignment::Center, info);
+		gr.draw_text(rc, GameHeader::tiny, Graphics::Color::White, Graphics::Alignment::Center, info);
 
 	if (time >= 0)
 	{
 		TCHAR v[16];
 		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
-		gr.draw_text(HDR, GameHeader::font, Graphics::Color::DimGray, Graphics::Alignment::Right, v);
+		gr.draw_text(rc, GameHeader::font, Graphics::Color::Silver, Graphics::Alignment::Right, v);
 	}
 }
 
@@ -687,9 +687,13 @@ void Game::update( HWND hWnd )
 	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("unsolvable") : Sudoku::rating == -1 ? _T("ambiguous") : nullptr)
 	                               : (Sudoku::corrupt() ? _T("corrupt") : _T("solved"));
 
+	RECT rc;
 	POINT cursor;
 	GetCursorPos(&cursor);
 	ScreenToClient(hWnd, &cursor);
+	GetClientRect(hWnd, &rc);
+	cursor.x = rc.right > rc.left ? std::round(static_cast<FLOAT>(cursor.x) * WIN.width  / (rc.right - rc.left)) : 0;
+//	cursor.y = rc.bottom > rc.top ? std::round(static_cast<FLOAT>(cursor.y) * WIN.height / (rc.bottom - rc.top)) : 0;
 
 	Graphics::begin(Background);
 
@@ -698,7 +702,7 @@ void Game::update( HWND hWnd )
 	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 
-	Graphics::fill_rect(BAR, colors[Sudoku::level]);
+	Graphics::fill_rect(HDR, colors[Sudoku::level]);
 
 	Game::hdr.update(*this, info, time);
 	Game::tab.update(*this, Game::number, Game::help, Game::tab.getCell(), Game::light_f);
