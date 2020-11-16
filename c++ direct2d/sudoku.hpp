@@ -220,7 +220,7 @@ public:
 		if (n == 0)
 			return true;
 
-		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell &c ){ return n == c.num; });
+		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell &c ){ return c.num == n; });
 	}
 
 	bool corrupt()
@@ -228,7 +228,7 @@ public:
 		if (Cell::num == 0)
 			return Cell::len() == 0;
 
-		return std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [this]( Cell &c ){ return Cell::num == c.num; });
+		return std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [this]( Cell &c ){ return c.num == Cell::num; });
 	}
 
 	bool allowed( int n )
@@ -241,6 +241,11 @@ public:
 		Cell::num = 0;
 
 		return result;
+	}
+
+	bool accept( int n )
+	{
+		return Cell::num == n || Cell::allowed(n);
 	}
 
 	int sure( int n = 0 )
@@ -491,7 +496,7 @@ public:
 	{
 		for (auto i = Sudoku::begin(); i != Sudoku::end(); i += 9)
 			for (int n = 1; n <= 9; ++n)
-				if (std::none_of(i, i + 9, [n]( Cell &c ){ return c.num == n || c.allowed(n); }))
+				if (std::none_of(i, i + 9, [n]( Cell &c ){ return c.accept(n); }))
 					return true;
 
 		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.corrupt(); });
