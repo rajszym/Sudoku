@@ -321,9 +321,9 @@ void GameCell::mouseMove( const int _x, const int _y )
 	GameCell::focused = _x == GameCell::x && _y == GameCell::y;
 }
 
-Command GameCell::mouseLButton( const int _x, const int _y, const int number, const Assistance help )
+Command GameCell::mouseLButton( const int, const int, const int number, const Assistance help )
 {
-	if (_x == GameCell::x && _y == GameCell::y)
+	if (GameCell::focused)
 	{
 		if (GameCell::allowed(number, help))
 			return SetCellCmd;
@@ -331,6 +331,7 @@ Command GameCell::mouseLButton( const int _x, const int _y, const int number, co
 		if (help == Assistance::Full && number == 0 && GameCell::cell->sure() != 0)
 			return SetSureCmd;
 		else
+		if (help != Assistance::None)
 			return static_cast<Command>(Button0Cmd + GameCell::cell->num);
 	}
 
