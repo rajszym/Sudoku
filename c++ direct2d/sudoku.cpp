@@ -48,7 +48,8 @@ constexpr auto TabSize   { SegSize  * 3 + Margin * 8 };
 constexpr auto MnuSize   { 12 };
 
 const Graphics::Rect TAB(Frame + Margin * 2, Frame + CellSize, TabSize, TabSize);
-const Graphics::Rect MNU(TAB.right + Margin * 8, TAB.top, SegSize,  TAB.height);
+const Graphics::Rect BAR(TAB.right + Margin, TAB.top + Margin, Margin * 6, TAB.height - Margin * 2);
+const Graphics::Rect MNU(BAR.right + Margin, TAB.top, SegSize,  TAB.height);
 const Graphics::Rect HDR(TAB.left, Frame, MNU.right - TAB.left, TAB.top - Frame);
 const Graphics::Rect FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
 const Graphics::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom + Frame);
@@ -697,7 +698,7 @@ void Game::update( HWND hWnd )
 	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 3 + Margin * 3, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 	Graphics::fill_rect(Graphics::Rect(TAB.x, TAB.y + CellSize * 6 + Margin * 9, TAB.width, Margin * 2),  Graphics::Color::DimGray);
 
-	Graphics::fill_rect(Graphics::Rect(TAB.right + Margin, TAB.y, Margin * 6, TAB.height), colors[Sudoku::level]);
+	Graphics::fill_rect(BAR, colors[Sudoku::level]);
 
 	Game::hdr.update(*this, info, time);
 	Game::tab.update(*this, Game::number, Game::help, Game::tab.getCell(), Game::light_f);
