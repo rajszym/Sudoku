@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    13.11.2020
+   @date    16.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -272,7 +272,7 @@ public:
 
 	bool set( int n )
 	{
-		if (!Cell::allowed(n) && (n != 0 || Cell::immutable))
+		if (Cell::immutable || (n != 0 && !Cell::allowed(n)))
 			return false;
 
 		Cell::num = n;
@@ -489,6 +489,11 @@ public:
 
 	bool corrupt()
 	{
+		for (auto i = Sudoku::begin(); i != Sudoku::end(); i += 9)
+			for (int n = 1; n <= 9; ++n)
+				if (std::none_of(i, i + 9, [n]( Cell &c ){ return c.num == n || c.allowed(n); }))
+					return true;
+
 		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.corrupt(); });
 	}
 

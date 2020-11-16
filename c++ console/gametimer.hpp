@@ -2,7 +2,7 @@
 
    @file    gametimer.hpp
    @author  Rajmund Szymanski
-   @date    05.11.2020
+   @date    16.11.2020
    @brief   GameTimer class
 
 *******************************************************************************
@@ -80,6 +80,13 @@ public:
 	GameTimer( const Rep _period )
 	{
 		start(_period);
+	}
+
+	void start( bool correct )
+	{
+		count_ = Source::max();
+		if (correct) restart();
+		else         reset();
 	}
 
 	void start()
