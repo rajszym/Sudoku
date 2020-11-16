@@ -331,7 +331,7 @@ Command GameCell::mouseLButton( const int, const int, const int number, const As
 		if (help == Assistance::Full && number == 0 && GameCell::cell->sure() != 0)
 			return SetSureCmd;
 		else
-		if (help != Assistance::None)
+		if (help != Assistance::None || GameCell::cell->num != number)
 			return static_cast<Command>(Button0Cmd + GameCell::cell->num);
 	}
 
