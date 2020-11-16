@@ -42,8 +42,8 @@ using Cell = SudokuCell;
 const TCHAR *title = _T("Sudoku");
 
 const Console::Rect TAB(0, 1, 25, 13);
-const Console::Rect BTN(TAB.right, TAB.top,  3, TAB.height);
-const Console::Rect MNU(BTN.right, BTN.top, 14, BTN.height);
+const Console::Rect BAR(TAB.right, TAB.top + 1, 2, TAB.height - 2);
+const Console::Rect MNU(BAR.right, TAB.top, 14, TAB.height);
 const Console::Rect HDR(TAB.left, 0, MNU.right - TAB.left, TAB.top);
 const Console::Rect FTR(HDR.left, TAB.bottom, HDR.width, HDR.height);
 const Console::Rect WIN(0, 0, HDR.left + HDR.right, FTR.bottom);
@@ -150,36 +150,6 @@ public:
 
 /*---------------------------------------------------------------------------*/
 
-class Button
-{
-	const int x, y;
-	const int num;
-
-	bool focused;
-
-public:
-
-	Button( const int _y, const int _n ): x(BTN.x + 1), y{_y}, num{_n} {}
-
-	void    update      ( Console &, const bool, const int );
-	void    mouseMove   ( const int, const int );
-	Command mouseLButton( const int, const int );
-};
-
-
-class GameButtons: public std::vector<Button>
-{
-public:
-
-	GameButtons();
-
-	void    update      ( Console &, const bool, const int );
-	void    mouseMove   ( const int, const int );
-	Command mouseLButton( const int, const int );
-};
-
-/*---------------------------------------------------------------------------*/
-
 class MenuItem: public std::vector<const TCHAR *>
 {
 	const int x, y;
@@ -235,7 +205,6 @@ class Game: public Console, public Sudoku, public GameTimer<int>
 {
 	GameHeader  hdr;
 	GameTable   tab;
-	GameButtons btn;
 	GameMenu    mnu;
 	GameFooter  ftr;
 	
@@ -471,73 +440,6 @@ Cell *GameTable::getCell()
 
 /*---------------------------------------------------------------------------*/
 
-void Button::update( Console &con, const bool init, const int number )
-{
-	if (init)
-		con.Put(BTN.x + 1, Button::y, _T("0123456789")[num]);
-
-	auto f = number == Button::num ? Console::Black : Button::focused ? Console::White : Console::LightGray;
-	auto b = number == Button::num ? Console::White : Button::focused ? Lighted  : Background;
-
-	con.Put(Button::x, Button::y, f, b);
-}
-
-void Button::mouseMove( const int _x, const int _y )
-{
-	Button::focused = _x >= BTN.left && _x < BTN.right && _y == Button::y;
-}
-
-Command Button::mouseLButton( const int _x, const int _y )
-{
-	if (_x >= BTN.left && _x < BTN.right && _y == Button::y)
-		return static_cast<Command>(Button::num);
-
-	return NoCmd;
-}
-
-/*---------------------------------------------------------------------------*/
-
-GameButtons::GameButtons()
-{
-	for (int n = 1; n <= 9; n++)
-	{
-		int y = BTN.y + 2 + n;
-
-		GameButtons::emplace_back(y, n);
-	}
-}
-
-void GameButtons::update( Console &con, const bool init, const int number )
-{
-	if (init)
-		con.DrawSingle(Console::Rect::inflate(BTN, 0, -2, 0, 0));
-
-	for (auto &b: *this)
-		b.update(con, init, number);
-}
-
-void GameButtons::mouseMove( const int _x, const int _y )
-{
-	for (auto &b: *this)
-		b.mouseMove(_x, _y);
-}
-
-Command GameButtons::mouseLButton( const int _x, const int _y )
-{
-	for (auto &b: *this)
-	{
-		Command d = b.mouseLButton(_x, _y);
-		if (d != NoCmd) return d;
-	}
-
-	if (BTN.contains(_x, _y))
-		return Button0Cmd;
-
-	return NoCmd;
-}
-
-/*---------------------------------------------------------------------------*/
-
 void MenuItem::update( Console &con, const bool init, const int _x )
 {
 	if (init)
@@ -648,7 +550,7 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back(_T("new"));
 	GameMenu::emplace_back( 3, MNU.y +  4, _T("s:"), _T("Solve the current layout"));
 		GameMenu::back().emplace_back(_T("solve"));
-	GameMenu::emplace_back( 4, MNU.y +  5, _T("u:"), _T("Undo last move / restore accepted layout"));
+	GameMenu::emplace_back( 4, MNU.y +  5, _T("u:"), _T("Undo last move /restore accepted layout"));
 		GameMenu::back().emplace_back(_T("undo"));
 	GameMenu::emplace_back( 5, MNU.y +  6, _T("c:"), _T("Clear the board"));
 		GameMenu::back().emplace_back(_T("clear"));
@@ -715,7 +617,7 @@ void GameFooter::update( Console &con, const bool init, const TCHAR *info )
 
 /*---------------------------------------------------------------------------*/
 
-Game::Game(): Console(::title), hdr{}, tab{*this}, btn{}, mnu{}, ftr{}, timer_f{true}, light_f{false}, help{Assistance::None}, alive{true}, xpos{0}
+Game::Game(): Console(::title), hdr{}, tab{*this}, mnu{}, ftr{}, timer_f{true}, light_f{false}, help{Assistance::None}, alive{true}, xpos{0}
 {
 	Console::SetFont(56, L"Consolas");
 	Console::Center(WIN.width, WIN.height);
@@ -750,29 +652,15 @@ void Game::update()
 	auto info = Sudoku::len() < 81 ? (Sudoku::rating == -2 ? _T("unsolvable") : Sudoku::rating == -1 ? _T("ambiguous") : _T(""))
 	                               : (Sudoku::corrupt() ? _T("corrupt") : _T("solved"));
 
-	Console::Fill(HDR, Console::White, colors[Sudoku::level]);
+	Console::Fill(BAR, Console::White, colors[Sudoku::level]);
 
 	Game::hdr.update(*this, init, info, time);
 	Game::tab.update(*this, init, Game::number, Game::help, Game::tab.getCell(), Game::light_f);
-	Game::btn.update(*this, init, Game::number);
 	Game::mnu.update(*this, init, Game::xpos);
 	Game::ftr.update(*this, init, Game::mnu.getInfo());
 
-	if (Game::number != 0 && help > Assistance::None)
-	{
-		int count = Sudoku::count(Game::number);
-		Console::Put(BTN.x + 1, BTN.y + 1, count > 9 ? '?' : _T("0123456789")[count]);
-	}
-	else
-	{
-		Console::Put(BTN.x + 1, BTN.y + 1, ' ');
-	}
-
 	if (init)
-	{
-		Console::DrawSingle(Console::Rect(BTN.x - 1, BTN.y, 5, 1));
 		init = false;
-	}
 }
 
 void Game::mouseMove( const int _x, const int _y )
@@ -780,7 +668,6 @@ void Game::mouseMove( const int _x, const int _y )
 	Game::xpos = _x;
 
 	Game::tab.mouseMove(_x, _y);
-	Game::btn.mouseMove(_x, _y);
 	Game::mnu.mouseMove(_x, _y);
 }
 
@@ -788,7 +675,6 @@ void Game::mouseLButton( const int _x, const int _y )
 {
 	Game::command(Game::hdr.mouseLButton(_x, _y));
 	Game::command(Game::tab.mouseLButton(_x, _y, Game::number, Game::help));
-	Game::command(Game::btn.mouseLButton(_x, _y));
 	Game::command(Game::mnu.mouseLButton(_x, _y));
 }
 
@@ -799,7 +685,7 @@ void Game::mouseRButton( const int _x, const int _y )
 
 void Game::mouseWheel( const int _x, const int _y, const int _d )
 {
-	if (TAB.contains(_x, _y) || BTN.contains(_x, _y))
+	if (TAB.contains(_x, _y))
 		Game::command(static_cast<Command>(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
 		                                                        : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
 }
