@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    16.11.2020
+   @date    17.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -47,10 +47,10 @@ constexpr auto SegSize   { CellSize * 3 + Margin * 2 };
 constexpr auto TabSize   { SegSize  * 3 + Margin * 8 };
 constexpr auto MnuSize   { 12 };
 
-const Graphics::Rect TAB(Frame + Margin * 2, Frame + Margin * 2 + CellSize, TabSize, TabSize);
+const Graphics::Rect TAB(Frame + Margin * 2, Frame + CellSize + Margin * 2, TabSize, TabSize);
 const Graphics::Rect MNU(TAB.right + Margin, TAB.top, SegSize,  TAB.height);
-const Graphics::Rect HDR(TAB.left, Frame + Margin, MNU.right - TAB.left, TAB.top - Frame - Margin * 2);
-const Graphics::Rect FTR(TAB.left, TAB.bottom, HDR.width, CellSize / 2);
+const Graphics::Rect HDR(Frame, Frame, TAB.left + MNU.right, TAB.top - TAB.left);
+const Graphics::Rect FTR(HDR.left, TAB.bottom, HDR.width, CellSize / 2);
 const Graphics::Rect WIN(0, 0, HDR.left + HDR.right + 1, FTR.bottom + Frame + 1);
 
 constexpr Graphics::Color Background = Graphics::Color::Moccasin;
@@ -278,7 +278,7 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, const int time )
 	if (GameHeader::tiny == nullptr)
 		GameHeader::tiny = gr.font(HDR.height / 2,  FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
-	auto rc = Graphics::Rect::inflate(HDR, -Margin);
+	auto rc = Graphics::Rect::inflate(HDR, - TAB.left);
 	gr.draw_text(rc, GameHeader::font, Graphics::Color::White, Graphics::Alignment::Left, ::title);
 
 	if (info != nullptr)
