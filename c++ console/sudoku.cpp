@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    16.11.2020
+   @date    17.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -550,7 +550,7 @@ GameMenu::GameMenu()
 		GameMenu::back().emplace_back(_T("new"));
 	GameMenu::emplace_back( 3, MNU.y +  4, _T("s:"), _T("Solve the current layout"));
 		GameMenu::back().emplace_back(_T("solve"));
-	GameMenu::emplace_back( 4, MNU.y +  5, _T("u:"), _T("Undo last move /restore accepted layout"));
+	GameMenu::emplace_back( 4, MNU.y +  5, _T("u:"), _T("Undo last move or restore layout"));
 		GameMenu::back().emplace_back(_T("undo"));
 	GameMenu::emplace_back( 5, MNU.y +  6, _T("c:"), _T("Clear the board"));
 		GameMenu::back().emplace_back(_T("clear"));
