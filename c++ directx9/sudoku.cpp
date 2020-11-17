@@ -867,7 +867,7 @@ void Game::command( const Command _c )
 	                    break;
 	case SaveCmd:       Sudoku::save();
 	                    break;
-	case LoadCmd:       if (Sudoku::load()) Game::number = 0, GameTimer::start(Sudoku::rating >= 0);
+	case LoadCmd:       if (Sudoku::load()) Game::number = 0, GameTimer::start_if(Sudoku::rating >= 0);
 	                    break;
 	case QuitCmd:       Graphics::quit();
 	                    break;
