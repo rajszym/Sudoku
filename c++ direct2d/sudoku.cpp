@@ -676,11 +676,11 @@ void Game::update( HWND hWnd )
 {
 	static constexpr std::array<Graphics::Color, 5> colors =
 	{
-		Graphics::Color::Blue,
+		Graphics::Color::Navy,
 		Graphics::Color::Green,
-		Graphics::Color::Orange,
-		Graphics::Color::Crimson,
-		Graphics::Color::Crimson,
+		Graphics::Color::Olive,
+		Graphics::Color::Maroon,
+		Graphics::Color::Maroon,
 	};
 
 	auto time = Game::timer_f ? GameTimer::now() : -1;
