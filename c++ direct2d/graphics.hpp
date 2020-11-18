@@ -159,6 +159,24 @@ public:
 			return { r.x - _dx, r.y - _dy, r.width + _dx + _dw, r.height + _dy + _dh };
 		}
 
+		static
+		Rect deflate( const Rect &r, const auto _d )
+		{
+			return { r.x + _d, r.y + _d, r.width - _d * 2, r.height - _d * 2 };
+		}
+
+		static
+		Rect deflate( const Rect &r, const auto _dx, const auto _dy )
+		{
+			return { r.x + _dx, r.y + _dy, r.width - _dx * 2, r.height - _dy * 2 };
+		}
+
+		static
+		Rect deflate( const Rect &r, const auto _dx, const auto _dy, const auto _dw, const auto _dh )
+		{
+			return { r.x + _dx, r.y + _dy, r.width - _dx - _dw, r.height - _dy - _dh };
+		}
+
 		bool contains( const auto _x, const auto _y ) const
 		{
 			return static_cast<FLOAT>(_x) >= left  &&

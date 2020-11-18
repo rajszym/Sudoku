@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    17.11.2020
+   @date    18.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -278,7 +278,7 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, const int time )
 	if (GameHeader::tiny == nullptr)
 		GameHeader::tiny = gr.font(HDR.height / 2,  FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
-	auto rc = Graphics::Rect::inflate(HDR, - TAB.left);
+	auto rc = Graphics::Rect::deflate(HDR, TAB.left);
 	gr.draw_text(rc, GameHeader::font, Graphics::Color::White, Graphics::Alignment::Left, ::title);
 
 	if (info != nullptr)
@@ -311,7 +311,7 @@ void GameCell::update( Graphics &gr, const int number, const Assistance help, Ce
 		GameCell::tiny = gr.font(CellSize / 3, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
 	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
-		gr.fill_rect(Graphics::Rect::inflate(GameCell::r, -Margin), Lighted);
+		gr.fill_rect(Graphics::Rect::deflate(GameCell::r, Margin), Lighted);
 
 	if (GameCell::cell->num != 0)
 	{
@@ -477,7 +477,7 @@ void MenuItem::update( Graphics &gr, const int _x )
 		MenuItem::font = gr.font(h, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	if (MenuItem::focused)
-		gr.fill_rect(Graphics::Rect::inflate(MenuItem::r, -GameTimer::until(Margin * 4)), Lighted);
+		gr.fill_rect(Graphics::Rect::deflate(MenuItem::r, GameTimer::until(Margin * 4)), Lighted);
 
 	if (MenuItem::size() > 1)
 	{

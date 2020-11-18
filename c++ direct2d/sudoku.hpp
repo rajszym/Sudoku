@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    16.11.2020
+   @date    18.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -385,6 +385,9 @@ class Sudoku: public cell_array
 
 	static const
 	std::vector<std::basic_string<TCHAR>> extreme;
+
+	static const
+	std::basic_string<TCHAR> html;
 
 	std::list<std::pair<Cell *, int>> mem;
 
@@ -1043,6 +1046,23 @@ public:
 		file << *this << std::endl;
 
 		file.close();
+
+		auto htmlname = std::basic_string<TCHAR>(filename) + _T(".html");
+		file = std::basic_ofstream<TCHAR>(htmlname.c_str(), std::ios::out);
+		if (!file.is_open())
+			return;
+
+		size_t pos = 0;
+		auto puzzle = html;
+		for (Cell &c: *this)
+		{
+			pos = puzzle.find(_T(" </td>"), pos + 1);
+			puzzle[pos] = _T(" 123456789")[c.num];
+		}
+		
+		file << puzzle;
+
+		file.close();
 	}
 
 	void append( const TCHAR *filename )
@@ -1108,3 +1128,7 @@ _T(".98.1....2......6.............3.2.5..84.........6.4.......4.8.93..5.....8...
 _T(".26.........6....3.74.8.........3..2.8..4..1.6..5.........1.78.5....9..........4.|3:20:513:768c7f5e"),
 _T(".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8|3:20:513:f4916447"),
 };
+
+const
+std::basic_string<TCHAR> Sudoku::html =
+_T("<!doctype html><html><head><title>sudoku</title><style>table{margin-left:auto;margin-right:auto;font-family:Tahoma,Verdana,sans-serif;font-weight:bold;}table,td{border:1px solid black;border-collapse:collapse;}td{width:80px;height:80px;font-size:64px;text-align:center;vertical-align:middle}#top-left{border-top-width:5px;border-left-width:5px;}#top{border-top-width:5px;}#top-right{border-top-width:5px;border-right-width:5px;}#left{border-left-width:5px;}#center{}#right{border-right-width:5px;}#bottom-left{border-bottom-width:5px;border-left-width:5px;}#bottom{border-bottom-width:5px;}#bottom-right{border-bottom-width:5px;border-right-width:5px;}</style></head><body><table><caption><h1>SUDOKU</h1></caption><tr><td id=top-left> </td><td id=top> </td><td id=top-right> </td><td id=top-left> </td><td id=top> </td><td id=top-right> </td><td id=top-left> </td><td id=top> </td><td id=top-right> </td></tr><tr><td id=left> </td><td id=center> </td><td id=right> </td><td id=left> </td><td id=center> </td><td id=right> </td><td id=left> </td><td id=center> </td><td id=right> </td></tr><tr><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td></tr><tr><td id=top-left> </td><td id=top> </td><td id=top-right> </td><td id=top-left> </td><td id=top> </td><td id=top-right> </td><td id=top-left> </td><td id=top> </td><td id=top-right> </td></tr><tr><td id=left> </td><td id=center> </td><td id=right> </td><td id=left> </td><td id=center> </td><td id=right> </td><td id=left> </td><td id=center> </td><td id=right> </td></tr><tr><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td></tr><tr><td id=top-left> </td><td id=top> </td><td id=top-right> </td><td id=top-left> </td><td id=top> </td><td id=top-right> </td><td id=top-left> </td><td id=top> </td><td id=top-right> </td></tr><tr><td id=left> </td><td id=center> </td><td id=right> </td><td id=left> </td><td id=center> </td><td id=right> </td><td id=left> </td><td id=center> </td><td id=right> </td></tr><tr><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td><td id=bottom-left> </td><td id=bottom> </td><td id=bottom-right> </td></tr></table></body></html>");

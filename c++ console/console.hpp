@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    15.11.2020
+   @date    18.11.2020
    @brief   console class
 
 *******************************************************************************
@@ -145,6 +145,24 @@ public:
 		Rect inflate( const Rect &r, const int _dx, const int _dy, const int _dw, const int _dh )
 		{
 			return { r.x - _dx, r.y - _dy, r.width + _dx + _dw, r.height + _dy + _dh };
+		}
+
+		static
+		Rect deflate( const Rect &r, const int _d )
+		{
+			return { r.x + _d, r.y + _d, r.width - _d * 2, r.height - _d * 2 };
+		}
+
+		static
+		Rect deflate( const Rect &r, const int _dx, const int _dy )
+		{
+			return { r.x + _dx, r.y + _dy, r.width - _dx * 2, r.height - _dy * 2 };
+		}
+
+		static
+		Rect deflate( const Rect &r, const int _dx, const int _dy, const int _dw, const int _dh )
+		{
+			return { r.x + _dx, r.y + _dy, r.width - _dx - _dw, r.height - _dy - _dh };
 		}
 
 		bool contains( const int _x, const int _y ) const
