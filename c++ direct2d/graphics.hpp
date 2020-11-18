@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    15.11.2020
+   @date    18.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -38,7 +38,6 @@
 #include <d2d1helper.h>
 #include <dwrite.h>
 #include <vector>
-#include <wchar.h>
 #include <tchar.h>
 
 class Graphics
@@ -52,7 +51,6 @@ class Graphics
 	void done()
 	{
 		for (auto f: fnt) f->Release();
-		fnt.clear();
 
 		if (brush   != NULL) { brush->Release();   brush   = NULL; }
 		if (writer  != NULL) { writer->Release();  writer  = NULL; }
@@ -239,97 +237,106 @@ public:
 		target->EndDraw();
 	}
 
-	ID2D1SolidColorBrush *get( const D2D1::ColorF::Enum c )
+	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const D2D1::ColorF &c, FLOAT s = 1.0f )
 	{
-		brush->SetColor(D2D1::ColorF(c));
-		return brush;
+		brush->SetColor(c);
+
+		target->DrawLine(p1, p2, brush, s);
 	}
 
-	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const Color c, FLOAT s = 1.0f )
-	{
-		target->DrawLine(p1, p2, get(c), s);
-	}
-
-	void draw_line( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
+	void draw_line( const D2D1_RECT_F &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
 	{
 		auto p1 = D2D1::Point2F(r.left, r.top);
 		auto p2 = D2D1::Point2F(r.right, r.bottom);
 		draw_line(p1, p2, c, s);
 	}
 
-	void draw_rect( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
+	void draw_rect( const D2D1_RECT_F &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
 	{
-		target->DrawRectangle(&r, get(c), s);
+		brush->SetColor(c);
+
+		target->DrawRectangle(&r, brush, s);
 	}
 
-	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color c, FLOAT s = 1.0f )
+	void draw_rounded( const D2D1_ROUNDED_RECT &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
 	{
-		target->DrawRoundedRectangle(&r, get(c), s);
+		brush->SetColor(c);
+
+		target->DrawRoundedRectangle(&r, brush, s);
 	}
 
-	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color c, FLOAT s = 1.0f )
+	void draw_rounded( const D2D1_RECT_F &r, const int rr, const D2D1::ColorF &c, FLOAT s = 1.0f )
 	{
 		auto rc = D2D1::RoundedRect(r, rr, rr);
 		draw_rounded(rc, c, s);
 	}
 
-	void draw_ellipse( const D2D1_ELLIPSE &e, const Color c, FLOAT s = 1.0f )
+	void draw_ellipse( const D2D1_ELLIPSE &e, const D2D1::ColorF &c, FLOAT s = 1.0f )
 	{
-		target->DrawEllipse(&e, get(c), s);
+		brush->SetColor(c);
+
+		target->DrawEllipse(&e, brush, s);
 	}
 
-	void draw_ellipse( const D2D1_RECT_F &r, const Color c, FLOAT s = 1.0f )
+	void draw_ellipse( const D2D1_RECT_F &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
 	{
 		auto p = D2D1::Point2F((r.right + r.left) / 2, (r.bottom + r.top) / 2);
 		auto e = D2D1::Ellipse(p, (r.right - r.left) / 2, (r.bottom - r.top) / 2);
 		draw_ellipse(e, c, s);
 	}
 
-	void fill_rect( const D2D1_RECT_F &r, const Color c )
+	void fill_rect( const D2D1_RECT_F &r, const D2D1::ColorF &c )
 	{
-		target->FillRectangle(&r, get(c));
-		target->DrawRectangle(&r, get(c));
+		brush->SetColor(c);
+
+		target->FillRectangle(&r, brush);
+		target->DrawRectangle(&r, brush);
 	}
 
-	void fill_rounded( const D2D1_ROUNDED_RECT &r, const Color c )
+	void fill_rounded( const D2D1_ROUNDED_RECT &r, const D2D1::ColorF &c )
 	{
-		target->FillRoundedRectangle(&r, get(c));
-		target->DrawRoundedRectangle(&r, get(c));
+		brush->SetColor(c);
+
+		target->FillRoundedRectangle(&r, brush);
+		target->DrawRoundedRectangle(&r, brush);
 	}
 
-	void fill_rounded( const D2D1_RECT_F &r, const int rr, const Color c )
+	void fill_rounded( const D2D1_RECT_F &r, const int rr, const D2D1::ColorF &c )
 	{
 		auto rc = D2D1::RoundedRect(r, rr, rr);
 		fill_rounded(rc, c);
 	}
 
-	void fill_ellipse( const D2D1_ELLIPSE &e, const Color c )
+	void fill_ellipse( const D2D1_ELLIPSE &e, const D2D1::ColorF &c )
 	{
-		target->FillEllipse(&e, get(c));
-		target->DrawEllipse(&e, get(c));
+		brush->SetColor(c);
+
+		target->FillEllipse(&e, brush);
+		target->DrawEllipse(&e, brush);
 	}
 
-	void fill_ellipse( const D2D1_RECT_F &r, const Color c )
+	void fill_ellipse( const D2D1_RECT_F &r, const D2D1::ColorF &c )
 	{
 		auto p = D2D1::Point2F((r.right + r.left) / 2, (r.bottom + r.top) / 2);
 		auto e = D2D1::Ellipse(p, (r.right - r.left) / 2, (r.bottom - r.top) / 2);
 		fill_ellipse(e, c);
 	}
 
-	void draw_layout( const D2D1_RECT_F &r, Font *f, const Color c, Alignment a, const TCHAR *t, size_t s )
+	void draw_layout( const D2D1_RECT_F &r, Font *f, const D2D1::ColorF &c, Alignment a, const TCHAR *t, size_t s )
 	{
 		f->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(LOWORD(a)));
 		f->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(HIWORD(a)));
+		brush->SetColor(c);
 
-		target->DrawText(t, s, f, &r, get(c), D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
+		target->DrawText(t, s, f, &r, brush, D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
 	}
 
-	void draw_char( const D2D1_RECT_F &r, Font *f, const Color c, Alignment a, const TCHAR t )
+	void draw_char( const D2D1_RECT_F &r, Font *f, const D2D1::ColorF &c, Alignment a, const TCHAR t )
 	{
 		draw_layout(r, f, c, a, &t, 1);
 	}
 
-	void draw_text( const D2D1_RECT_F &r, Font *f, const Color c, Alignment a, const TCHAR *t )
+	void draw_text( const D2D1_RECT_F &r, Font *f, const D2D1::ColorF &c, Alignment a, const TCHAR *t )
 	{
 		draw_layout(r, f, c, a, t, _tcslen(t));
 	}
