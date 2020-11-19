@@ -65,9 +65,9 @@ class Graphics
 		return Alpha(c, static_cast<DWORD>(std::round(0xFF * a)));
 	}
 
-	HWND                    wnd;
-	LPDIRECT3D9             d3d;
-	LPDIRECT3DDEVICE9       dev;
+	HWND                     wnd;
+	LPDIRECT3D9              d3d;
+	LPDIRECT3DDEVICE9        dev;
 	std::vector<ID3DXFont *> fnt;
 
 public:

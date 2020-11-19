@@ -42,13 +42,12 @@
 
 class Graphics
 {
-	HWND wnd;
-	HDC  hdc;
-	PAINTSTRUCT ps;
-	ULONG_PTR token;
-	Gdiplus::GdiplusStartupInput si;
-	Gdiplus::Bitmap   *bm;
-	Gdiplus::Graphics *gr;
+	HWND                         wnd;
+	ULONG_PTR                    token;
+	Gdiplus::Bitmap             *bm;
+	Gdiplus::Graphics           *gr;
+	Gdiplus::Pen                *pen;
+	Gdiplus::SolidBrush         *brush;
 	std::vector<Gdiplus::Font *> fnt;
 
 public:
@@ -187,20 +186,32 @@ public:
 		}
 	};
 
-	Graphics(): wnd{NULL}, hdc{NULL}, ps{}, token{}, si{}, gr{nullptr}, fnt{}
+	Graphics(): wnd{NULL}, token{}, bm{nullptr}, gr{nullptr}, pen{nullptr}, brush{nullptr}, fnt{}
 	{
 	}
 
 	bool init( HWND hWnd )
 	{
 		wnd = hWnd;
-		Gdiplus::GdiplusStartup(&token, &si, NULL);
+		Gdiplus::GdiplusStartupInput si = {};
+		auto status = Gdiplus::GdiplusStartup(&token, &si, NULL);
+		if (status != Gdiplus::Status::Ok) return false;
+
+		pen = new Gdiplus::Pen(Color::Black);
+		if (pen == nullptr) return false;
+
+		brush = new Gdiplus::SolidBrush(Color::Black);
+		if (brush == nullptr) return false;
+
 		return true;
 	}
 
 	~Graphics()
 	{
 		for (auto f: fnt) delete f;
+
+		if (brush != nullptr) delete brush;
+		if (pen   != nullptr) delete pen;
 
 		Gdiplus::GdiplusShutdown(token);
 	}
@@ -220,7 +231,7 @@ public:
 		DestroyWindow(wnd);
 	}
 
-	void begin( const Color c )
+	void begin( const Color &c )
 	{
 		RECT rc;
 		GetClientRect(wnd, &rc);
@@ -231,7 +242,8 @@ public:
 
 	void end()
 	{
-		hdc = GetDC(wnd); // BeginPaint(wnd, &ps);
+	//	PAINTSTRUCT ps;
+		HDC hdc = GetDC(wnd); // BeginPaint(wnd, &ps);
 		auto g = Gdiplus::Graphics(hdc);
 		g.DrawImage(bm, 0, 0);
 		delete gr;
@@ -241,37 +253,37 @@ public:
 
 	void draw_rect( const RectF &r, const Color &c, const FLOAT s = 1 )
 	{
-		Gdiplus::Pen pen(c);
-		pen.SetWidth(s);
+		pen->SetColor(c);
+		pen->SetWidth(s);
 
-		gr->DrawRectangle(&pen, r);
+		gr->DrawRectangle(pen, r);
 	}
 
 	void fill_rect( const RectF &r, const Color &c )
 	{
-		Gdiplus::SolidBrush brush(c);
+		brush->SetColor(c);
 
-		gr->FillRectangle(&brush, r);
+		gr->FillRectangle(brush, r);
 		draw_rect(r, c);
 	}
 
-	void draw_text( const RectF &r, Font *f, const Color c, DWORD a, const TCHAR *t )
+	void draw_text( const RectF &r, Font *f, const Color &c, DWORD a, const TCHAR *t )
 	{
 		Gdiplus::StringFormat format{};
 		format.SetLineAlignment(static_cast<Gdiplus::StringAlignment>(LOWORD(a)));
 		format.SetAlignment(static_cast<Gdiplus::StringAlignment>(HIWORD(a)));
-		Gdiplus::SolidBrush brush(c);
+		brush->SetColor(c);
 
-		gr->DrawString(t, -1, f, r, &format, &brush);
+		gr->DrawString(t, -1, f, r, &format, brush);
 	}
 
-	void draw_char( const RectF &r, Font *f, const Color c, DWORD a, const TCHAR t )
+	void draw_char( const RectF &r, Font *f, const Color &c, DWORD a, const TCHAR t )
 	{
 		Gdiplus::StringFormat format{};
 		format.SetLineAlignment(static_cast<Gdiplus::StringAlignment>(LOWORD(a)));
 		format.SetAlignment(static_cast<Gdiplus::StringAlignment>(HIWORD(a)));
-		Gdiplus::SolidBrush brush(c);
+		brush->SetColor(c);
 
-		gr->DrawString(&t, 1, f, r, &format, &brush);
+		gr->DrawString(&t, 1, f, r, &format, brush);
 	}
 };

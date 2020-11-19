@@ -42,28 +42,11 @@
 
 class Graphics
 {
-	ID2D1Factory *factory;
-	ID2D1HwndRenderTarget *target;
-	IDWriteFactory *writer;
+	ID2D1Factory                    *factory;
+	ID2D1HwndRenderTarget           *target;
+	IDWriteFactory                  *writer;
+	ID2D1SolidColorBrush            *brush;
 	std::vector<IDWriteTextFormat *> fnt;
-
-	class SolidBrush
-	{
-		ID2D1SolidColorBrush *brush;
-	public:
-		SolidBrush( ID2D1HwndRenderTarget *t, const D2D1::ColorF &c ): brush{nullptr}
-		{
-			t->CreateSolidColorBrush(c, &brush);
-		}
-		operator ID2D1SolidColorBrush *()
-		{
-			return brush;
-		}
-		~SolidBrush()
-		{
-			brush->Release();
-		}
-	};
 
 public:
 
@@ -203,7 +186,7 @@ public:
 		}
 	};
 
-	Graphics(): factory{nullptr}, target{nullptr}, writer{nullptr}, fnt{}
+	Graphics(): factory{nullptr}, target{nullptr}, writer{nullptr}, brush{nullptr}, fnt{}
 	{
 	}
 
@@ -222,6 +205,9 @@ public:
 //		target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
 		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&writer));
+		if (FAILED(hr)) return false;
+
+		hr = target->CreateSolidColorBrush(Color(Color::Black), &brush);
 		return SUCCEEDED(hr);
     }
 
@@ -229,9 +215,10 @@ public:
 	{
 		for (auto f: fnt) f->Release();
 
-		if (writer  != nullptr) { writer->Release();  writer  = nullptr; }
-		if (target  != nullptr) { target->Release();  target  = nullptr; }
-		if (factory != nullptr) { factory->Release(); factory = nullptr; }
+		if (brush   != nullptr) brush->Release();
+		if (writer  != nullptr) writer->Release();
+		if (target  != nullptr) target->Release();
+		if (factory != nullptr) factory->Release();
 	}
 
 	Font *font( const FLOAT h, const DWRITE_FONT_WEIGHT w, DWRITE_FONT_STRETCH s, const TCHAR *f )
@@ -265,7 +252,7 @@ public:
 
 	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const Color &c, FLOAT s = 1.0f )
 	{
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->DrawLine(p1, p2, brush, s);
 	}
@@ -279,14 +266,14 @@ public:
 
 	void draw_rect( const D2D1_RECT_F &r, const Color &c, FLOAT s = 1.0f )
 	{
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->DrawRectangle(&r, brush, s);
 	}
 
 	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color &c, FLOAT s = 1.0f )
 	{
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->DrawRoundedRectangle(&r, brush, s);
 	}
@@ -299,7 +286,7 @@ public:
 
 	void draw_ellipse( const D2D1_ELLIPSE &e, const Color &c, FLOAT s = 1.0f )
 	{
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->DrawEllipse(&e, brush, s);
 	}
@@ -313,7 +300,7 @@ public:
 
 	void fill_rect( const D2D1_RECT_F &r, const Color &c )
 	{
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->FillRectangle(&r, brush);
 		target->DrawRectangle(&r, brush);
@@ -321,7 +308,7 @@ public:
 
 	void fill_rounded( const D2D1_ROUNDED_RECT &r, const Color &c )
 	{
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->FillRoundedRectangle(&r, brush);
 		target->DrawRoundedRectangle(&r, brush);
@@ -335,7 +322,7 @@ public:
 
 	void fill_ellipse( const D2D1_ELLIPSE &e, const Color &c )
 	{
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->FillEllipse(&e, brush);
 		target->DrawEllipse(&e, brush);
@@ -352,7 +339,7 @@ public:
 	{
 		f->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(LOWORD(a)));
 		f->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(HIWORD(a)));
-		auto brush = SolidBrush(target, c);
+		brush->SetColor(c);
 
 		target->DrawText(t, s, f, &r, brush, D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
 	}
