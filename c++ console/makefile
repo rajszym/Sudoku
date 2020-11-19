@@ -102,7 +102,7 @@ COMMON_F   += -municode
 endif
 endif
 COMMON_F   += -Wall -Wextra -Wshadow -Wpedantic
-COMMON_F   +=#-MD -MP
+COMMON_F   += -MD -MP
 COMMON_F   +=#-Wa,-amhls=$(@:.o=.lst)
 COMMON_F   +=#-g -ggdb
 
