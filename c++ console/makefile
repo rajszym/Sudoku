@@ -18,7 +18,7 @@ KEYS       ?=
 
 #----------------------------------------------------------#
 
-LIBS       +=#advapi32 gdi32 gdiplus msimg32 ole32 shlwapi user32 wtsapi32 comctl32 ddraw d3d9 d3dx9 d2d1 dwrite
+LIBS       +=
 KEYS       += *
 
 #----------------------------------------------------------#
@@ -74,25 +74,31 @@ LSTS       := $(OBJS:.o=.lst)
 
 #----------------------------------------------------------#
 
-COMMON_F    = -O2 -s
+COMMON_F   := -O2 -s
 ifneq ($(filter CONSOLE,$(DEFS)),)
+DEFS       := $(DEFS:CONSOLE=)
 COMMON_F   += -mconsole
 else
 ifneq ($(filter WINDOWS,$(DEFS)),)
+DEFS       := $(DEFS:WINDOWS=)
 COMMON_F   += -mwindows
 endif
 endif
 ifneq ($(filter USE_STATIC,$(DEFS)),)
+DEFS       := $(DEFS:USE_STATIC=)
 COMMON_F   += -static
 endif
 ifneq ($(filter USE_LTO,$(DEFS)),)
+DEFS       := $(DEFS:USE_LTO=)
 COMMON_F   += -flto
 endif
 ifneq ($(filter UNICODE,$(DEFS)),)
-COMMON_F   += -municode -D_UNICODE
+DEFS       += _UNICODE
+COMMON_F   += -municode
 else
 ifneq ($(filter unicode,$(MAKECMDGOALS)),)
-COMMON_F   += -municode -D_UNICODE -DUNICODE
+DEFS       += _UNICODE UNICODE
+COMMON_F   += -municode
 endif
 endif
 COMMON_F   += -Wall -Wextra -Wshadow -Wpedantic
@@ -132,7 +138,7 @@ unicode : all
 
 lib : $(LIB) print_size
 
-flash: all
+run : all
 	$(info Starting the program...)
 ifneq ($(OS),Windows_NT)
 	@chmod 777 ./$(EXE)
@@ -185,6 +191,6 @@ print_exe_size : $(EXE)
 	$(info Size of target file:)
 	$(SIZE) -B $(EXE)
 
-.PHONY : all unicode lib clean flash
+.PHONY : all unicode lib run clean
 
 -include $(DEPS)
