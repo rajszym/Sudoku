@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    18.11.2020
+   @date    19.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -70,18 +70,9 @@ class Graphics
 	LPDIRECT3DDEVICE9       dev;
 	std::vector<ID3DXFont *> fnt;
 
-	void done()
-	{
-		for (ID3DXFont *f: fnt) f->Release();
-		fnt.clear();
-
-		if (dev != NULL) { dev->Release(); dev = NULL; }
-		if (d3d != NULL) { d3d->Release(); d3d = NULL; }
-	}
-
 public:
 
-	using Font  = ID3DXFont;
+	using Font = ID3DXFont;
 
 	enum Color: D3DCOLOR
 	{
@@ -343,16 +334,11 @@ public:
 	{
 	}
 
-	~Graphics()
-	{
-		done();
-	}
-
 	bool init( HWND hWnd )
 	{
 		wnd = hWnd;
 		d3d = Direct3DCreate9(D3D_SDK_VERSION);
-		if (d3d == NULL) { return false; }
+		if (d3d == NULL) return false;
 
 		D3DPRESENT_PARAMETERS d3dpp = {};
 		d3dpp.Windowed         = TRUE;
@@ -362,7 +348,7 @@ public:
 
 		HRESULT hr;
 		hr = d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &dev);
-		if (FAILED(hr)) { done(); return false; }
+		if (FAILED(hr)) return false;
 
 		dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
 		dev->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);
@@ -370,6 +356,14 @@ public:
 		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
 
 		return true;
+	}
+
+	~Graphics()
+	{
+		for (ID3DXFont *f: fnt) f->Release();
+
+		if (dev != NULL) dev->Release();
+		if (d3d != NULL) d3d->Release();
 	}
 
 	Font *font( const INT h, const UINT w, const BYTE p, const TCHAR *f )
@@ -400,7 +394,7 @@ public:
 		DestroyWindow(wnd);
 	}
 
-	void begin( const D3DCOLOR c )
+	void begin( const Color &c )
 	{
 		dev->Clear(0, NULL, D3DCLEAR_TARGET, c, 1.0f, 0);
 		dev->BeginScene();
@@ -412,7 +406,7 @@ public:
 		dev->Present(NULL, NULL, NULL, NULL);
 	}
 
-	void draw_line( const Rect &r, const D3DCOLOR c )
+	void draw_line( const Rect &r, const Color &c )
 	{
 		Vertex v[] =
 		{
@@ -423,7 +417,7 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 1, v, sizeof(Vertex));
 	}
 
-	void draw_rect( const Rect &r, const D3DCOLOR c, const int s = 1 )
+	void draw_rect( const Rect &r, const Color &c, const int s = 1 )
 	{
 		for (int i = (0 - s) / 2; i < (1 + s) / 2; ++i)
 		{
@@ -440,7 +434,7 @@ public:
 		}
 	}
 
-	void fill_rect( const Rect &r, const D3DCOLOR c )
+	void fill_rect( const Rect &r, const Color &c )
 	{
 		Vertex v[] =
 		{
@@ -455,13 +449,13 @@ public:
 		dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
 	}
 
-	void draw_char( const Rect &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR t )
+	void draw_char( const Rect &r, Font *f, const Color &c, DWORD a, const TCHAR t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, &t, 1, &rc, a | DT_NOCLIP, c);
 	}
 
-	void draw_text( const Rect &r, Font *f, const D3DCOLOR c, DWORD a, const TCHAR *t )
+	void draw_text( const Rect &r, Font *f, const Color &c, DWORD a, const TCHAR *t )
 	{
 		RECT rc = r;
 		f->DrawText(NULL, t, -1, &rc, a | DT_NOCLIP, c);

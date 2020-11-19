@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    18.11.2020
+   @date    19.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -45,22 +45,29 @@ class Graphics
 	ID2D1Factory *factory;
 	ID2D1HwndRenderTarget *target;
 	IDWriteFactory *writer;
-	ID2D1SolidColorBrush *brush;
 	std::vector<IDWriteTextFormat *> fnt;
 
-	void done()
+	class SolidBrush
 	{
-		for (auto f: fnt) f->Release();
-
-		if (brush   != NULL) { brush->Release();   brush   = NULL; }
-		if (writer  != NULL) { writer->Release();  writer  = NULL; }
-		if (target  != NULL) { target->Release();  target  = NULL; }
-		if (factory != NULL) { factory->Release(); factory = NULL; }
-	}
+		ID2D1SolidColorBrush *brush;
+	public:
+		SolidBrush( ID2D1HwndRenderTarget *t, const D2D1::ColorF &c ): brush{nullptr}
+		{
+			t->CreateSolidColorBrush(c, &brush);
+		}
+		operator ID2D1SolidColorBrush *()
+		{
+			return brush;
+		}
+		~SolidBrush()
+		{
+			brush->Release();
+		}
+	};
 
 public:
 
-	using Color = D2D1::ColorF::Enum;
+	using Color = D2D1::ColorF;
 	using Font  = IDWriteTextFormat;
 
 	enum Alignment: DWORD
@@ -196,13 +203,8 @@ public:
 		}
 	};
 
-	Graphics(): factory{NULL}, target{NULL}, writer{NULL}, brush{NULL}, fnt{}
+	Graphics(): factory{nullptr}, target{nullptr}, writer{nullptr}, fnt{}
 	{
-	}
-
-	~Graphics()
-	{
-		done();
 	}
 
 	bool init( HWND hWnd )
@@ -220,15 +222,21 @@ public:
 //		target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
 		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&writer));
-		if (FAILED(hr)) return false;
-
-		hr = target->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Enum::Black), &brush);
 		return SUCCEEDED(hr);
     }
 
+	~Graphics()
+	{
+		for (auto f: fnt) f->Release();
+
+		if (writer  != nullptr) { writer->Release();  writer  = nullptr; }
+		if (target  != nullptr) { target->Release();  target  = nullptr; }
+		if (factory != nullptr) { factory->Release(); factory = nullptr; }
+	}
+
 	Font *font( const FLOAT h, const DWRITE_FONT_WEIGHT w, DWRITE_FONT_STRETCH s, const TCHAR *f )
 	{
-		Font *format = NULL;
+		Font *format = nullptr;
 		HRESULT hr = writer->CreateTextFormat(f, NULL, w, DWRITE_FONT_STYLE_NORMAL, s, h, _T(""), &format);
 		if (SUCCEEDED(hr))
 		{
@@ -243,11 +251,11 @@ public:
 		DestroyWindow(target->GetHwnd());
 	}
 
-	void begin( Color c )
+	void begin( const Color &c )
 	{
 		target->BeginDraw();
 		target->SetTransform(D2D1::Matrix3x2F::Identity());
-		target->Clear(D2D1::ColorF(c));
+		target->Clear(c);
 	}
 
 	void end()
@@ -255,106 +263,106 @@ public:
 		target->EndDraw();
 	}
 
-	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const D2D1::ColorF &c, FLOAT s = 1.0f )
+	void draw_line( const D2D1_POINT_2F &p1, D2D1_POINT_2F &p2, const Color &c, FLOAT s = 1.0f )
 	{
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->DrawLine(p1, p2, brush, s);
 	}
 
-	void draw_line( const D2D1_RECT_F &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
+	void draw_line( const D2D1_RECT_F &r, const Color &c, FLOAT s = 1.0f )
 	{
 		auto p1 = D2D1::Point2F(r.left, r.top);
 		auto p2 = D2D1::Point2F(r.right, r.bottom);
 		draw_line(p1, p2, c, s);
 	}
 
-	void draw_rect( const D2D1_RECT_F &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
+	void draw_rect( const D2D1_RECT_F &r, const Color &c, FLOAT s = 1.0f )
 	{
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->DrawRectangle(&r, brush, s);
 	}
 
-	void draw_rounded( const D2D1_ROUNDED_RECT &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
+	void draw_rounded( const D2D1_ROUNDED_RECT &r, const Color &c, FLOAT s = 1.0f )
 	{
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->DrawRoundedRectangle(&r, brush, s);
 	}
 
-	void draw_rounded( const D2D1_RECT_F &r, const int rr, const D2D1::ColorF &c, FLOAT s = 1.0f )
+	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color &c, FLOAT s = 1.0f )
 	{
 		auto rc = D2D1::RoundedRect(r, rr, rr);
 		draw_rounded(rc, c, s);
 	}
 
-	void draw_ellipse( const D2D1_ELLIPSE &e, const D2D1::ColorF &c, FLOAT s = 1.0f )
+	void draw_ellipse( const D2D1_ELLIPSE &e, const Color &c, FLOAT s = 1.0f )
 	{
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->DrawEllipse(&e, brush, s);
 	}
 
-	void draw_ellipse( const D2D1_RECT_F &r, const D2D1::ColorF &c, FLOAT s = 1.0f )
+	void draw_ellipse( const D2D1_RECT_F &r, const Color &c, FLOAT s = 1.0f )
 	{
 		auto p = D2D1::Point2F((r.right + r.left) / 2, (r.bottom + r.top) / 2);
 		auto e = D2D1::Ellipse(p, (r.right - r.left) / 2, (r.bottom - r.top) / 2);
 		draw_ellipse(e, c, s);
 	}
 
-	void fill_rect( const D2D1_RECT_F &r, const D2D1::ColorF &c )
+	void fill_rect( const D2D1_RECT_F &r, const Color &c )
 	{
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->FillRectangle(&r, brush);
 		target->DrawRectangle(&r, brush);
 	}
 
-	void fill_rounded( const D2D1_ROUNDED_RECT &r, const D2D1::ColorF &c )
+	void fill_rounded( const D2D1_ROUNDED_RECT &r, const Color &c )
 	{
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->FillRoundedRectangle(&r, brush);
 		target->DrawRoundedRectangle(&r, brush);
 	}
 
-	void fill_rounded( const D2D1_RECT_F &r, const int rr, const D2D1::ColorF &c )
+	void fill_rounded( const D2D1_RECT_F &r, const int rr, const Color &c )
 	{
 		auto rc = D2D1::RoundedRect(r, rr, rr);
 		fill_rounded(rc, c);
 	}
 
-	void fill_ellipse( const D2D1_ELLIPSE &e, const D2D1::ColorF &c )
+	void fill_ellipse( const D2D1_ELLIPSE &e, const Color &c )
 	{
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->FillEllipse(&e, brush);
 		target->DrawEllipse(&e, brush);
 	}
 
-	void fill_ellipse( const D2D1_RECT_F &r, const D2D1::ColorF &c )
+	void fill_ellipse( const D2D1_RECT_F &r, const Color &c )
 	{
 		auto p = D2D1::Point2F((r.right + r.left) / 2, (r.bottom + r.top) / 2);
 		auto e = D2D1::Ellipse(p, (r.right - r.left) / 2, (r.bottom - r.top) / 2);
 		fill_ellipse(e, c);
 	}
 
-	void draw_layout( const D2D1_RECT_F &r, Font *f, const D2D1::ColorF &c, Alignment a, const TCHAR *t, size_t s )
+	void draw_layout( const D2D1_RECT_F &r, Font *f, const Color &c, Alignment a, const TCHAR *t, size_t s )
 	{
 		f->SetParagraphAlignment(static_cast<DWRITE_PARAGRAPH_ALIGNMENT>(LOWORD(a)));
 		f->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(HIWORD(a)));
-		brush->SetColor(c);
+		auto brush = SolidBrush(target, c);
 
 		target->DrawText(t, s, f, &r, brush, D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
 	}
 
-	void draw_char( const D2D1_RECT_F &r, Font *f, const D2D1::ColorF &c, Alignment a, const TCHAR t )
+	void draw_char( const D2D1_RECT_F &r, Font *f, const Color &c, Alignment a, const TCHAR t )
 	{
 		draw_layout(r, f, c, a, &t, 1);
 	}
 
-	void draw_text( const D2D1_RECT_F &r, Font *f, const D2D1::ColorF &c, Alignment a, const TCHAR *t )
+	void draw_text( const D2D1_RECT_F &r, Font *f, const Color &c, Alignment a, const TCHAR *t )
 	{
 		draw_layout(r, f, c, a, t, _tcslen(t));
 	}

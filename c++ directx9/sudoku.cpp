@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    18.11.2020
+   @date    19.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -53,8 +53,8 @@ const Graphics::Rect HDR(Frame, Frame, TAB.left + MNU.right, TAB.top - TAB.left)
 const Graphics::Rect FTR(HDR.left, TAB.bottom, HDR.width, CellSize / 2);
 const Graphics::Rect WIN(0, 0, HDR.left + HDR.right + 1, FTR.bottom + Frame + 1);
 
-constexpr Graphics::Color Background = Graphics::Color::Moccasin;
-constexpr Graphics::Color Lighted    = Graphics::Color::OldLace;
+const Graphics::Color Background = Graphics::Color::Moccasin;
+const Graphics::Color Lighted    = Graphics::Color::OldLace;
 
 /*---------------------------------------------------------------------------*/
 /*                                GAME CLASSES                               */
@@ -488,8 +488,8 @@ void MenuItem::update( Graphics &gr, const int _x )
 		gr.draw_char(MenuItem::r, MenuItem::font, cl, Graphics::Alignment::Left,  _T('◄'));
 		gr.draw_char(MenuItem::r, MenuItem::font, cr, Graphics::Alignment::Right, _T('►'));
 #else
-		gr.draw_char(Graphics::Rect::inflate(MenuItem::r, -Margin), MenuItem::font, cl, Graphics::Alignment::Left,  _T('<'));
-		gr.draw_char(Graphics::Rect::inflate(MenuItem::r, -Margin), MenuItem::font, cr, Graphics::Alignment::Right, _T('>'));
+		gr.draw_char(Graphics::Rect::deflate(MenuItem::r, Margin), MenuItem::font, cl, Graphics::Alignment::Left,  _T('<'));
+		gr.draw_char(Graphics::Rect::deflate(MenuItem::r, Margin), MenuItem::font, cr, Graphics::Alignment::Right, _T('>'));
 #endif
 	}
 
@@ -679,7 +679,7 @@ Game::Game(): hdr{}, tab{*this}, mnu{}, ftr{}, number{0}, tracking{false}, timer
 
 void Game::update( HWND hWnd )
 {
-	static constexpr std::array<Graphics::Color, 5> colors =
+	static const std::array<Graphics::Color, 5> colors =
 	{
 		Graphics::Color::Navy,
 		Graphics::Color::Green,
@@ -895,6 +895,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 	switch (msg)
 	{
+		case WM_PAINT:       game.update(hWnd);              break;
+		case WM_ERASEBKGND:  return TRUE;
 		case WM_MOUSEMOVE:   game.mouseMove(x, y, hWnd);     break;
 		case WM_MOUSELEAVE:  game.mouseLeave();              break;
 		case WM_LBUTTONDOWN: game.mouseLButton(x, y);        break;
@@ -902,7 +904,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		case WM_MOUSEWHEEL:  game.mouseWheel(x, y, d, hWnd); break;
 		case WM_KEYDOWN:     game.keyboard(k);               break;
 		case WM_DESTROY:     PostQuitMessage(0);             break;
-		default:      return DefWindowProc(hWnd, msg, wParam, lParam);
+		default:             return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
 	return FALSE;
