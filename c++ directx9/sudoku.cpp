@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    19.11.2020
+   @date    20.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -276,7 +276,7 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, const int time )
 		GameHeader::font = gr.font(HDR.height, FW_MEDIUM, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
 	if (GameHeader::tiny == nullptr)
-		GameHeader::tiny = gr.font(HDR.height / 2,  FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
+		GameHeader::tiny = gr.font(HDR.height / 2, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	auto rc = Graphics::Rect::deflate(HDR, TAB.left);
 	gr.draw_text(rc, GameHeader::font, Graphics::Color::White, Graphics::Alignment::Left, ::title);

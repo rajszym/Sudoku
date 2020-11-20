@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    19.11.2020
+   @date    20.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -35,9 +35,7 @@
 
 #include <windows.h>
 #include <gdiplus.h>
-#include <memory>
 #include <vector>
-#include <map>
 #include <tchar.h>
 
 class Graphics

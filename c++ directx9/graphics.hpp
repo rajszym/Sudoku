@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    19.11.2020
+   @date    20.11.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -380,12 +380,11 @@ public:
 		desc.PitchAndFamily  = p;
 		_tcscpy(desc.FaceName, f);
 
-		Font *font;
+		Font *font = nullptr;
 		HRESULT hr = D3DXCreateFontIndirect(dev, &desc, &font);
-		if (FAILED(hr))
-			return NULL;
+		if (SUCCEEDED(hr))
+			fnt.push_back(font);
 
-		fnt.push_back(font);
 		return font;
 	}
 

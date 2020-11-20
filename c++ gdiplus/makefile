@@ -1,7 +1,7 @@
 #**********************************************************#
 #file     makefile
 #author   Rajmund Szymanski
-#date     19.11.2020
+#date     20.11.2020
 #brief    x86/x64 makefile.
 #**********************************************************#
 
@@ -13,7 +13,7 @@ PROJECT    ?= sudoku
 DEFS       ?= WINDOWS UNICODE USE_STATIC
 DIRS       ?=
 INCS       ?=
-LIBS       ?= gdi32 gdiplus
+LIBS       ?= gdiplus
 KEYS       ?=
 
 #----------------------------------------------------------#
