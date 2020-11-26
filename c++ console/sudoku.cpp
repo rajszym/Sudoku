@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    17.11.2020
+   @date    25.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -878,15 +878,20 @@ int _tmain( int argc, TCHAR **argv )
 {
 	int   cnt = 0;
 	TCHAR cmd = _T('g');
+	TCHAR ext = 0;
 	auto  tmp = std::basic_string<TCHAR>(*argv) + _T(".board");
 	const TCHAR *file = tmp.c_str();
 
 	if (--argc > 0 && (++argv, **argv == _T('/') || **argv == _T('-')))
-		cmd = *++*argv;
-
-	switch (std::toupper(cmd))
 	{
-		case _T('G'): // game
+		cmd = std::tolower(*++*argv);
+		if (cmd != 0)
+			ext = std::tolower(*++*argv);
+	}
+
+	switch (cmd)
+	{
+		case _T('g'): // game
 		{
 			auto sudoku = Game();
 			LONG style = GetWindowLong(sudoku.Console::Hwnd, GWL_STYLE);
@@ -897,7 +902,7 @@ int _tmain( int argc, TCHAR **argv )
 			break;
 		}
 
-		case _T('F'): // find
+		case _T('f'): // find
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
@@ -912,9 +917,9 @@ int _tmain( int argc, TCHAR **argv )
 			while (!GetAsyncKeyState(VK_ESCAPE))
 			{
 				sudoku.generate();
-				if (sudoku.level > Difficulty::Medium && sudoku.len() > 17 && std::islower(cmd))
+				if (ext == _T('r') || ext == _T('x'))
 					sudoku.raise();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(ext != _T('x')))
 				{
 					data.push_back(sudoku.signature);
 					std::cout << sudoku << std::endl;
@@ -926,7 +931,7 @@ int _tmain( int argc, TCHAR **argv )
 			break;
 		}
 
-		case _T('T'): // test
+		case _T('t'): // test
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
@@ -952,7 +957,7 @@ int _tmain( int argc, TCHAR **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_weight);
+			std::sort(coll.begin(), coll.end(), ext == _T('w') ? Sudoku::select_weight : ext == _T('l') ? Sudoku::select_length : Sudoku::select_rating);
 
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
@@ -961,7 +966,7 @@ int _tmain( int argc, TCHAR **argv )
 			break;
 		}
 
-		case _T('S'): // sort
+		case _T('s'): // sort
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
@@ -987,7 +992,7 @@ int _tmain( int argc, TCHAR **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), std::islower(cmd) ? Sudoku::select_rating : Sudoku::select_length);
+			std::sort(coll.begin(), coll.end(), ext == _T('w') ? Sudoku::select_weight : ext == _T('l') ? Sudoku::select_length : Sudoku::select_rating);
 
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
@@ -996,12 +1001,11 @@ int _tmain( int argc, TCHAR **argv )
 			break;
 		}
 
-		case _T('R'): // raise
+		case _T('r'): // raise
 		{
 			auto sudoku = Sudoku(Difficulty::Medium);
 			auto timer  = GameTimer<int>();
 			auto data   = std::vector<uint32_t>();
-			auto coll   = std::vector<Sudoku>();
 			auto lst    = std::vector<std::basic_string<TCHAR>>();
 
 
@@ -1017,24 +1021,19 @@ int _tmain( int argc, TCHAR **argv )
 				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
 				sudoku.raise();
-				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(std::isupper(cmd)))
+				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(ext != _T('x')))
 				{
 					data.push_back(sudoku.signature);
-					coll.emplace_back(sudoku);
+					std::cout << sudoku << std::endl;
 				}
 			}
-
-			std::sort(coll.begin(), coll.end(), Sudoku::select_rating);
-
-			for (auto &tab: coll)
-				std::cout << tab << std::endl;
 
 			std::wcerr << ::title << " raise: " << data.size() << " boards found, " << timer.now() << 's' << std::endl;
 			break;
 		}
 
 		case _T('?'): /* falls through */
-		case _T('H'): // help
+		case _T('h'): // help
 		{
 			std::cerr << "\n"
 			             "Sudoku game, solver and generator\n"
@@ -1044,15 +1043,18 @@ int _tmain( int argc, TCHAR **argv )
 			             "You are free to modify and redistribute it.\n"
 			             "\n"
 			             "Usage:\n"
-			             "sudoku -g        - game\n"
-			             "sudoku -f [file] - find and show extreme only\n"
-			             "sudoku -F [file] - find and show all\n"
-			             "sudoku -t [file] - test and sort by rating\n"
-			             "sudoku -T [file] - test and sort by weight\n"
-			             "sudoku -s [file] - sort by rating / length\n"
-			             "sudoku -S [file] - sort by length / rating\n"
-			             "sudoku -r [file] - raise and show extreme only\n"
-			             "sudoku -R [file] - raise and show all\n"
+			             "sudoku -g        - game (default)\n"
+			             "sudoku -f [file] - find (append to file)\n"
+			             "       -fr       - force raise\n"
+			             "       -fx       - force raise and show extreme only\n"
+			             "sudoku -t [file] - test for extreme (read from file)\n"
+			             "       -tw       - sort by weight/length (default is rating/length)\n"
+			             "       -tl       - sort by length/rating (default is rating/length)\n"
+			             "sudoku -s [file] - sort (read from file)\n"
+			             "       -sw       - sort by weight/length (default is rating/length)\n"
+			             "       -sl       - sort by length/rating (default is rating/length)\n"
+			             "sudoku -r [file] - raise (read from file)\n"
+			             "       -rx       - show extreme only\n"
 			             "sudoku -h        - this usage help\n"
 			             "sudoku -?        - this usage help\n"
 			          << std::endl;
