@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    21.11.2020
+   @date    25.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -50,7 +50,7 @@ using  cell_array = std::array<SudokuCell, 81>;
 
 enum Difficulty
 {
-	Same = -1,
+	Any = -1,
 	Easy = 0,
 	Medium,
 	Hard,
@@ -79,24 +79,21 @@ public:
 	{
 	public:
 
-		Values( Cell &cell )
+		Values( Cell &cell, bool shuffled = false )
 		{
 		 	std::iota(Values::begin(), Values::end(), 0);
 
 			Values::at(cell.num) = 0;
 			for (Cell &c: cell.lst)
 				Values::at(c.num) = 0;
+
+			if (shuffled)
+				std::shuffle(Values::begin(), Values::end(), std::mt19937{std::random_device{}()});
 		}
 
 		int len()
 		{
 			return std::count_if(Values::begin(), Values::end(), []( int v ){ return v != 0; });
-		}
-
-		Values &shuffled()
-		{
-			std::shuffle(Values::begin(), Values::end(), std::mt19937{std::random_device{}()});
-			return *this;
 		}
 	};
 
@@ -296,7 +293,7 @@ public:
 		}
 
 		Cell &cell = c.get();
-		for (int v: Cell::Values(cell).shuffled())
+		for (int v: Cell::Values(cell))
 		{
 			if ((cell.num = v) != 0 && cell.solve(check))
 			{
@@ -326,37 +323,6 @@ public:
 		if (level == Difficulty::Easy && !check)
 			return false;
 
-		for (int v: Cell::Values(*this))
-		{
-			if ((Cell::num = v) != 0 && Cell::solve(true))
-			{
-				Cell::num = n;
-				return false;
-			}
-		}
-
-		Cell::num = 0;
-		return true;
-	}
-
-	bool raise( bool strict )
-	{
-		if (Cell::num == 0)
-			return false;
-
-		int n = Cell::num;
-
-		Cell::num = 0;
-		if (Cell::sure(n))
-		{
-			if (!strict)
-				return true;
-
-			Cell::num = n;
-			return false;
-		}
-
-		Cell::num = n;
 		for (int v: Cell::Values(*this))
 		{
 			if ((Cell::num = v) != 0 && Cell::solve(true))
@@ -563,12 +529,15 @@ public:
 			c.immutable = false;
 	}
 
-	void accept()
+	void accept( bool estimate = false, Difficulty difficulty = Difficulty::Any )
 	{
 		for (Cell &c: *this)
 			c.immutable = c.num != 0;
 
-		Sudoku::specify_layout();
+		if (difficulty != Difficulty::Any)
+			Sudoku::level = difficulty;
+
+		Sudoku::specify_layout(estimate);
 		Sudoku::mem.clear();
 	}
 
@@ -690,7 +659,7 @@ private:
 		return 0;
 	}
 
-	bool simplify()
+	bool simplify( bool confirm = false )
 	{
 		bool result = false;
 
@@ -699,10 +668,23 @@ private:
 		{
 			simplified = false;
 			for (Cell &c: *this)
+			{
 				if (c.num == 0 && (c.num = c.sure(0)) != 0)
-					simplified = result = true;
+				{
+					if (confirm)
+						c.immutable = true;
+					result = simplified = true;
+				}
+			}
 		}
 		while (simplified);
+
+		if (confirm)
+		{
+			Sudoku::level = Difficulty::Expert;
+			Sudoku::rating = 0;
+			Sudoku::signature = 0;
+		}
 
 		return result;
 	}
@@ -723,9 +705,9 @@ public:
 		}
 	}
 
-	void generate( Difficulty difficulty = Difficulty::Same )
+	void generate( Difficulty difficulty = Difficulty::Any )
 	{
-		if (difficulty != Difficulty::Same)
+		if (difficulty != Difficulty::Any)
 			Sudoku::level = difficulty;
 
 		if (Sudoku::level == Difficulty::Extreme)
@@ -745,49 +727,91 @@ public:
 		}
 	}
 
-	void raise()
+	bool verify( bool force )
 	{
-		Sudoku::level = Difficulty::Medium;
-		Sudoku::accept();
+		Difficulty current = Sudoku::level;
+		Sudoku::accept(true);
+		if (Sudoku::level >= current && Sudoku::rating >= 0 && (!force || Sudoku::level >= Difficulty::Hard))
+		{
+			if (force && Sudoku::level > current && Sudoku::level == Difficulty::Hard)
+			{
+				Sudoku::simplify(true);
+				Sudoku::accept(true);
+			}
+			return true;
+		}
+		Sudoku::level = current;
+		return false;
+	}
 
-		if (Sudoku::level == Difficulty::Medium)
+	void raise( bool force = true, bool show = true )
+	{
+		Sudoku::accept(false, Difficulty::Medium);
+		if (show)
+			std::cerr << *this << std::endl;
+
+		if (force && Sudoku::level == Difficulty::Hard)
+		{
+			Sudoku::simplify(true);
+			if (show)
+				std::cerr << *this << std::endl;
+		}
+
+		if (Sudoku::len() <= 17)
 			return;
 
-		if (Sudoku::level == Difficulty::Hard)
-			Sudoku::simplify();
-
-		Sudoku::discard();
-		Sudoku::Backup tmp(this);
-
+		bool success;
 		do
 		{
-			if (Sudoku::len() > tmp.len()) tmp.restore();
-			else                           tmp.reload();
-
-			bool changed;
-			do
+			success = false;
+			auto rnd = Sudoku::Random(this);
+			for (auto i = rnd.begin(); i != rnd.end(); ++i)
 			{
-				changed = false;
-				for (Cell &c: Sudoku::Random(this))
-					if (c.raise(true))
-						changed = true;
-			}
-			while (changed);
+				Cell &ci = *i;
+				if (ci.num == 0) continue;
+				int ni = ci.num;
+				ci.num = 0;
 
-			do
-			{
-				changed = false;
-				for (Cell &c: Sudoku::Random(this))
-					if (c.raise(false))
-						changed = true;
-			}
-			while (changed);
+				for (auto j = i + 1; j != rnd.end(); ++j)
+				{
+					Cell &cj = *j;
+					if (cj.num == 0) continue;
+					int nj = cj.num;
+					cj.num = 0;
 
-			Sudoku::simplify();
+					for (Cell &cell: Sudoku::Random(this))
+					{
+						if (cell.num != 0) continue;
+						if (&cell != &ci && &cell != &cj && !cell.linked(&ci) && !cell.linked(&cj)) continue;
+
+						for (int v: Cell::Values(cell))
+						{
+							if ((cell.num = v) != 0 && Sudoku::verify(force))
+							{
+								if (show)
+									std::cerr << *this << std::endl;
+								success = true;
+								break;
+							}
+						}
+
+						if (success) break;
+						cell.num = 0;
+					}
+
+					if (success) break;
+					cj.num = nj;
+				}
+
+				if (success) break;
+				ci.num = ni;
+			}
 		}
-		while (tmp.changed());
+		while (success);
 
 		Sudoku::accept();
+		if (show)
+			std::cerr << *this << std::endl;
 	}
 
 	bool test( bool all )
@@ -900,12 +924,12 @@ private:
 		return crc;
 	}
 
-	void calculate_rating()
+	void calculate_rating( bool estimate = false )
 	{
 		Sudoku::rating = Sudoku::solvable(); if (Sudoku::rating != 0) return;
 		Sudoku::rating = Sudoku::correct();  if (Sudoku::rating != 0) return;
 
-		if (Sudoku::level == Difficulty::Extreme) return;
+		if (estimate || Sudoku::level == Difficulty::Extreme) return;
 
 		int msb = 0;
 		int result = Sudoku::parse_rating();
@@ -918,8 +942,8 @@ private:
 	void calculate_level()
 	{
 		if ( Sudoku::level                      == Difficulty::Easy)    { return; }
-		if ( Sudoku::rating < 0) { Sudoku::level = Difficulty::Medium;    return; }
 		if ( Sudoku::level                      == Difficulty::Extreme) { return; }
+		if ( Sudoku::rating < 0) { Sudoku::level = Difficulty::Medium;    return; }
 		if ( Sudoku::solved())   { Sudoku::level = Difficulty::Medium;    return; }
 		if (!Sudoku::simplify()) { Sudoku::level = Difficulty::Expert;    return; }
 		if (!Sudoku::solved())   { Sudoku::level = Difficulty::Hard;              }
@@ -927,8 +951,14 @@ private:
 		Sudoku::again();
 	}
 
-	void calculate_signature()
+	void calculate_signature( bool estimate = false )
 	{
+		if (estimate)
+		{
+			Sudoku::signature = 0;
+			return;
+		}
+
 		std::array<uint32_t, 10> v = { 0 };
 		std::array<uint32_t, 81> l;
 		std::array<uint32_t, 81> r;
@@ -949,11 +979,11 @@ private:
 		Sudoku::signature = Sudoku::calculate_crc32(r, Sudoku::signature);
 	}
 
-	void specify_layout()
+	void specify_layout( bool estimate = false )
 	{
-		Sudoku::calculate_rating();
+		Sudoku::calculate_rating(estimate);
 		Sudoku::calculate_level();		// must be after calculate_rating (depends on the rating)
-		Sudoku::calculate_signature();
+		Sudoku::calculate_signature(estimate);
 	}
 
 public:
@@ -1100,7 +1130,8 @@ std::vector<std::basic_string<TCHAR>> Sudoku::extreme =
 _T(".2.4.37.........32........4.4.2...7.8...5.........1...5.....9...3.9....7..1..86..|3:21:702:9c071975"),
 _T("4.....8.5.3..........7......2.....6.....8.4...4..1.......6.3.7.5.32.1...1.4......|3:20:666:10144aa6"),
 _T("52...6.........7.131..........4..8..6......5...........418.........3..28.387.....|3:20:666:f54090de"),
-_T(".9............15...68........2.5.4...5.8...9........5....64.185....75...4.5...967|3:24:663:9c3bf303"),
+_T(".9............15...68........2.5.4.....8...9...1....5..2.6...85....75...4.....96.|3:21:654:ae498c1b"),
+_T("12....3.8.6.4..............2.3.1...........758.7......97.5...6..31.8.2...........|3:21:654:ea3fbd5f"),
 _T("7.48..............328...16....2....15.......8....93........6.....63..5...351.2...|3:22:642:16cb5f8e"),
 _T("52.....8...........1....7.575694......467...............8.1..29.6...24.......9..8|3:23:630:346fd02a"),
 _T("6.....8.3.4.7.................5.4.7.3.42.1...1.6.......2.....5.....8.6...6..1....|3:20:617:d9865cd1"),
@@ -1113,6 +1144,7 @@ _T(".9............15...68........2.5.4...5.8...9........5....649185...1.....4...
 _T("48.3............7112.......7.5....6....2..8.............1.76...3.....4......53...|3:19:576:0f8412ed"),
 _T(".923.........8.1...........1.7.4...........658.6.......6.5.2...4.....7.....9.4...|3:19:575:abdc6334"),
 _T(".68.......52..7..........845..3...9..7...5...1..............5.78........3..4..2.8|3:20:567:d8cd3478"),
+_T("458....3....8.1....9.....8.....5.39.2..7......4........1..48.........7.2...6.....|3:20:565:ed9dbd09"),
 _T("4.....8.5.3........5.7......2.....6.....5.4......1.......693.71..32.1...1.9......|3:21:560:ad7de212"),
 _T(".......39.....1..5..3.5.8....8.9...6.7...2...1..4.......9.8..5..2....6..4..7.....|3:21:556:33afc54f"),
 _T("8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4..|3:21:555:078b18c4"),
@@ -1125,6 +1157,7 @@ _T("3...8.......7....51.......3......36...2..4....7...........6.13..452.........
 _T("......5..........39..64......8.7......3.....2....6..4.67.....9......58..48...6...|3:19:522:95d90963"),
 _T("...5.1....9....8...6.......4.1..........7..9........3.8.....1.5...21.4.3.1.36....|3:20:518:21d22039"),
 _T(".7...15..63..4...........8......7.3...5....4......96.....8..9..2...6...1....5...8|3:20:513:0a6a7338"),
+_T("49.....7..8..6..2......5..3.2.....4...8..2........1...3...7.1....1...3.5.6.......|3:20:513:399a75f8"),
 _T(".26.........6....3.74.8.........3..2.8..4..1.6..5.........1.78.5....9..........4.|3:20:513:5ff0c9e4"),
 _T(".98.1....2......6.............3.2.5..84.........6.4.......4.8.93..5.....8.....1.5|3:20:513:ebd7fdce"),
 };
