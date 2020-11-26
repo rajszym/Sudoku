@@ -918,7 +918,7 @@ int _tmain( int argc, TCHAR **argv )
 			{
 				sudoku.generate();
 				if (ext == _T('r') || ext == _T('x'))
-					sudoku.raise();
+					sudoku.raise(ext == _T('x'));
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(ext != _T('x')))
 				{
 					data.push_back(sudoku.signature);
