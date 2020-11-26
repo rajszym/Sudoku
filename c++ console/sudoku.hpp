@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    25.11.2020
+   @date    26.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -175,6 +175,12 @@ public:
 		                    (a_len == b_len && a.range() < b.range()));
 	}
 
+	static
+	bool select_solid( Cell &a, Cell &b )
+	{
+		return a.solid() > b.solid();
+	}
+
 	void init( int p )
 	{
 		Cell::pos = p;
@@ -197,6 +203,14 @@ public:
 	int range()
 	{
 		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), 0, []( int r, Cell &c ){ return r + c.len(); });
+	}
+
+	int solid()
+	{
+		if (Cell::num == 0)
+			return 0;
+
+		return std::count_if(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.num != 0; }) + 1;
 	}
 
 	bool empty()
@@ -431,6 +445,16 @@ class Sudoku: public cell_array
 		Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
 		{
 			std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
+		}
+	};
+
+	class Sorted: public std::vector<cell_ref>
+	{
+	public:
+
+		Sorted( cell_array *tab, bool(*compare)(Cell &, Cell&) ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
+		{
+			std::sort(Sorted::begin(), Sorted::end(), compare);
 		}
 	};
 
@@ -731,7 +755,7 @@ public:
 	{
 		Difficulty current = Sudoku::level;
 		Sudoku::accept(true);
-		if (Sudoku::level >= current && Sudoku::rating >= 0 && (!force || Sudoku::level >= Difficulty::Hard))
+		if (Sudoku::rating >= 0 && (!force || (Sudoku::level >= current && Sudoku::level >= Difficulty::Hard)))
 		{
 			if (force && Sudoku::level > current && Sudoku::level == Difficulty::Hard)
 			{
@@ -764,15 +788,15 @@ public:
 		do
 		{
 			success = false;
-			auto rnd = Sudoku::Random(this);
-			for (auto i = rnd.begin(); i != rnd.end(); ++i)
+			auto vec = Sudoku::Sorted(this, Cell::select_solid);
+			for (auto i = vec.begin(); i != vec.end(); ++i)
 			{
 				Cell &ci = *i;
 				if (ci.num == 0) continue;
 				int ni = ci.num;
 				ci.num = 0;
 
-				for (auto j = i + 1; j != rnd.end(); ++j)
+				for (auto j = i + 1; j != vec.end(); ++j)
 				{
 					Cell &cj = *j;
 					if (cj.num == 0) continue;
