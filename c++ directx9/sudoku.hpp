@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    26.11.2020
+   @date    27.11.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -164,23 +164,6 @@ public:
 		return in_lst(*c);
 	}
 
-	static
-	bool select_length( Cell &a, Cell &b )
-	{
-		int a_len = a.len();
-		int b_len = b.len();
-
-		return a.num == 0 &&
-		      (b.num != 0 || a_len <  b_len ||
-		                    (a_len == b_len && a.range() < b.range()));
-	}
-
-	static
-	bool select_solid( Cell &a, Cell &b )
-	{
-		return a.solid() > b.solid();
-	}
-
 	void init( int p )
 	{
 		Cell::pos = p;
@@ -297,17 +280,17 @@ public:
 
 	bool solve( bool check = false )
 	{
-		cell_ref c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::select_length);
+		cell_ref c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::by_length);
 		if (c.get().num != 0)
 		{
 			Cell * const tab = this - Cell::pos;
-			c = std::ref(*std::min_element(tab, tab + 81, Cell::select_length));
+			c = std::ref(*std::min_element(tab, tab + 81, Cell::by_length));
 			if (c.get().num != 0)
 				return true;
 		}
 
 		Cell &cell = c.get();
-		for (int v: Cell::Values(cell))
+		for (int v: Cell::Values(cell, true))
 		{
 			if ((cell.num = v) != 0 && cell.solve(check))
 			{
@@ -348,6 +331,23 @@ public:
 
 		Cell::num = 0;
 		return true;
+	}
+
+	static
+	bool by_length( Cell &a, Cell &b )
+	{
+		int a_len = a.len();
+		int b_len = b.len();
+
+		return a.num == 0 &&
+		      (b.num != 0 || a_len <  b_len ||
+		                    (a_len == b_len && a.range() < b.range()));
+	}
+
+	static
+	bool by_solid( Cell &a, Cell &b )
+	{
+		return a.solid() > b.solid();
 	}
 
 	template<class T> friend
@@ -673,7 +673,7 @@ private:
 	{
 		auto tmp = Sudoku::Temp(this);
 
-		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select_length)->solve();
+		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::by_length)->solve();
 		if (!Sudoku::solved())
 			return -2;
 
@@ -724,7 +724,7 @@ public:
 	{
 		if (Sudoku::solvable() == 0)
 		{
-			std::max_element(Sudoku::begin(), Sudoku::end(), Cell::select_length)->solve();
+			std::max_element(Sudoku::begin(), Sudoku::end(), Cell::by_length)->solve();
 			Sudoku::mem.clear();
 		}
 	}
@@ -784,11 +784,13 @@ public:
 		if (Sudoku::len() <= 17)
 			return;
 
+		bool forced = false;
 		bool success;
 		do
 		{
+			forced = forced || (force && (Sudoku::level >= Difficulty::Hard || Sudoku::len() <= 30));
 			success = false;
-			auto vec = Sudoku::Sorted(this, Cell::select_solid);
+			auto vec = Sudoku::Sorted(this, Cell::by_solid);
 			for (auto i = vec.begin(); i != vec.end(); ++i)
 			{
 				Cell &ci = *i;
@@ -810,7 +812,7 @@ public:
 
 						for (int v: Cell::Values(cell))
 						{
-							if ((cell.num = v) != 0 && Sudoku::verify(force))
+							if ((cell.num = v) != 0 && Sudoku::verify(forced))
 							{
 								if (show)
 									std::cerr << *this << std::endl;
@@ -903,7 +905,7 @@ private:
 			return result;
 		}
 			
-		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::select_length);
+		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::by_length);
 		if (cell.num != 0) // solved!
 			return 1;
 
@@ -1013,12 +1015,12 @@ private:
 public:
 
 	static
-	bool select_weight( Sudoku &a, Sudoku &b )
+	bool by_weight( Sudoku &a, Sudoku &b )
 	{
-		int a_len = a.len();
-		int b_len = b.len();
 		int a_wgt = a.weight();
 		int b_wgt = b.weight();
+		int a_len = a.len();
+		int b_len = b.len();
 
 		return a_wgt  > b_wgt ||
 		      (a_wgt == b_wgt && (a_len  < b_len ||
@@ -1027,7 +1029,7 @@ public:
 	}
 
 	static
-	bool select_rating( Sudoku &a, Sudoku &b )
+	bool by_rating( Sudoku &a, Sudoku &b )
 	{
 		int a_len = a.len();
 		int b_len = b.len();
@@ -1039,7 +1041,7 @@ public:
 	}
 
 	static
-	bool select_length( Sudoku &a, Sudoku &b )
+	bool by_length( Sudoku &a, Sudoku &b )
 	{
 		int a_len = a.len();
 		int b_len = b.len();
