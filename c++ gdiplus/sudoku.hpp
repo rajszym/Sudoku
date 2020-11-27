@@ -759,17 +759,14 @@ public:
 		}
 	}
 
-	bool verify( bool force )
+	bool verify( bool forced )
 	{
 		Difficulty current = Sudoku::level;
 		Sudoku::accept(true);
-		if (Sudoku::rating >= 0 && (!force || (Sudoku::level >= current && Sudoku::level >= Difficulty::Hard)))
+		if (Sudoku::rating >= 0 && (!forced || (Sudoku::level >= current && Sudoku::level >= Difficulty::Hard)))
 		{
-			if (force && Sudoku::level > current && Sudoku::level == Difficulty::Hard)
-			{
+			if (forced && Sudoku::level == Difficulty::Hard && Sudoku::level > current)
 				Sudoku::simplify(true);
-				Sudoku::accept(true);
-			}
 			return true;
 		}
 		Sudoku::level = current;
@@ -786,15 +783,16 @@ public:
 		{
 			Sudoku::simplify(true);
 			if (show)
+			{
+				if (Sudoku::len() <= 20)
+					accept();
 				std::cerr << *this << std::endl;
+			}
 		}
 
-		if (Sudoku::len() <= 17)
-			return;
-
 		bool forced = false;
-		bool success;
-		do
+		bool success = true;
+		while (success && Sudoku::len() > 17)
 		{
 			forced = forced || (force && (Sudoku::level >= Difficulty::Hard || Sudoku::len() <= 30));
 			success = false;
@@ -823,7 +821,12 @@ public:
 							if ((cell.num = v) != 0 && Sudoku::verify(forced))
 							{
 								if (show)
+								{
+									if (Sudoku::len() <= 20)
+										accept();
 									std::cerr << *this << std::endl;
+								}
+
 								success = true;
 								break;
 							}
@@ -841,7 +844,6 @@ public:
 				ci.num = ni;
 			}
 		}
-		while (success);
 
 		Sudoku::accept();
 		if (show)
