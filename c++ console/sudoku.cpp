@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    25.11.2020
+   @date    27.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -957,7 +957,7 @@ int _tmain( int argc, TCHAR **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), ext == _T('w') ? Sudoku::select_weight : ext == _T('l') ? Sudoku::select_length : Sudoku::select_rating);
+			std::sort(coll.begin(), coll.end(), ext == _T('w') ? Sudoku::by_weight : ext == _T('l') ? Sudoku::by_length : Sudoku::by_rating);
 
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
@@ -992,7 +992,7 @@ int _tmain( int argc, TCHAR **argv )
 				}
 			}
 
-			std::sort(coll.begin(), coll.end(), ext == _T('w') ? Sudoku::select_weight : ext == _T('l') ? Sudoku::select_length : Sudoku::select_rating);
+			std::sort(coll.begin(), coll.end(), ext == _T('w') ? Sudoku::by_weight : ext == _T('l') ? Sudoku::by_length : Sudoku::by_rating);
 
 			for (auto &tab: coll)
 				std::cout << tab << std::endl;
