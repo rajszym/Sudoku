@@ -440,11 +440,18 @@ class Sudoku: public cell_array
 
 	class Random: public std::vector<cell_ref>
 	{
+		std::mt19937 rnd;
+
 	public:
 
-		Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
+		Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab)), rnd{std::random_device{}()}
 		{
-			std::shuffle(Random::begin(), Random::end(), std::mt19937{std::random_device{}()});
+			std::shuffle(Random::begin(), Random::end(), Random::rnd);
+		}
+
+		Cell& operator()()
+		{
+			return Random::at(Random::rnd() % Random::size());
 		}
 	};
 
@@ -743,9 +750,10 @@ public:
 		}
 		else
 		{
+			auto rnd = Sudoku::Random(this);
 			Sudoku::clear();
-			Sudoku::solve();
-			for (Cell &c: Sudoku::Random(this))
+			rnd().solve();
+			for (Cell &c: rnd)
 				c.generate(Sudoku::level);
 			Sudoku::accept();
 		}
