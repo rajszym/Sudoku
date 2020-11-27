@@ -1020,7 +1020,7 @@ int _tmain( int argc, TCHAR **argv )
 			{
 				std::cerr << ' ' << ++cnt << '\r';
 				sudoku.init(i);
-				sudoku.raise();
+				sudoku.raise(ext == _T('x'));
 				if (std::find(data.begin(), data.end(), sudoku.signature) == data.end() && sudoku.test(ext != _T('x')))
 				{
 					data.push_back(sudoku.signature);
