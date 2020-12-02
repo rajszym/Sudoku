@@ -1,7 +1,7 @@
 #**********************************************************#
 #file     makefile
 #author   Rajmund Szymanski
-#date     20.11.2020
+#date     19.11.2020
 #brief    x86/x64 makefile.
 #**********************************************************#
 
@@ -101,7 +101,7 @@ DEFS       += _UNICODE UNICODE
 COMMON_F   += -municode
 endif
 endif
-COMMON_F   += -Wall -Wextra -Wshadow -Wpedantic
+COMMON_F   += -Wall -Wextra -Wshadow -Wpedantic -Wconversion
 COMMON_F   += -MD -MP
 COMMON_F   +=#-Wa,-amhls=$(@:.o=.lst)
 COMMON_F   +=#-g -ggdb

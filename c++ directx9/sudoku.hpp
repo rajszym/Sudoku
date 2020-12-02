@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    27.11.2020
+   @date    02.12.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -93,7 +93,8 @@ public:
 
 		int len()
 		{
-			return std::count_if(Values::begin(), Values::end(), []( int v ){ return v != 0; });
+			auto result = std::count_if(Values::begin(), Values::end(), []( int v ){ return v != 0; });
+			return static_cast<int>(result);
 		}
 	};
 
@@ -193,7 +194,8 @@ public:
 		if (Cell::num == 0)
 			return 0;
 
-		return std::count_if(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.num != 0; }) + 1;
+		auto result = std::count_if(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.num != 0; }) + 1;
+		return static_cast<int>(result);
 	}
 
 	bool empty()
@@ -414,10 +416,11 @@ class Sudoku: public cell_array
 
 		int len()
 		{
-			return std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			auto result = std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
 			{
 				return std::get<int>(t) != 0;
 			});
+			return static_cast<int>(result);
 		}
 	};
 
@@ -474,17 +477,22 @@ public:
 	Sudoku( Difficulty l = Difficulty::Easy ): mem{}, level{l}, rating{0}, signature{0}
 	{
 		for (Cell &cell: *this)
-			cell.init(&cell - this->cell_array::data());
+		{
+			auto pos = &cell - this->cell_array::data();
+			cell.init(static_cast<int>(pos));
+		}
 	}
 
 	int len()
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
+		auto result = std::count_if(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
+		return static_cast<int>(result);
 	}
 
 	int count( int n )
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), [n]( Cell &c ){ return c.num == n; });
+		auto result = std::count_if(Sudoku::begin(), Sudoku::end(), [n]( Cell &c ){ return c.num == n; });
+		return static_cast<int>(result);
 	}
 
 	bool empty()
@@ -580,8 +588,8 @@ public:
 		{
 			if (c.pos < static_cast<int>(txt.size()))
 			{
-				unsigned char x = txt[c.pos] - _T('0');
-				c.set(x <= 9 ? x : 0);
+				int x = txt[c.pos] - _T('0');
+				c.set(x >= 0 && x <= 9 ? x : 0);
 			}
 		}
 
@@ -591,8 +599,8 @@ public:
 		{
 			if (c.pos < static_cast<int>(txt.size()))
 			{
-				unsigned char x = txt[c.pos] - _T('@');
-				c.set(x <= 9 ? x : 0);
+				int x = txt[c.pos] - _T('@');
+				c.set(x >= 0 && x <= 9 ? x : 0);
 			}
 		}
 	}

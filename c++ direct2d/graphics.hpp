@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    19.11.2020
+   @date    02.12.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -134,37 +134,55 @@ public:
 		static
 		Rect inflate( const Rect &r, const auto _d )
 		{
-			return { r.x - _d, r.y - _d, r.width + _d * 2, r.height + _d * 2 };
+			return { r.x - static_cast<FLOAT>(_d),
+			         r.y - static_cast<FLOAT>(_d),
+			         r.width + static_cast<FLOAT>(_d * 2),
+			         r.height + static_cast<FLOAT>(_d * 2) };
 		}
 
 		static
 		Rect inflate( const Rect &r, const auto _dx, const auto _dy )
 		{
-			return { r.x - _dx, r.y - _dy, r.width + _dx * 2, r.height + _dy * 2 };
+			return { r.x - static_cast<FLOAT>(_dx),
+			         r.y - static_cast<FLOAT>(_dy),
+			         r.width + static_cast<FLOAT>(_dx * 2),
+			         r.height + static_cast<FLOAT>(_dy * 2) };
 		}
 
 		static
 		Rect inflate( const Rect &r, const auto _dx, const auto _dy, const auto _dw, const auto _dh )
 		{
-			return { r.x - _dx, r.y - _dy, r.width + _dx + _dw, r.height + _dy + _dh };
+			return { r.x - static_cast<FLOAT>(_dx),
+			         r.y - static_cast<FLOAT>(_dy),
+			         r.width + static_cast<FLOAT>(_dx) + static_cast<FLOAT>(_dw),
+			         r.height + static_cast<FLOAT>(_dy) + static_cast<FLOAT>(_dh) };
 		}
 
 		static
 		Rect deflate( const Rect &r, const auto _d )
 		{
-			return { r.x + _d, r.y + _d, r.width - _d * 2, r.height - _d * 2 };
+			return { r.x + static_cast<FLOAT>(_d),
+			         r.y + static_cast<FLOAT>(_d),
+			         r.width - static_cast<FLOAT>(_d * 2),
+			         r.height - static_cast<FLOAT>(_d * 2) };
 		}
 
 		static
 		Rect deflate( const Rect &r, const auto _dx, const auto _dy )
 		{
-			return { r.x + _dx, r.y + _dy, r.width - _dx * 2, r.height - _dy * 2 };
+			return { r.x + static_cast<FLOAT>(_dx),
+			         r.y + static_cast<FLOAT>(_dy),
+			         r.width - static_cast<FLOAT>(_dx * 2),
+			         r.height - static_cast<FLOAT>(_dy * 2) };
 		}
 
 		static
 		Rect deflate( const Rect &r, const auto _dx, const auto _dy, const auto _dw, const auto _dh )
 		{
-			return { r.x + _dx, r.y + _dy, r.width - _dx - _dw, r.height - _dy - _dh };
+			return { r.x + static_cast<FLOAT>(_dx),
+			         r.y + static_cast<FLOAT>(_dy),
+			         r.width - static_cast<FLOAT>(_dx) - static_cast<FLOAT>(_dw),
+			         r.height - static_cast<FLOAT>(_dy) - static_cast<FLOAT>(_dh) };
 		}
 
 		bool contains( const auto _x, const auto _y ) const
@@ -280,7 +298,7 @@ public:
 
 	void draw_rounded( const D2D1_RECT_F &r, const int rr, const Color &c, FLOAT s = 1.0f )
 	{
-		auto rc = D2D1::RoundedRect(r, rr, rr);
+		auto rc = D2D1::RoundedRect(r, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr));
 		draw_rounded(rc, c, s);
 	}
 
@@ -316,7 +334,7 @@ public:
 
 	void fill_rounded( const D2D1_RECT_F &r, const int rr, const Color &c )
 	{
-		auto rc = D2D1::RoundedRect(r, rr, rr);
+		auto rc = D2D1::RoundedRect(r, static_cast<FLOAT>(rr), static_cast<FLOAT>(rr));
 		fill_rounded(rc, c);
 	}
 
@@ -341,7 +359,7 @@ public:
 		f->SetTextAlignment(static_cast<DWRITE_TEXT_ALIGNMENT>(HIWORD(a)));
 		brush->SetColor(c);
 
-		target->DrawText(t, s, f, &r, brush, D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
+		target->DrawText(t, static_cast<UINT>(s), f, &r, brush, D2D1_DRAW_TEXT_OPTIONS_NO_SNAP, DWRITE_MEASURING_MODE_NATURAL);
 	}
 
 	void draw_char( const D2D1_RECT_F &r, Font *f, const Color &c, Alignment a, const TCHAR t )

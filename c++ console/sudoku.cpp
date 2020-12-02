@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    27.11.2020
+   @date    02.12.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -247,7 +247,7 @@ void GameHeader::update( Console &con, const bool init, const TCHAR *info, const
 		con.Put(HDR.x + 1, HDR.y, ::title);
 	}
 
-	auto s = _tcslen(info);
+	int s = (int)_tcslen(info);
 	con.Fill(TAB.x + 9, HDR.y, TAB.width - 10 - s, 1);
 	con.Put(TAB.Right(s + 1), HDR.y, info);
 
@@ -256,7 +256,8 @@ void GameHeader::update( Console &con, const bool init, const TCHAR *info, const
 	{
 		TCHAR v[16];
 		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
-		con.Put(MNU.Right(_tcslen(v) + 1), HDR.y, v);
+		s = (int)_tcslen(v);
+		con.Put(MNU.Right(s + 1), HDR.y, v);
 	}
 	else
 	{
@@ -331,7 +332,7 @@ Command GameCell::mouseLButton( const int, const int, const int number, const As
 			return SetSureCmd;
 		else
 		if (help != Assistance::None || GameCell::cell->num != number)
-			return static_cast<Command>(Button0Cmd + GameCell::cell->num);
+			return (Command)(Button0Cmd + GameCell::cell->num);
 	}
 
 	return NoCmd;
@@ -451,7 +452,7 @@ void MenuItem::update( Console &con, const bool init, const int _x )
 	if (MenuItem::size() > 1)
 	{
 		con.Put(MenuItem::x, MenuItem::y, !MenuItem::focused ? MenuItem::key : _x < MNU.center ? _T("<<") : _T(">>"));
-		auto s = _tcslen(MenuItem::at(MenuItem::idx));
+		int s = (int)_tcslen(MenuItem::at(MenuItem::idx));
 		con.Put(MenuItem::x + 3, MenuItem::y, MenuItem::at(MenuItem::idx));
 		con.Fill(MenuItem::x + 3 + s, MenuItem::y, MNU.width - 5 - s, 1);
 	}
@@ -501,13 +502,13 @@ const TCHAR *MenuItem::getInfo()
 template<typename T>
 void MenuItem::setIndex( const T _i )
 {
-	MenuItem::idx = static_cast<int>(_i);
+	MenuItem::idx = (int)_i;
 }
 
 int MenuItem::prev()
 {
-	const int i = MenuItem::idx;
-	const int s = MenuItem::size();
+	const int i = (int)MenuItem::idx;
+	const int s = (int)MenuItem::size();
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == 0 ? s - 1 : i == s - 1 ? 1 : 0;
@@ -519,8 +520,8 @@ int MenuItem::prev()
 
 int MenuItem::next()
 {
-	const int i = MenuItem::idx;
-	const int s = MenuItem::size();
+	const int i = (int)MenuItem::idx;
+	const int s = (int)MenuItem::size();
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == s - 1 ? 0 : i == 0 ? 1 : s - 1;
@@ -610,7 +611,7 @@ void GameFooter::update( Console &con, const bool init, const TCHAR *info )
 
 	if (info == nullptr)
 		info = _T("Sudoku game, solver and generator");
-	auto s = _tcslen(info);
+	int s = (int)_tcslen(info);
 	con.Put(FTR.x + 1, FTR.y, info);
 	con.Fill(FTR.x + 1 + s, FTR.y, FTR.width - 2 - s, 1);
 }
@@ -686,8 +687,8 @@ void Game::mouseRButton( const int _x, const int _y )
 void Game::mouseWheel( const int _x, const int _y, const int _d )
 {
 	if (TAB.contains(_x, _y))
-		Game::command(static_cast<Command>(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
-		                                                        : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
+		Game::command((Command)(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
+		                                             : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
 }
 
 void Game::keyboard( const int _k )
@@ -744,8 +745,8 @@ void Game::run()
 			{
 			case MOUSE_EVENT:
 
-				x = static_cast<int>(input.Event.MouseEvent.dwMousePosition.X);
-				y = static_cast<int>(input.Event.MouseEvent.dwMousePosition.Y);
+				x = (int)input.Event.MouseEvent.dwMousePosition.X;
+				y = (int)input.Event.MouseEvent.dwMousePosition.Y;
 
 				switch(input.Event.MouseEvent.dwEventFlags)
 				{
@@ -772,7 +773,7 @@ void Game::run()
 
 				case MOUSE_WHEELED:
 
-					s = static_cast<int>(input.Event.MouseEvent.dwButtonState);
+					s = (int)input.Event.MouseEvent.dwButtonState;
 
 					Game::mouseWheel(x, y, s);
 					break;
@@ -782,7 +783,7 @@ void Game::run()
 
 			case KEY_EVENT:
 
-				k = static_cast<int>(input.Event.KeyEvent.wVirtualKeyCode);
+				k = (int)input.Event.KeyEvent.wVirtualKeyCode;
 
 				if (input.Event.KeyEvent.bKeyDown)
 					Game::keyboard(k);
@@ -830,15 +831,15 @@ void Game::command( const Command _c )
 	                    break;
 	case SetSureCmd:    Game::set(Game::tab.getCell()->sure());
 	                    break;
-	case PrevHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].prev());
+	case PrevHelpCmd:   Game::help = (Assistance)Game::mnu[1].prev();
 	                    break;
-	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
+	case NextHelpCmd:   Game::help = (Assistance)Game::mnu[1].next();
 	                    break;
-	case PrevLevelCmd:  Sudoku::level = static_cast<Difficulty>(Game::mnu[0].prev());
+	case PrevLevelCmd:  Sudoku::level = (Difficulty)Game::mnu[0].prev();
 	                    Sudoku::generate(); Game::number = 0; GameTimer::start();
                     	Game::mnu[0].setIndex(Sudoku::level);
 	                    break;
-	case NextLevelCmd:  Sudoku::level = static_cast<Difficulty>(Game::mnu[0].next());
+	case NextLevelCmd:  Sudoku::level = (Difficulty)Game::mnu[0].next();
 	                    /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Game::number = 0; GameTimer::start();
                     	Game::mnu[0].setIndex(Sudoku::level);
@@ -884,9 +885,9 @@ int _tmain( int argc, TCHAR **argv )
 
 	if (--argc > 0 && (++argv, **argv == _T('/') || **argv == _T('-')))
 	{
-		cmd = std::tolower(*++*argv);
+		cmd = (TCHAR)std::tolower(*++*argv);
 		if (cmd != 0)
-			ext = std::tolower(*++*argv);
+			ext = (TCHAR)std::tolower(*++*argv);
 	}
 
 	switch (cmd)

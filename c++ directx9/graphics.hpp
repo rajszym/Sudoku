@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    20.11.2020
+   @date    02.12.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -283,37 +283,55 @@ public:
 		static
 		Rect inflate( const Rect &r, const auto _d )
 		{
-			return { r.x - _d, r.y - _d, r.width + _d * 2, r.height + _d * 2 };
+			return { r.x - static_cast<FLOAT>(_d),
+			         r.y - static_cast<FLOAT>(_d),
+			         r.width + static_cast<FLOAT>(_d * 2),
+			         r.height + static_cast<FLOAT>(_d * 2) };
 		}
 
 		static
 		Rect inflate( const Rect &r, const auto _dx, const auto _dy )
 		{
-			return { r.x - _dx, r.y - _dy, r.width + _dx * 2, r.height + _dy * 2 };
+			return { r.x - static_cast<FLOAT>(_dx),
+			         r.y - static_cast<FLOAT>(_dy),
+			         r.width + static_cast<FLOAT>(_dx * 2),
+			         r.height + static_cast<FLOAT>(_dy * 2) };
 		}
 
 		static
 		Rect inflate( const Rect &r, const auto _dx, const auto _dy, const auto _dw, const auto _dh )
 		{
-			return { r.x - _dx, r.y - _dy, r.width + _dx + _dw, r.height + _dy + _dh };
+			return { r.x - static_cast<FLOAT>(_dx),
+			         r.y - static_cast<FLOAT>(_dy),
+			         r.width + static_cast<FLOAT>(_dx) + static_cast<FLOAT>(_dw),
+			         r.height + static_cast<FLOAT>(_dy) + static_cast<FLOAT>(_dh) };
 		}
 
 		static
 		Rect deflate( const Rect &r, const auto _d )
 		{
-			return { r.x + _d, r.y + _d, r.width - _d * 2, r.height - _d * 2 };
+			return { r.x + static_cast<FLOAT>(_d),
+			         r.y + static_cast<FLOAT>(_d),
+			         r.width - static_cast<FLOAT>(_d * 2),
+			         r.height - static_cast<FLOAT>(_d * 2) };
 		}
 
 		static
 		Rect deflate( const Rect &r, const auto _dx, const auto _dy )
 		{
-			return { r.x + _dx, r.y + _dy, r.width - _dx * 2, r.height - _dy * 2 };
+			return { r.x + static_cast<FLOAT>(_dx),
+			         r.y + static_cast<FLOAT>(_dy),
+			         r.width - static_cast<FLOAT>(_dx * 2),
+			         r.height - static_cast<FLOAT>(_dy * 2) };
 		}
 
 		static
 		Rect deflate( const Rect &r, const auto _dx, const auto _dy, const auto _dw, const auto _dh )
 		{
-			return { r.x + _dx, r.y + _dy, r.width - _dx - _dw, r.height - _dy - _dh };
+			return { r.x + static_cast<FLOAT>(_dx),
+			         r.y + static_cast<FLOAT>(_dy),
+			         r.width - static_cast<FLOAT>(_dx) - static_cast<FLOAT>(_dw),
+			         r.height - static_cast<FLOAT>(_dy) - static_cast<FLOAT>(_dh) };
 		}
 
 		bool contains( const auto _x, const auto _y ) const
@@ -422,11 +440,11 @@ public:
 		{
 			Vertex v[] =
 			{
-				Vertex(r.left  + i, r.top    + i, c),
-				Vertex(r.right - i, r.top    + i, c),
-				Vertex(r.right - i, r.bottom - i, c),
-				Vertex(r.left  + i, r.bottom - i, c),
-				Vertex(r.left  + i, r.top    + i, c),
+				Vertex(r.left  + (FLOAT)i, r.top    + (FLOAT)i, c),
+				Vertex(r.right - (FLOAT)i, r.top    + (FLOAT)i, c),
+				Vertex(r.right - (FLOAT)i, r.bottom - (FLOAT)i, c),
+				Vertex(r.left  + (FLOAT)i, r.bottom - (FLOAT)i, c),
+				Vertex(r.left  + (FLOAT)i, r.top    + (FLOAT)i, c),
 			};
 
 			dev->DrawPrimitiveUP(D3DPT_LINESTRIP, 4, v, sizeof(Vertex));
