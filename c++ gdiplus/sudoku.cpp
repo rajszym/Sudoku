@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    02.12.2020
+   @date    20.11.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -40,12 +40,12 @@ using Cell = SudokuCell;
 
 const TCHAR *title = _T("Sudoku");
 
-constexpr FLOAT Frame     {  0 };
-constexpr FLOAT Margin    {  4 };
-constexpr FLOAT CellSize  { 64 };
-constexpr FLOAT SegSize   { CellSize * 3 + Margin * 2 };
-constexpr FLOAT TabSize   { SegSize  * 3 + Margin * 8 };
-constexpr FLOAT MnuSize   { 12 };
+constexpr auto Frame     {  0 };
+constexpr auto Margin    {  4 };
+constexpr auto CellSize  { 64 };
+constexpr auto SegSize   { CellSize * 3 + Margin * 2 };
+constexpr auto TabSize   { SegSize  * 3 + Margin * 8 };
+constexpr auto MnuSize   { 12 };
 
 const Graphics::Rect TAB(Frame + Margin * 2, Frame + CellSize + Margin * 2, TabSize, TabSize);
 const Graphics::Rect MNU(TAB.right + Margin, TAB.top, SegSize,  TAB.height);
@@ -108,8 +108,8 @@ enum Command: int
 
 class GameHeader
 {
-	static Graphics::Font *font;
-	static Graphics::Font *tiny;
+	static Graphics::Font font;
+	static Graphics::Font tiny;
 
 public:
 
@@ -128,8 +128,8 @@ class GameCell
 
 	bool focused;
 
-	static Graphics::Font *font;
-	static Graphics::Font *tiny;
+	static Graphics::Font font;
+	static Graphics::Font tiny;
 
 	bool allowed( const int, const Assistance );
 
@@ -172,7 +172,7 @@ class MenuItem: public std::vector<const TCHAR *>, public GameTimer<int, std::ra
 	int  idx;
 	bool focused;
 
-	static Graphics::Font *font;
+	static Graphics::Font font;
 
 public:
 
@@ -208,7 +208,7 @@ public:
 
 class GameFooter
 {
-	static Graphics::Font *font;
+	static Graphics::Font font;
 
 public:
 
@@ -253,12 +253,12 @@ public:
 /*                              INITIALIZATION                               */
 /*---------------------------------------------------------------------------*/
 
-Graphics::Font *GameHeader::font = nullptr;
-Graphics::Font *GameHeader::tiny = nullptr;
-Graphics::Font *GameCell  ::font = nullptr;
-Graphics::Font *GameCell  ::tiny = nullptr;
-Graphics::Font *MenuItem  ::font = nullptr;
-Graphics::Font *GameFooter::font = nullptr;
+Graphics::Font GameHeader::font = NULL;
+Graphics::Font GameHeader::tiny = NULL;
+Graphics::Font GameCell  ::font = NULL;
+Graphics::Font GameCell  ::tiny = NULL;
+Graphics::Font MenuItem  ::font = NULL;
+Graphics::Font GameFooter::font = NULL;
 
 /*---------------------------------------------------------------------------*/
 /*                                  SUDOKU                                   */
@@ -272,11 +272,11 @@ auto game = Game();
 
 void GameHeader::update( Graphics &gr, const TCHAR *info, const int time )
 {
-	if (GameHeader::font == nullptr)
-		GameHeader::font = gr.font(HDR.height, Gdiplus::FontStyle::FontStyleRegular, _T("Tahoma"));
+	if (GameHeader::font == NULL)
+		GameHeader::font = gr.font(HDR.height, FW_MEDIUM, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
-	if (GameHeader::tiny == nullptr)
-		GameHeader::tiny = gr.font(HDR.height / 2, Gdiplus::FontStyle::FontStyleRegular, _T("Arial"));
+	if (GameHeader::tiny == NULL)
+		GameHeader::tiny = gr.font(HDR.height / 2, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	auto rc = Graphics::Rect::deflate(HDR, TAB.left);
 	gr.draw_text(rc, GameHeader::font, Graphics::Color::White, Graphics::Alignment::Left, ::title);
@@ -304,11 +304,11 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 
 void GameCell::update( Graphics &gr, const int number, const Assistance help, Cell* const focus, const bool light )
 {
-	if (GameCell::font == nullptr)
-		GameCell::font = gr.font(CellSize, Gdiplus::FontStyle::FontStyleBold, _T("Tahoma"));
+	if (GameCell::font == NULL)
+		GameCell::font = gr.font(CellSize, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
-	if (GameCell::tiny == nullptr)
-		GameCell::tiny = gr.font(CellSize / 3, Gdiplus::FontStyle::FontStyleBold, _T("Tahoma"));
+	if (GameCell::tiny == NULL)
+		GameCell::tiny = gr.font(CellSize / 3, FW_BLACK, FIXED_PITCH | FF_DECORATIVE, _T("Tahoma"));
 
 	if (GameCell::focused || (light && GameCell::cell->linked(focus)))
 		gr.fill_rect(Graphics::Rect::deflate(GameCell::r, Margin), Lighted);
@@ -361,7 +361,7 @@ Command GameCell::mouseLButton( const int, const int, const int number, const As
 			return SetSureCmd;
 		else
 		if (help != Assistance::None || GameCell::cell->num != number)
-			return (Command)(Button0Cmd + GameCell::cell->num);
+			return static_cast<Command>(Button0Cmd + GameCell::cell->num);
 	}
 
 	return NoCmd;
@@ -406,8 +406,8 @@ GameTable::GameTable( Sudoku &_s )
 {
 	for (auto &c: _s)
 	{
-		auto x = TAB.x + (FLOAT)((int)c.pos % 9) * (CellSize + Margin) + (FLOAT)((int)c.pos % 9 / 3) * Margin * 3;
-		auto y = TAB.y + (FLOAT)((int)c.pos / 9) * (CellSize + Margin) + (FLOAT)((int)c.pos / 9 / 3) * Margin * 3;
+		auto x = TAB.x + (c.pos % 9) * (CellSize + Margin) + (c.pos % 9 / 3) * Margin * 3;
+		auto y = TAB.y + (c.pos / 9) * (CellSize + Margin) + (c.pos / 9 / 3) * Margin * 3;
 
 		GameTable::emplace_back(x, y, &c);
 	}
@@ -473,16 +473,16 @@ void MenuItem::update( Graphics &gr, const int _x )
 {
 	static constexpr auto h = std::round(TabSize / 1.8f / MnuSize);
 
-	if (MenuItem::font == nullptr)
-		MenuItem::font = gr.font(h, Gdiplus::FontStyle::FontStyleRegular, _T("Arial"));
+	if (MenuItem::font == NULL)
+		MenuItem::font = gr.font(h, FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	if (MenuItem::focused)
-		gr.fill_rect(Graphics::Rect::deflate(MenuItem::r, GameTimer::until((int)Margin * 4)), Lighted);
+		gr.fill_rect(Graphics::Rect::deflate(MenuItem::r, GameTimer::until(Margin * 4)), Lighted);
 
 	if (MenuItem::size() > 1)
 	{
-		auto cl = !MenuItem::focused ? Lighted : ((FLOAT)_x < MNU.center || MenuItem::size() == 2) ? Graphics::Color::Black : Background;
-		auto cr = !MenuItem::focused ? Lighted : ((FLOAT)_x < MNU.center && MenuItem::size() != 2) ? Background : Graphics::Color::Black;
+		auto cl = !MenuItem::focused ? Lighted : (_x < MNU.center || MenuItem::size() == 2) ? Graphics::Color::Black : Background;
+		auto cr = !MenuItem::focused ? Lighted : (_x < MNU.center && MenuItem::size() != 2) ? Background : Graphics::Color::Black;
 
 		gr.draw_char(MenuItem::r, MenuItem::font, cl, Graphics::Alignment::Left,  _T('◄'));
 		gr.draw_char(MenuItem::r, MenuItem::font, cr, Graphics::Alignment::Right, _T('►'));
@@ -509,8 +509,8 @@ Command MenuItem::mouseLButton( const int _x, const int )
 
 		switch (MenuItem::num)
 		{
-		case  0: return (FLOAT)_x < MNU.center ? PrevLevelCmd : NextLevelCmd;
-		case  1: return (FLOAT)_x < MNU.center ? PrevHelpCmd  : NextHelpCmd;
+		case  0: return _x < MNU.center ? PrevLevelCmd : NextLevelCmd;
+		case  1: return _x < MNU.center ? PrevHelpCmd  : NextHelpCmd;
 		case  2: return HighLightCmd;
 		case  3: return GenerateCmd;
 		case  4: return SolveCmd;
@@ -538,13 +538,13 @@ const TCHAR *MenuItem::getInfo()
 template<typename T>
 void MenuItem::setIndex( const T _i )
 {
-	MenuItem::idx = (int)_i;
+	MenuItem::idx = static_cast<int>(_i);
 }
 
 int MenuItem::prev()
 {
-	const int i = (int)MenuItem::idx;
-	const int s = (int)MenuItem::size();
+	const int i = MenuItem::idx;
+	const int s = MenuItem::size();
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == 0 ? s - 1 : i == s - 1 ? 1 : 0;
@@ -556,8 +556,8 @@ int MenuItem::prev()
 
 int MenuItem::next()
 {
-	const int i = (int)MenuItem::idx;
-	const int s = (int)MenuItem::size();
+	const int i = MenuItem::idx;
+	const int s = MenuItem::size();
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == s - 1 ? 0 : i == 0 ? 1 : s - 1;
@@ -572,7 +572,7 @@ int MenuItem::next()
 GameMenu::GameMenu()
 {
 	static constexpr auto h = std::round(TabSize / 1.2f / MnuSize);
-	auto pos = []( const FLOAT i ){ return MNU.y + std::round(i * (MNU.height - h) / (MnuSize - 1)); };
+	auto pos = []( const auto i ){ return MNU.y + std::round(i * (MNU.height - h) / (MnuSize - 1)); };
 
 	GameMenu::emplace_back( 0, pos( 0), h, _T("Change the difficulty level: easy, medium / hard / expert, extreme (keyboard shortcuts: D, PgUp, PgDn)"));
 		GameMenu::back().emplace_back(_T("easy"));
@@ -653,8 +653,8 @@ const TCHAR *GameMenu::getInfo()
 
 void GameFooter::update( Graphics &gr, const TCHAR *info )
 {
-	if (GameFooter::font == nullptr)
-		GameFooter::font = gr.font(std::min(FTR.height, WIN.width / 40), Gdiplus::FontStyle::FontStyleRegular, _T("Arial"));
+	if (GameFooter::font == NULL)
+		GameFooter::font = gr.font(std::min(FTR.height, WIN.width / 40), FW_NORMAL, VARIABLE_PITCH, _T("Arial"));
 
 	if (info == nullptr)
 		info = _T("Sudoku game, solver and generator");
@@ -692,8 +692,8 @@ void Game::update( HWND hWnd )
 	GetCursorPos(&cursor);
 	ScreenToClient(hWnd, &cursor);
 	GetClientRect(hWnd, &rc);
-	cursor.x = rc.right > rc.left ? (int)std::round((FLOAT)cursor.x * WIN.width  / (FLOAT)(rc.right - rc.left)) : 0;
-//	cursor.y = rc.bottom > rc.top ? (int)std::round((FLOAT)cursor.y * WIN.height / (FLOAT)(rc.bottom - rc.top)) : 0;
+	cursor.x = rc.right > rc.left ? std::round(static_cast<FLOAT>(cursor.x) * WIN.width  / (rc.right - rc.left)) : 0;
+//	cursor.y = rc.bottom > rc.top ? std::round(static_cast<FLOAT>(cursor.y) * WIN.height / (rc.bottom - rc.top)) : 0;
 
 	Graphics::begin(Background);
 
@@ -752,8 +752,8 @@ void Game::mouseWheel( const int _x, const int _y, const int _d, const HWND hWnd
 	ScreenToClient(hWnd, &cursor);
 
 	if ((Game::help != Assistance::None && TAB.contains(cursor)) || (cell != nullptr && cell->empty()))
-		Game::command((Command)(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
-		                                             : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
+		Game::command(static_cast<Command>(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
+		                                                        : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
 }
 
 void Game::keyboard( const int _k )
@@ -832,15 +832,15 @@ void Game::command( const Command _c )
 	                    break;
 	case SetSureCmd:    Game::set(Game::tab.getCell()->sure());
 	                    break;
-	case PrevHelpCmd:   Game::help = (Assistance)Game::mnu[1].prev();
+	case PrevHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].prev());
 	                    break;
-	case NextHelpCmd:   Game::help = (Assistance)Game::mnu[1].next();
+	case NextHelpCmd:   Game::help = static_cast<Assistance>(Game::mnu[1].next());
 	                    break;
-	case PrevLevelCmd:  Sudoku::level = (Difficulty)Game::mnu[0].prev();
+	case PrevLevelCmd:  Sudoku::level = static_cast<Difficulty>(Game::mnu[0].prev());
 	                    Sudoku::generate(); Game::number = 0; GameTimer::start();
                     	Game::mnu[0].setIndex(Sudoku::level);
 	                    break;
-	case NextLevelCmd:  Sudoku::level = (Difficulty)Game::mnu[0].next();
+	case NextLevelCmd:  Sudoku::level = static_cast<Difficulty>(Game::mnu[0].next());
 	                    /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Game::number = 0; GameTimer::start();
                     	Game::mnu[0].setIndex(Sudoku::level);
@@ -885,8 +885,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	const int h = rc.bottom - rc.top;
 	const int k = GET_KEYSTATE_WPARAM(wParam);
 	const int d = GET_WHEEL_DELTA_WPARAM(wParam);
-	const int x = w > 0 ? (int)std::round((FLOAT)GET_X_LPARAM(lParam) * WIN.width  / (FLOAT)w) : 0;
-	const int y = h > 0 ? (int)std::round((FLOAT)GET_Y_LPARAM(lParam) * WIN.height / (FLOAT)h) : 0;
+	const int x = w > 0 ? std::round(static_cast<FLOAT>(GET_X_LPARAM(lParam)) * WIN.width  / w) : 0;
+	const int y = h > 0 ? std::round(static_cast<FLOAT>(GET_Y_LPARAM(lParam)) * WIN.height / h) : 0;
 
 	switch (msg)
 	{
@@ -949,7 +949,7 @@ int WINAPI _tWinMain( HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow )
 			continue;
 		}
 
-		game.update(hWnd);
+//		game.update(hWnd);
 	}
 
 	return 0;

@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    02.12.2020
+   @date    10.12.2020
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -119,15 +119,15 @@ class GameCell
 
 	bool focused;
 
-	bool allowed( const int, const Assistance );
+	bool allowed( const uint, const Assistance );
 
 public:
 
 	GameCell( const int _x, const int _y, Cell* const _c ): x{_x}, y{_y}, cell{_c}, focused{false} {}
 
-	void    update      ( Console &, const bool, const int, const Assistance, Cell* const, const bool );
+	void    update      ( Console &, const bool, const uint, const Assistance, Cell* const, const bool );
 	void    mouseMove   ( const int, const int );
-	Command mouseLButton( const int, const int, const int, const Assistance );
+	Command mouseLButton( const int, const int, const uint, const Assistance );
 	Command mouseRButton( const int, const int );
 	Cell  * getCell     ();
 };
@@ -140,9 +140,9 @@ public:
 
 	GameTable( Sudoku & );
 
-	void    update      ( Console &, const bool, const int, const Assistance, Cell* const, const bool );
+	void    update      ( Console &, const bool, const uint, const Assistance, Cell* const, const bool );
 	void    mouseMove   ( const int, const int );
-	Command mouseLButton( const int, const int, const int, const Assistance );
+	Command mouseLButton( const int, const int, const uint, const Assistance );
 	Command mouseRButton( const int, const int );
 	Cell  * getCell     ();
 };
@@ -156,7 +156,7 @@ class MenuItem: public std::vector<const TCHAR *>
 	const TCHAR * const info;
 	const int num;
 
-	int  idx;
+	uint idx;
 	bool focused;
 
 public:
@@ -169,8 +169,8 @@ public:
 	const TCHAR *getInfo();
 	template<typename T>
 	void    setIndex    ( const T );
-	int     prev        ();
-	int     next        ();
+	uint    prev        ();
+	uint    next        ();
 };
 
 /*---------------------------------------------------------------------------*/
@@ -207,7 +207,7 @@ class Game: public Console, public Sudoku, public GameTimer<int>
 	GameMenu    mnu;
 	GameFooter  ftr;
 	
-	int  number;
+	uint number;
 	bool timer_f;
 	bool light_f;
 
@@ -217,7 +217,7 @@ class Game: public Console, public Sudoku, public GameTimer<int>
 	int  xpos;
 
 	void run    ();
-	bool set    ( int = 0 );
+	bool set    ( uint = 0 );
 	void command( Command );
 
 public:
@@ -275,7 +275,7 @@ Command GameHeader::mouseLButton( const int _x, const int _y )
 
 /*---------------------------------------------------------------------------*/
 
-void GameCell::update( Console &con, const bool, const int number, const Assistance help, Cell* const focus, const bool light )
+void GameCell::update( Console &con, const bool, const uint number, const Assistance help, Cell* const focus, const bool light )
 {
 	auto l = GameCell::focused || (light && GameCell::cell->linked(focus));
 	auto b = l ? Lighted : Background;
@@ -321,7 +321,7 @@ void GameCell::mouseMove( const int _x, const int _y )
 	GameCell::focused = _x == GameCell::x && _y == GameCell::y;
 }
 
-Command GameCell::mouseLButton( const int, const int, const int number, const Assistance help )
+Command GameCell::mouseLButton( const int, const int, const uint number, const Assistance help )
 {
 	if (GameCell::focused)
 	{
@@ -354,7 +354,7 @@ Cell *GameCell::getCell()
 	return nullptr;
 }
 
-bool GameCell::allowed( const int number, const Assistance help )
+bool GameCell::allowed( const uint number, const Assistance help )
 {
 	if (number == 0 || GameCell::cell->num != 0)
 		return false;
@@ -377,14 +377,14 @@ GameTable::GameTable( Sudoku &_s )
 {
 	for (auto &c: _s)
 	{
-		int x = TAB.x + 2 + (c.pos % 9 + c.pos % 9 / 3) * 2;
-		int y = TAB.y + 1 + (c.pos / 9 + c.pos / 9 / 3);
+		int x = TAB.x + 2 + ((int)c.pos % 9 + (int)c.pos % 9 / 3) * 2;
+		int y = TAB.y + 1 + ((int)c.pos / 9 + (int)c.pos / 9 / 3);
 
 		GameTable::emplace_back(x, y, &c);
 	}
 }
 
-void GameTable::update( Console &con, const bool init, const int number, const Assistance help, Cell* const focus, const bool light )
+void GameTable::update( Console &con, const bool init, const uint number, const Assistance help, Cell* const focus, const bool light )
 {
 	if (init)
 	{
@@ -403,7 +403,7 @@ void GameTable::mouseMove( const int _x, const int _y )
 		c.mouseMove(_x, _y);
 }
 
-Command GameTable::mouseLButton( const int _x, const int _y, const int number, const Assistance help )
+Command GameTable::mouseLButton( const int _x, const int _y, const uint number, const Assistance help )
 {
 	for (auto &c: *this)
 	{
@@ -502,13 +502,13 @@ const TCHAR *MenuItem::getInfo()
 template<typename T>
 void MenuItem::setIndex( const T _i )
 {
-	MenuItem::idx = (int)_i;
+	MenuItem::idx = (uint)_i;
 }
 
-int MenuItem::prev()
+uint MenuItem::prev()
 {
-	const int i = (int)MenuItem::idx;
-	const int s = (int)MenuItem::size();
+	const uint i = MenuItem::idx;
+	const uint s = MenuItem::size();
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == 0 ? s - 1 : i == s - 1 ? 1 : 0;
@@ -518,10 +518,10 @@ int MenuItem::prev()
 	return MenuItem::idx;
 }
 
-int MenuItem::next()
+uint MenuItem::next()
 {
-	const int i = (int)MenuItem::idx;
-	const int s = (int)MenuItem::size();
+	const uint i = MenuItem::idx;
+	const uint s = MenuItem::size();
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == s - 1 ? 0 : i == 0 ? 1 : s - 1;
@@ -796,7 +796,7 @@ void Game::run()
 	}
 }
 
-bool Game::set( int num )
+bool Game::set( uint num )
 {
 	if (num == 0)
 		num = Game::number;
@@ -822,7 +822,7 @@ void Game::command( const Command _c )
 	case Button6Cmd:    /* falls through */
 	case Button7Cmd:    /* falls through */
 	case Button8Cmd:    /* falls through */
-	case Button9Cmd:    Game::number = Game::number == _c - Button0Cmd ? 0 : _c - Button0Cmd;
+	case Button9Cmd:    Game::number = Game::number == (uint)(_c - Button0Cmd) ? 0 : (uint)(_c - Button0Cmd);
 	                    break;
 	case ClearCellCmd:  Game::number = Game::tab.getCell()->num;
 	                    Sudoku::set(Game::tab.getCell(), 0);

@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    02.12.2020
+   @date    10.12.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -45,8 +45,9 @@
 class SudokuCell;
 class Sudoku;
 
-using  cell_ref = std::reference_wrapper<SudokuCell>;
-using  cell_array = std::array<SudokuCell, 81>;
+using cell_ref = std::reference_wrapper<SudokuCell>;
+using cell_array = std::array<SudokuCell, 81>;
+using uint = unsigned int;
 
 enum Difficulty
 {
@@ -71,11 +72,11 @@ class SudokuCell
 
 public:
 
-	int  pos{0};
-	int  num{0};
+	uint pos{0};
+	uint num{0};
 	bool immutable{false};
 
-	class Values: public std::array<int, 10>
+	class Values: public std::array<uint, 10>
 	{
 	public:
 
@@ -91,10 +92,9 @@ public:
 				std::shuffle(Values::begin(), Values::end(), std::mt19937{std::random_device{}()});
 		}
 
-		int len()
+		uint len()
 		{
-			auto result = std::count_if(Values::begin(), Values::end(), []( int v ){ return v != 0; });
-			return static_cast<int>(result);
+			return std::count_if(Values::begin(), Values::end(), []( uint v ){ return v != 0; });
 		}
 	};
 
@@ -110,8 +110,8 @@ private:
 		if (Cell::pos == c.pos)
 			return false;
 
-		int r1 = Cell::pos / 9;
-		int r2 = c.pos / 9;
+		uint r1 = Cell::pos / 9;
+		uint r2 = c.pos / 9;
 
 		return r1 == r2;
 	}
@@ -121,8 +121,8 @@ private:
 		if (Cell::pos == c.pos)
 			return false;
 
-		int c1 = Cell::pos % 9;
-		int c2 = c.pos % 9;
+		uint c1 = Cell::pos % 9;
+		uint c2 = c.pos % 9;
 
 		return c1 == c2;
 	}
@@ -132,12 +132,12 @@ private:
 		if (Cell::pos == c.pos)
 			return false;
 
-		int r1 = Cell::pos / 9;
-		int r2 = c.pos / 9;
-		int c1 = Cell::pos % 9;
-		int c2 = c.pos % 9;
-		int s1 = (r1 / 3) * 3 + (c1 / 3);
-		int s2 = (r2 / 3) * 3 + (c2 / 3);
+		uint r1 = Cell::pos / 9;
+		uint r2 = c.pos / 9;
+		uint c1 = Cell::pos % 9;
+		uint c2 = c.pos % 9;
+		uint s1 = (r1 / 3) * 3 + (c1 / 3);
+		uint s2 = (r2 / 3) * 3 + (c2 / 3);
 
 		return s1 == s2;
 	}
@@ -165,7 +165,7 @@ public:
 		return in_lst(*c);
 	}
 
-	void init( int p )
+	void init( uint p )
 	{
 		Cell::pos = p;
 
@@ -176,7 +176,7 @@ public:
 		});
 	}
 
-	int len()
+	uint len()
 	{
 		if (Cell::num != 0)
 			return 0;
@@ -184,18 +184,17 @@ public:
 		return Cell::Values(*this).len();
 	}
 
-	int range()
+	uint range()
 	{
-		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), 0, []( int r, Cell &c ){ return r + c.len(); });
+		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), 0U, []( uint r, Cell &c ){ return r + c.len(); });
 	}
 
-	int solid()
+	uint solid()
 	{
 		if (Cell::num == 0)
 			return 0;
 
-		auto result = std::count_if(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.num != 0; }) + 1;
-		return static_cast<int>(result);
+		return std::count_if(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.num != 0; }) + 1;
 	}
 
 	bool empty()
@@ -203,12 +202,12 @@ public:
 		return Cell::num == 0;
 	}
 
-	bool equal( int n )
+	bool equal( uint n )
 	{
 		return Cell::num != 0 && Cell::num == n;
 	}
 
-	bool passable( int n )
+	bool passable( uint n )
 	{
 		if (Cell::num != 0)
 			return false;
@@ -227,7 +226,7 @@ public:
 		return std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [this]( Cell &c ){ return c.num == Cell::num; });
 	}
 
-	bool allowed( int n )
+	bool allowed( uint n )
 	{
 		if (Cell::num != 0 || n == 0)
 			return false;
@@ -239,16 +238,16 @@ public:
 		return result;
 	}
 
-	bool accept( int n )
+	bool accept( uint n )
 	{
 		return Cell::num == n || Cell::allowed(n);
 	}
 
-	int sure( int n = 0 )
+	uint sure( uint n = 0 )
 	{
 		if (Cell::num == 0 && n == 0)
 		{
-			for (int v: Cell::Values(*this))
+			for (uint v: Cell::Values(*this))
 				if (v != 0 && Cell::sure(v))
 					return v;
 
@@ -271,7 +270,7 @@ public:
 		Cell::immutable = false;
 	}
 
-	bool set( int n )
+	bool set( uint n )
 	{
 		if (Cell::immutable || (n != 0 && !Cell::allowed(n)))
 			return false;
@@ -292,7 +291,7 @@ public:
 		}
 
 		Cell &cell = c.get();
-		for (int v: Cell::Values(cell, true))
+		for (uint v: Cell::Values(cell, true))
 		{
 			if ((cell.num = v) != 0 && cell.solve(check))
 			{
@@ -312,7 +311,7 @@ public:
 		if (Cell::num == 0 || Cell::immutable)
 			return false;
 
-		int n = Cell::num;
+		uint n = Cell::num;
 
 		Cell::num = 0;
 		if (Cell::sure(n))
@@ -322,7 +321,7 @@ public:
 		if (level == Difficulty::Easy && !check)
 			return false;
 
-		for (int v: Cell::Values(*this))
+		for (uint v: Cell::Values(*this))
 		{
 			if ((Cell::num = v) != 0 && Cell::solve(true))
 			{
@@ -338,8 +337,8 @@ public:
 	static
 	bool by_length( Cell &a, Cell &b )
 	{
-		int a_len = a.len();
-		int b_len = b.len();
+		uint a_len = a.len();
+		uint b_len = b.len();
 
 		return a.num == 0 &&
 		      (b.num != 0 || a_len <  b_len ||
@@ -371,9 +370,9 @@ class Sudoku: public cell_array
 	static const
 	std::basic_string<TCHAR> html;
 
-	std::list<std::pair<Cell *, int>> mem;
+	std::list<std::pair<Cell *, uint>> mem;
 
-	class Backup: public std::array<std::tuple<Cell *, int, bool>, 81>
+	class Backup: public std::array<std::tuple<Cell *, uint, bool>, 81>
 	{
 	public:
 
@@ -387,40 +386,39 @@ class Sudoku: public cell_array
 
 		void reload()
 		{
-			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
-				std::get<int>(t) = c->num;
+				std::get<uint>(t) = c->num;
 				std::get<bool>(t) = c->immutable;
 			});
 		}
 
 		void restore()
 		{
-			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
-				c->num = std::get<int>(t);
+				c->num = std::get<uint>(t);
 				c->immutable = std::get<bool>(t);
 			});
 		}
 
 		bool changed()
 		{
-			return std::any_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			return std::any_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
-				return c->num != std::get<int>(t);
+				return c->num != std::get<uint>(t);
 			});
 		}
 
-		int len()
+		uint len()
 		{
-			auto result = std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			return std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
 			{
-				return std::get<int>(t) != 0;
+				return std::get<uint>(t) != 0;
 			});
-			return static_cast<int>(result);
 		}
 	};
 
@@ -433,10 +431,10 @@ class Sudoku: public cell_array
 
 		bool reset()
 		{
-			return std::all_of(Sudoku::Backup::begin(), Sudoku::Backup::end(), []( std::tuple<Cell *, int, bool> &t )
+			return std::all_of(Sudoku::Backup::begin(), Sudoku::Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
-				return c->set(std::get<int>(t));
+				return c->set(std::get<uint>(t));
 			});
 		}
 	};
@@ -479,20 +477,18 @@ public:
 		for (Cell &cell: *this)
 		{
 			auto pos = &cell - this->cell_array::data();
-			cell.init(static_cast<int>(pos));
+			cell.init(static_cast<uint>(pos));
 		}
 	}
 
-	int len()
+	uint len()
 	{
-		auto result = std::count_if(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
-		return static_cast<int>(result);
+		return std::count_if(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
 	}
 
-	int count( int n )
+	uint count( uint n )
 	{
-		auto result = std::count_if(Sudoku::begin(), Sudoku::end(), [n]( Cell &c ){ return c.num == n; });
-		return static_cast<int>(result);
+		return std::count_if(Sudoku::begin(), Sudoku::end(), [n]( Cell &c ){ return c.num == n; });
 	}
 
 	bool empty()
@@ -503,7 +499,7 @@ public:
 	bool corrupt()
 	{
 		for (auto i = Sudoku::begin(); i != Sudoku::end(); i += 9)
-			for (int n = 1; n <= 9; ++n)
+			for (uint n = 1; n <= 9; ++n)
 				if (std::none_of(i, i + 9, [n]( Cell &c ){ return c.accept(n); }))
 					return true;
 
@@ -515,12 +511,12 @@ public:
 		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.empty() || c.corrupt(); });
 	}
 
-	bool set( Cell *cell, int n, Force force = Force::Direct )
+	bool set( Cell *cell, uint n, Force force = Force::Direct )
 	{
 		if (cell == nullptr)
 			return false;
 
-		int t = cell->num;
+		uint t = cell->num;
 
 		if (t == n)
 			return false;
@@ -586,10 +582,10 @@ public:
 
 		for (Cell &c: *this)
 		{
-			if (c.pos < static_cast<int>(txt.size()))
+			if (c.pos < txt.size())
 			{
 				int x = txt[c.pos] - _T('0');
-				c.set(x >= 0 && x <= 9 ? x : 0);
+				c.set(x >= 0 && x <= 9 ? static_cast<uint>(x) : 0U);
 			}
 		}
 
@@ -597,10 +593,10 @@ public:
 
 		for (Cell &c: *this)
 		{
-			if (c.pos < static_cast<int>(txt.size()))
+			if (c.pos < txt.size())
 			{
 				int x = txt[c.pos] - _T('@');
-				c.set(x >= 0 && x <= 9 ? x : 0);
+				c.set(x >= 0 && x <= 9 ? static_cast<uint>(x) : 0U);
 			}
 		}
 	}
@@ -616,22 +612,22 @@ public:
 
 private:
 
-	void swap_cells( int p1, int p2 )
+	void swap_cells( uint p1, uint p2 )
 	{
 		std::swap(Sudoku::at(p1).num,       Sudoku::at(p2).num);
 		std::swap(Sudoku::at(p1).immutable, Sudoku::at(p2).immutable);
 	}
 
-	void swap_rows( int r1, int r2 )
+	void swap_rows( uint r1, uint r2 )
 	{
 		r1 *= 9; r2 *= 9;
-		for (int c = 0; c < 9; c++)
+		for (uint c = 0; c < 9; c++)
 			Sudoku::swap_cells(r1 + c, r2 + c);
 	}
 
-	void swap_cols( int c1, int c2 )
+	void swap_cols( uint c1, uint c2 )
 	{
-		for (int r = 0; r < 81; r += 9)
+		for (uint r = 0; r < 81; r += 9)
 			Sudoku::swap_cells(r + c1, r + c2);
 	}
 
@@ -639,33 +635,33 @@ private:
 	{
 		auto rnd = std::mt19937{std::random_device{}()};
 
-		int v[10];
+		uint v[10];
 	 	std::iota(v, v + 10, 0);
 		std::shuffle(v + 1, v + 10, rnd);
 
 		for (Cell &c: *this)
 			c.num = v[c.num];
 
-		for (int i = 0; i < 81; i++)
+		for (uint i = 0; i < 81; i++)
 		{
-			int c1 = rnd() % 9;
-			int c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
+			uint c1 = rnd() % 9;
+			uint c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
 			Sudoku::swap_cols(c1, c2);
 
-			int r1 = rnd() % 9;
-			int r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
+			uint r1 = rnd() % 9;
+			uint r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
 			Sudoku::swap_rows(r1, r2);
 
 			c1 = rnd() % 3;
 			c2 = (c1 + 1) % 3;
 			c1 *= 3; c2 *= 3;
-			for (int j = 0; j < 3; j++)
+			for (uint j = 0; j < 3; j++)
 				Sudoku::swap_cols(c1 + j, c2 + j);
 
 			r1 = rnd() % 3;
 			r2 = (r1 + 1) % 3;
 			r1 *= 3; r2 *= 3;
-			for (int j = 0; j < 3; j++)
+			for (uint j = 0; j < 3; j++)
 				Sudoku::swap_rows(r1 + j, r2 + j);
 		}
 	}
@@ -730,7 +726,7 @@ private:
 
 	int weight()
 	{
-		return Sudoku::rating - Sudoku::len() * 25;
+		return Sudoku::rating - static_cast<int>(Sudoku::len()) * 25;
 	}
 
 public:
@@ -809,14 +805,14 @@ public:
 			{
 				Cell &ci = *i;
 				if (ci.num == 0) continue;
-				int ni = ci.num;
+				uint ni = ci.num;
 				ci.num = 0;
 
 				for (auto j = i + 1; j != vec.end(); ++j)
 				{
 					Cell &cj = *j;
 					if (cj.num == 0) continue;
-					int nj = cj.num;
+					uint nj = cj.num;
 					cj.num = 0;
 
 					for (Cell &cell: Sudoku::Random(this))
@@ -824,7 +820,7 @@ public:
 						if (cell.num != 0) continue;
 						if (&cell != &ci && &cell != &cj && !cell.linked(&ci) && !cell.linked(&cj)) continue;
 
-						for (int v: Cell::Values(cell))
+						for (uint v: Cell::Values(cell))
 						{
 							if ((cell.num = v) != 0 && Sudoku::verify(forced))
 							{
@@ -879,7 +875,7 @@ public:
 	{
 		if (!Sudoku::mem.empty())
 		{
-			std::get<Cell *>(Sudoku::mem.back())->num = std::get<int>(Sudoku::mem.back());
+			std::get<Cell *>(Sudoku::mem.back())->num = std::get<uint>(Sudoku::mem.back());
 			Sudoku::mem.pop_back();
 			return false;
 		}
@@ -895,12 +891,12 @@ private:
 
 	int parse_rating()
 	{
-		std::vector<std::pair<Cell *, int>> sure;
+		std::vector<std::pair<Cell *, uint>> sure;
 		for (Cell &c: *this)
 		{
 			if (c.num == 0)
 			{
-				int n = c.sure();
+				uint n = c.sure();
 				if (n != 0)
 					sure.emplace_back(&c, n);
 				else
@@ -913,12 +909,12 @@ private:
 		{
 			int  result  = 0;
 			bool success = true;
-			for (std::pair<Cell *, int> &p: sure)
-				if (!std::get<Cell *>(p)->set(std::get<int>(p)))
+			for (std::pair<Cell *, uint> &p: sure)
+				if (!std::get<Cell *>(p)->set(std::get<uint>(p)))
 					success = false;
 			if (success)
 				result = Sudoku::parse_rating() + 1;
-			for (std::pair<Cell *, int> &p: sure)
+			for (std::pair<Cell *, uint> &p: sure)
 				std::get<Cell *>(p)->num = 0;
 			return result;
 		}
@@ -927,15 +923,15 @@ private:
 		if (cell.num != 0) // solved!
 			return 1;
 
-		int len    = cell.len();
-		int range  = cell.range();
+		uint len    = cell.len();
+		uint range  = cell.range();
 		int result = 0;
 		for (Cell &c: *this)
 		{
 			if (c.num == 0 && c.len() == len && c.range() == range)
 			{
 				int r = 0;
-				for (int v: Cell::Values(c))
+				for (uint v: Cell::Values(c))
 				{
 					if (v != 0 && c.set(v))
 					{
@@ -977,7 +973,7 @@ private:
 
 		int msb = 0;
 		int result = Sudoku::parse_rating();
-		for (int i = Sudoku::count(0); result > 0; Sudoku::rating += i--, result >>= 1)
+		for (uint i = Sudoku::count(0); result > 0; Sudoku::rating += static_cast<int>(i--), result >>= 1)
 			msb = (result & 1) ? msb + 1 : 0;
 		Sudoku::rating += msb - 1;
 	//	Sudoku::rating = Sudoku::parse_rating();
@@ -1037,8 +1033,8 @@ public:
 	{
 		int a_wgt = a.weight();
 		int b_wgt = b.weight();
-		int a_len = a.len();
-		int b_len = b.len();
+		uint a_len = a.len();
+		uint b_len = b.len();
 
 		return a_wgt  > b_wgt ||
 		      (a_wgt == b_wgt && (a_len  < b_len ||
@@ -1049,8 +1045,8 @@ public:
 	static
 	bool by_rating( Sudoku &a, Sudoku &b )
 	{
-		int a_len = a.len();
-		int b_len = b.len();
+		uint a_len = a.len();
+		uint b_len = b.len();
 
 		return a.rating  > b.rating ||
 		      (a.rating == b.rating && (a_len  < b_len ||
@@ -1061,8 +1057,8 @@ public:
 	static
 	bool by_length( Sudoku &a, Sudoku &b )
 	{
-		int a_len = a.len();
-		int b_len = b.len();
+		uint a_len = a.len();
+		uint b_len = b.len();
 
 		return a_len  < b_len ||
 		      (a_len == b_len && (a.rating  > b.rating ||

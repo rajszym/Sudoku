@@ -2,7 +2,7 @@
 
    @file    console.hpp
    @author  Rajmund Szymanski
-   @date    18.11.2020
+   @date    10.12.2020
    @brief   console class
 
 *******************************************************************************
@@ -219,7 +219,7 @@ private:
 			return false;
 
 		mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-		mode &= ~ENABLE_QUICK_EDIT_MODE;
+		mode &= static_cast<DWORD>(~ENABLE_QUICK_EDIT_MODE);
 
 		return SetConsoleMode(cin_, mode) &&
 		       SetTitle(title);
@@ -572,7 +572,7 @@ public:
 			return false;
 
 		const COORD home = { 0, 0 };
-		const DWORD size = sbi.dwSize.X * sbi.dwSize.Y;
+		const DWORD size = static_cast<DWORD>(sbi.dwSize.X * sbi.dwSize.Y);
 		DWORD count;
 
 		return FillConsoleOutputCharacter(Cout, _T(' '), size, home, &count) &&
@@ -885,7 +885,7 @@ public:
 		COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		DWORD count;
 		for (int h = height; h > 0; h--, coord.Y++)
-			if (!FillConsoleOutputAttribute(Cout, MakeAttribute(fore, back), width, coord, &count))
+			if (!FillConsoleOutputAttribute(Cout, MakeAttribute(fore, back), static_cast<DWORD>(width), coord, &count))
 				return false;
 
 		return true;
@@ -904,7 +904,7 @@ public:
 		COORD coord = { static_cast<SHORT>(x), static_cast<SHORT>(y) };
 		DWORD count;
 		for (int h = height; h > 0; h--, coord.Y++)
-			if (!FillConsoleOutputCharacter(Cout, c, width, coord, &count))
+			if (!FillConsoleOutputCharacter(Cout, c, static_cast<DWORD>(width), coord, &count))
 				return false;
 
 		return true;

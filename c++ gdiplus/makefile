@@ -1,16 +1,13 @@
 #**********************************************************#
 #file     makefile
 #author   Rajmund Szymanski
-#date     19.11.2020
+#date     10.12.2020
 #brief    x86/x64 makefile.
 #**********************************************************#
 
-CROSS      :=
-
-#----------------------------------------------------------#
-
 PROJECT    ?= sudoku
-DEFS       ?= WINDOWS UNICODE USE_STATIC
+CROSS      ?=
+DEFS       ?= WINDOWS UNICODE STATIC
 DIRS       ?=
 INCS       ?=
 LIBS       ?= gdiplus
@@ -18,7 +15,6 @@ KEYS       ?=
 
 #----------------------------------------------------------#
 
-LIBS       +=
 KEYS       += *
 
 #----------------------------------------------------------#
@@ -44,11 +40,12 @@ VPATH      := $(sort $(call DTREE,) $(foreach d,$(DIRS),$(call DTREE,$d/)))
 
 #----------------------------------------------------------#
 
-INC_DIRS   := $(sort $(dir $(foreach d,$(VPATH),$(wildcard $d*.h $d*.hpp))))
+INC_DIRS   := $(sort $(dir $(foreach d,$(VPATH),$(wildcard $d*.h $d*.hh $d*.hpp))))
 LIB_DIRS   := $(sort $(dir $(foreach d,$(VPATH),$(wildcard $dlib*.a))))
 OBJ_SRCS   :=              $(foreach d,$(VPATH),$(wildcard $d*.o))
 AS_SRCS    :=              $(foreach d,$(VPATH),$(wildcard $d*.s))
 C_SRCS     :=              $(foreach d,$(VPATH),$(wildcard $d*.c))
+CC_SRCS    :=              $(foreach d,$(VPATH),$(wildcard $d*.cc))
 CXX_SRCS   :=              $(foreach d,$(VPATH),$(wildcard $d*.cpp))
 FOR_SRCS   :=              $(foreach d,$(VPATH),$(wildcard $d*.f))
 RES_SRCS   :=              $(foreach d,$(VPATH),$(wildcard $d*.rc))
@@ -66,6 +63,7 @@ MAP        := $(PROJECT).map
 
 OBJS       := $(AS_SRCS:%.s=%.o)
 OBJS       += $(C_SRCS:%.c=%.o)
+OBJS       += $(CC_SRCS:%.cc=%.o)
 OBJS       += $(CXX_SRCS:%.cpp=%.o)
 OBJS       += $(FOR_SRCS:%.f=%.o)
 OBJS       += $(RES_SRCS:%.rc=%.o)
@@ -74,7 +72,7 @@ LSTS       := $(OBJS:.o=.lst)
 
 #----------------------------------------------------------#
 
-COMMON_F   := -O2 -s
+COMMON_F    = -O2 -s
 ifneq ($(filter CONSOLE,$(DEFS)),)
 DEFS       := $(DEFS:CONSOLE=)
 COMMON_F   += -mconsole
@@ -84,8 +82,8 @@ DEFS       := $(DEFS:WINDOWS=)
 COMMON_F   += -mwindows
 endif
 endif
-ifneq ($(filter USE_STATIC,$(DEFS)),)
-DEFS       := $(DEFS:USE_STATIC=)
+ifneq ($(filter STATIC,$(DEFS)),)
+DEFS       := $(DEFS:STATIC=)
 COMMON_F   += -static
 endif
 ifneq ($(filter USE_LTO,$(DEFS)),)
@@ -101,16 +99,22 @@ DEFS       += _UNICODE UNICODE
 COMMON_F   += -municode
 endif
 endif
-COMMON_F   += -Wall -Wextra -Wshadow -Wpedantic -Wconversion
+COMMON_F   += -Wall -Wextra -Wshadow -Wpedantic -Wsign-conversion
 COMMON_F   += -MD -MP
-COMMON_F   +=#-Wa,-amhls=$(@:.o=.lst)
-COMMON_F   +=#-g -ggdb
+COMMON_F   += -Wa,-amhls=$(@:.o=.lst)
+ifneq ($(filter DEBUG,$(DEFS)),)
+COMMON_F   += -g -ggdb
+else
+ifeq  ($(filter NDEBUG,$(DEFS)),)
+DEFS       += NDEBUG
+endif
+endif
 
 AS_FLAGS    =
 C_FLAGS     = -std=gnu2x
 CXX_FLAGS   = -std=gnu++2a -Wzero-as-null-pointer-constant
 FOR_FLAGS   = -cpp
-LD_FLAGS    =#-Wl,-Map=$(MAP)
+LD_FLAGS    = -Wl,-Map=$(MAP)
 
 #----------------------------------------------------------#
 
@@ -132,7 +136,7 @@ GENERATED   = $(EXE) $(LIB) $(LSS) $(MAP) $(DEPS) $(LSTS) $(OBJS)
 
 #----------------------------------------------------------#
 
-all : $(EXE) print_exe_size
+all : $(LSS) print_exe_size
 
 unicode : all
 
@@ -156,6 +160,10 @@ clean :
 %.o : %.c
 	$(info Compiling file: $<)
 	$(CC) $(C_FLAGS) -c $< -o $@
+
+%.o : %.cc
+	$(info Compiling file: $<)
+	$(CXX) $(CXX_FLAGS) -c $< -o $@
 
 %.o : %.cpp
 	$(info Compiling file: $<)

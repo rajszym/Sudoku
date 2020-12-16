@@ -2,7 +2,7 @@
 
    @file    graphics.hpp
    @author  Rajmund Szymanski
-   @date    02.12.2020
+   @date    10.12.2020
    @brief   graphics class
 
 *******************************************************************************
@@ -216,7 +216,7 @@ public:
 
 		RECT rc;
 		GetClientRect(hWnd, &rc);
-		D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+		D2D1_SIZE_U size = D2D1::SizeU(static_cast<UINT32>(rc.right - rc.left), static_cast<UINT32>(rc.bottom - rc.top));
 		hr = factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hWnd, size), &target);
 		if (FAILED(hr)) return false;
 //		target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
