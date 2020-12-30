@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    10.12.2020
+   @date    29.12.2020
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -49,6 +49,13 @@ using cell_ref = std::reference_wrapper<SudokuCell>;
 using cell_array = std::array<SudokuCell, 81>;
 using uint = unsigned int;
 
+static inline auto gen = std::mt19937{std::random_device{}()};
+
+static inline uint random( uint size )
+{
+	return std::uniform_int_distribution<uint>{0, size - 1}(gen);
+}
+
 enum Difficulty
 {
 	Any = -1,
@@ -89,7 +96,7 @@ public:
 				Values::at(c.num) = 0;
 
 			if (shuffled)
-				std::shuffle(Values::begin(), Values::end(), std::mt19937{std::random_device{}()});
+				std::shuffle(Values::begin(), Values::end(), gen);
 		}
 
 		uint len()
@@ -441,18 +448,16 @@ class Sudoku: public cell_array
 
 	class Random: public std::vector<cell_ref>
 	{
-		std::mt19937 rnd;
-
 	public:
 
-		Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab)), rnd{std::random_device{}()}
+		Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
 		{
-			std::shuffle(Random::begin(), Random::end(), Random::rnd);
+			std::shuffle(Random::begin(), Random::end(), gen);
 		}
 
 		Cell& operator()()
 		{
-			return Random::at(Random::rnd() % Random::size());
+			return Random::at(::random(Random::size()));
 		}
 	};
 
@@ -633,32 +638,30 @@ private:
 
 	void shuffle()
 	{
-		auto rnd = std::mt19937{std::random_device{}()};
-
 		uint v[10];
 	 	std::iota(v, v + 10, 0);
-		std::shuffle(v + 1, v + 10, rnd);
+		std::shuffle(v + 1, v + 10, gen);
 
 		for (Cell &c: *this)
 			c.num = v[c.num];
 
 		for (uint i = 0; i < 81; i++)
 		{
-			uint c1 = rnd() % 9;
+			uint c1 = ::random(9);
 			uint c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
 			Sudoku::swap_cols(c1, c2);
 
-			uint r1 = rnd() % 9;
+			uint r1 = ::random(9);
 			uint r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
 			Sudoku::swap_rows(r1, r2);
 
-			c1 = rnd() % 3;
+			c1 = ::random(3);
 			c2 = (c1 + 1) % 3;
 			c1 *= 3; c2 *= 3;
 			for (uint j = 0; j < 3; j++)
 				Sudoku::swap_cols(c1 + j, c2 + j);
 
-			r1 = rnd() % 3;
+			r1 = ::random(3);
 			r2 = (r1 + 1) % 3;
 			r1 *= 3; r2 *= 3;
 			for (uint j = 0; j < 3; j++)
@@ -747,9 +750,7 @@ public:
 
 		if (Sudoku::level == Difficulty::Extreme)
 		{
-			auto rnd = std::mt19937{std::random_device{}()};
-
-			Sudoku::init(Sudoku::extreme[rnd() % Sudoku::extreme.size()]);
+			Sudoku::init(Sudoku::extreme[::random(Sudoku::extreme.size())]);
 			Sudoku::shuffle();
 		}
 		else
