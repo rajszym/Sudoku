@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    10.12.2020
+   @date    12.04.2022
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -861,7 +861,7 @@ void Game::command( const Command _c )
 	                    break;
 	case SaveCmd:       Sudoku::save();
 	                    break;
-	case LoadCmd:       if (Sudoku::load()) Game::number = 0, GameTimer::start_if(Sudoku::rating >= 0);
+	case LoadCmd:       if (Sudoku::load()) Game::number = 0, GameTimer::start_if(Sudoku::rating >= 0), Game::mnu[0].setIndex(Sudoku::level);
 	                    break;
 	case QuitCmd:       Game::alive = false;
 	                    break;
