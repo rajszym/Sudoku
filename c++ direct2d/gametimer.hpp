@@ -2,7 +2,7 @@
 
    @file    gametimer.hpp
    @author  Rajmund Szymanski
-   @date    17.11.2020
+   @date    13.05.2022
    @brief   GameTimer class
 
 *******************************************************************************
@@ -82,10 +82,10 @@ public:
 		start(_period);
 	}
 
-	void start_if( bool cond )
+	void continue_if( bool _cond, const Rep _period )
 	{
-		if (cond) start();
-		else      reset();
+		count_ = _cond ? Source::max() : Source::zero();
+		start_ = Clock::now() - std::chrono::duration_cast<Source>(Target(_period));
 	}
 
 	void start()

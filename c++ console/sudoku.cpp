@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    12.04.2022
+   @date    14.05.2022
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -508,12 +508,12 @@ void MenuItem::setIndex( const T _i )
 uint MenuItem::prev()
 {
 	const uint i = MenuItem::idx;
-	const uint s = MenuItem::size();
+	const uint s = static_cast<uint>(MenuItem::size());
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == 0 ? s - 1 : i == s - 1 ? 1 : 0;
 	else
-		MenuItem::idx = (i + s - 1) % s;
+		MenuItem::idx = static_cast<uint>((i + s - 1) % s);
 
 	return MenuItem::idx;
 }
@@ -521,12 +521,12 @@ uint MenuItem::prev()
 uint MenuItem::next()
 {
 	const uint i = MenuItem::idx;
-	const uint s = MenuItem::size();
+	const uint s = static_cast<uint>(MenuItem::size());
 
 	if (MenuItem::num == 0)
 		MenuItem::idx = i == s - 1 ? 0 : i == 0 ? 1 : s - 1;
 	else
-		MenuItem::idx = (i + 1) % s;
+		MenuItem::idx = static_cast<uint>((i + 1) % s);
 
 	return MenuItem::idx;
 }
@@ -804,11 +804,13 @@ bool Game::set( uint num )
 	return num == 0                       ? false :
 	       Game::help == Assistance::None ? Sudoku::set(Game::tab.getCell(), num, Force::Direct) :
 	       Game::help != Assistance::Full ? Sudoku::set(Game::tab.getCell(), num, Force::Careful) :
-                                            Sudoku::set(Game::tab.getCell(), num, Force::Safe);
+	                                        Sudoku::set(Game::tab.getCell(), num, Force::Safe);
 }
 
 void Game::command( const Command _c )
 {
+	int seconds;
+
 	switch (_c)
 	{
 	case NoCmd:         break;
@@ -837,12 +839,12 @@ void Game::command( const Command _c )
 	                    break;
 	case PrevLevelCmd:  Sudoku::level = (Difficulty)Game::mnu[0].prev();
 	                    Sudoku::generate(); Game::number = 0; GameTimer::start();
-                    	Game::mnu[0].setIndex(Sudoku::level);
+	                   	Game::mnu[0].setIndex(Sudoku::level);
 	                    break;
 	case NextLevelCmd:  Sudoku::level = (Difficulty)Game::mnu[0].next();
 	                    /* falls through */
 	case GenerateCmd:   Sudoku::generate(); Game::number = 0; GameTimer::start();
-                    	Game::mnu[0].setIndex(Sudoku::level);
+	                  	Game::mnu[0].setIndex(Sudoku::level);
 	                    break;
 	case HighLightCmd:  Game::light_f = !Game::light_f; Game::mnu[2].setIndex(Game::light_f);
 	                    break;
@@ -859,9 +861,15 @@ void Game::command( const Command _c )
 	                    break;
 	case AcceptCmd:     Sudoku::accept();
 	                    break;
-	case SaveCmd:       Sudoku::save();
+	case SaveCmd:       seconds = Game::timer_f ? GameTimer::now() : 0;
+	                    Sudoku::save({}, seconds);
 	                    break;
-	case LoadCmd:       if (Sudoku::load()) Game::number = 0, GameTimer::start_if(Sudoku::rating >= 0), Game::mnu[0].setIndex(Sudoku::level);
+	case LoadCmd:       if (Sudoku::load({}, &seconds))
+	                    {
+	                    	Game::number = 0;
+	                    	GameTimer::continue_if(Sudoku::rating >= 0, seconds);
+	                    	Game::mnu[0].setIndex(Sudoku::level);
+	                    }
 	                    break;
 	case QuitCmd:       Game::alive = false;
 	                    break;

@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    12.04.2022
+   @date    14.05.2022
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -53,7 +53,7 @@ static inline auto gen = std::mt19937{std::random_device{}()};
 
 static inline uint random( uint size )
 {
-	return std::uniform_int_distribution<uint>{0, size - 1}(gen);
+	return std::uniform_int_distribution<uint>{0, --size}(gen);
 }
 
 enum Difficulty
@@ -89,19 +89,20 @@ public:
 
 		Values( Cell &cell, bool shuffled = false )
 		{
-		 	std::iota(Values::begin(), Values::end(), 0);
+			std::iota(Values::begin(), Values::end(), 0);
 
 			Values::at(cell.num) = 0;
 			for (Cell &c: cell.lst)
 				Values::at(c.num) = 0;
 
 			if (shuffled)
-				std::shuffle(Values::begin(), Values::end(), gen);
+				std::ranges::shuffle(*this, gen);
 		}
 
 		uint len()
 		{
-			return std::count_if(Values::begin(), Values::end(), []( uint v ){ return v != 0; });
+			size_t result = std::ranges::count_if(*this, []( uint v ){ return v != 0; });
+			return static_cast<uint>(result);
 		}
 	};
 
@@ -143,8 +144,8 @@ private:
 		uint r2 = c.pos / 9;
 		uint c1 = Cell::pos % 9;
 		uint c2 = c.pos % 9;
-		uint s1 = (r1 / 3) * 3 + (c1 / 3);
-		uint s2 = (r2 / 3) * 3 + (c2 / 3);
+		uint s1 = static_cast<uint>((r1 / 3) * 3 + (c1 / 3));
+		uint s2 = static_cast<uint>((r2 / 3) * 3 + (c2 / 3));
 
 		return s1 == s2;
 	}
@@ -193,7 +194,7 @@ public:
 
 	uint range()
 	{
-		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), 0U, []( uint r, Cell &c ){ return r + c.len(); });
+		return std::accumulate(std::begin(Cell::lst), std::end(Cell::lst), (uint)0, []( uint r, Cell &c ){ return r + c.len(); });
 	}
 
 	uint solid()
@@ -201,7 +202,8 @@ public:
 		if (Cell::num == 0)
 			return 0;
 
-		return std::count_if(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.num != 0; }) + 1;
+		size_t result = std::ranges::count_if(Cell::lst, []( Cell &c ){ return c.num != 0; }) + 1;
+		return static_cast<uint>(result);
 	}
 
 	bool empty()
@@ -222,7 +224,7 @@ public:
 		if (n == 0)
 			return true;
 
-		return std::none_of(std::begin(Cell::lst), std::end(Cell::lst), [n]( Cell &c ){ return c.num == n; });
+		return std::ranges::none_of(Cell::lst, [n]( Cell &c ){ return c.num == n; });
 	}
 
 	bool corrupt()
@@ -230,7 +232,7 @@ public:
 		if (Cell::num == 0)
 			return Cell::len() == 0;
 
-		return std::any_of(std::begin(Cell::lst), std::end(Cell::lst), [this]( Cell &c ){ return c.num == Cell::num; });
+		return std::ranges::any_of(Cell::lst, [this]( Cell &c ){ return c.num == Cell::num; });
 	}
 
 	bool allowed( uint n )
@@ -239,7 +241,7 @@ public:
 			return false;
 
 		Cell::num = n;
-		bool result = std::none_of(std::begin(Cell::lst), std::end(Cell::lst), []( Cell &c ){ return c.corrupt(); });
+		bool result = std::ranges::none_of(Cell::lst, []( Cell &c ){ return c.corrupt(); });
 		Cell::num = 0;
 
 		return result;
@@ -264,9 +266,9 @@ public:
 		if (!Cell::allowed(n)) return 0;
 		if ( Cell::len() == 1) return n;
 
-		if (std::none_of(std::begin(Cell::row), std::end(Cell::row), [n]( Cell &c ){ return c.allowed(n); })) return n;
-		if (std::none_of(std::begin(Cell::col), std::end(Cell::col), [n]( Cell &c ){ return c.allowed(n); })) return n;
-		if (std::none_of(std::begin(Cell::seg), std::end(Cell::seg), [n]( Cell &c ){ return c.allowed(n); })) return n;
+		if (std::ranges::none_of(Cell::row, [n]( Cell &c ){ return c.allowed(n); })) return n;
+		if (std::ranges::none_of(Cell::col, [n]( Cell &c ){ return c.allowed(n); })) return n;
+		if (std::ranges::none_of(Cell::seg, [n]( Cell &c ){ return c.allowed(n); })) return n;
 
 		return 0;
 	}
@@ -288,7 +290,7 @@ public:
 
 	bool solve( bool check = false )
 	{
-		cell_ref c = *std::min_element(std::begin(Cell::lst), std::end(Cell::lst), Cell::by_length);
+		cell_ref c = *std::ranges::min_element(Cell::lst, Cell::by_length);
 		if (c.get().num != 0)
 		{
 			Cell * const tab = this - Cell::pos;
@@ -385,7 +387,7 @@ class Sudoku: public cell_array
 
 		Backup( cell_array *tab )
 		{
-			std::transform(std::begin(*tab), std::end(*tab), Backup::begin(), []( Cell &c )
+			std::ranges::transform(*tab, Backup::begin(), []( Cell &c )
 			{
 				return std::make_tuple(&c, c.num, c.immutable);
 			});
@@ -393,7 +395,7 @@ class Sudoku: public cell_array
 
 		void reload()
 		{
-			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
+			std::ranges::for_each(*this, []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
 				std::get<uint>(t) = c->num;
@@ -403,7 +405,7 @@ class Sudoku: public cell_array
 
 		void restore()
 		{
-			std::for_each(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
+			std::ranges::for_each(*this, []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
 				c->num = std::get<uint>(t);
@@ -413,7 +415,7 @@ class Sudoku: public cell_array
 
 		bool changed()
 		{
-			return std::any_of(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
+			return std::ranges::any_of(*this, []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
 				return c->num != std::get<uint>(t);
@@ -422,10 +424,11 @@ class Sudoku: public cell_array
 
 		uint len()
 		{
-			return std::count_if(Backup::begin(), Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
+			size_t result = std::ranges::count_if(*this, []( std::tuple<Cell *, uint, bool> &t )
 			{
 				return std::get<uint>(t) != 0;
 			});
+			return static_cast<uint>(result);
 		}
 	};
 
@@ -438,7 +441,7 @@ class Sudoku: public cell_array
 
 		bool reset()
 		{
-			return std::all_of(Sudoku::Backup::begin(), Sudoku::Backup::end(), []( std::tuple<Cell *, uint, bool> &t )
+			return std::ranges::all_of(*this, []( std::tuple<Cell *, uint, bool> &t )
 			{
 				Cell *c = std::get<Cell *>(t);
 				return c->set(std::get<uint>(t));
@@ -452,12 +455,12 @@ class Sudoku: public cell_array
 
 		Random( cell_array *tab ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
 		{
-			std::shuffle(Random::begin(), Random::end(), gen);
+			std::ranges::shuffle(*this, gen);
 		}
 
 		Cell& operator()()
 		{
-			return Random::at(::random(Random::size()));
+			return Random::at(::random(static_cast<uint>(Random::size())));
 		}
 	};
 
@@ -467,7 +470,7 @@ class Sudoku: public cell_array
 
 		Sorted( cell_array *tab, bool(*compare)(Cell &, Cell&) ): std::vector<cell_ref>(std::begin(*tab), std::end(*tab))
 		{
-			std::sort(Sorted::begin(), Sorted::end(), compare);
+			std::ranges::sort(*this, compare);
 		}
 	};
 
@@ -476,8 +479,9 @@ public:
 	Difficulty level;
 	int        rating;
 	uint32_t   signature;
+	int        duration;
 
-	Sudoku( Difficulty l = Difficulty::Easy ): mem{}, level{l}, rating{0}, signature{0}
+	Sudoku( Difficulty l = Difficulty::Easy ): mem{}, level{l}, rating{0}, signature{0}, duration{0}
 	{
 		for (Cell &cell: *this)
 		{
@@ -488,17 +492,19 @@ public:
 
 	uint len()
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.num != 0; });
+		size_t result = std::ranges::count_if(*this, []( Cell &c ){ return c.num != 0; });
+		return static_cast<uint>(result);
 	}
 
 	uint count( uint n )
 	{
-		return std::count_if(Sudoku::begin(), Sudoku::end(), [n]( Cell &c ){ return c.num == n; });
+		size_t result = std::ranges::count_if(*this, [n]( Cell &c ){ return c.num == n; });
+		return static_cast<uint>(result);
 	}
 
 	bool empty()
 	{
-		return std::all_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.empty(); });
+		return std::ranges::all_of(*this, []( Cell &c ){ return c.empty(); });
 	}
 
 	bool corrupt()
@@ -508,12 +514,12 @@ public:
 				if (std::none_of(i, i + 9, [n]( Cell &c ){ return c.accept(n); }))
 					return true;
 
-		return std::any_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.corrupt(); });
+		return std::ranges::any_of(*this, []( Cell &c ){ return c.corrupt(); });
 	}
 
 	bool solved()
 	{
-		return std::none_of(Sudoku::begin(), Sudoku::end(), []( Cell &c ){ return c.empty() || c.corrupt(); });
+		return std::ranges::none_of(*this, []( Cell &c ){ return c.empty() || c.corrupt(); });
 	}
 
 	bool set( Cell *cell, uint n, Force force = Force::Direct )
@@ -587,7 +593,7 @@ public:
 
 		for (Cell &c: *this)
 		{
-			if (c.pos < txt.size())
+			if (c.pos < static_cast<uint>(txt.size()))
 			{
 				int x = txt[c.pos] - _T('0');
 				c.set(x >= 0 && x <= 9 ? static_cast<uint>(x) : 0U);
@@ -598,7 +604,7 @@ public:
 
 		for (Cell &c: *this)
 		{
-			if (c.pos < txt.size())
+			if (c.pos < static_cast<uint>(txt.size()))
 			{
 				int x = txt[c.pos] - _T('@');
 				c.set(x >= 0 && x <= 9 ? static_cast<uint>(x) : 0U);
@@ -639,7 +645,7 @@ private:
 	void shuffle()
 	{
 		uint v[10];
-	 	std::iota(v, v + 10, 0);
+		std::iota(v, v + 10, 0);
 		std::shuffle(v + 1, v + 10, gen);
 
 		for (Cell &c: *this)
@@ -648,21 +654,21 @@ private:
 		for (uint i = 0; i < 81; i++)
 		{
 			uint c1 = ::random(9);
-			uint c2 = 3 * (c1 / 3) + (c1 + 1) % 3;
+			uint c2 = static_cast<uint>((c1 / 3) * 3 + (c1 + 1) % 3);
 			Sudoku::swap_cols(c1, c2);
 
 			uint r1 = ::random(9);
-			uint r2 = 3 * (r1 / 3) + (r1 + 1) % 3;
+			uint r2 = static_cast<uint>((r1 / 3) * 3 + (r1 + 1) % 3);
 			Sudoku::swap_rows(r1, r2);
 
 			c1 = ::random(3);
-			c2 = (c1 + 1) % 3;
+			c2 = static_cast<uint>((c1 + 1) % 3);
 			c1 *= 3; c2 *= 3;
 			for (uint j = 0; j < 3; j++)
 				Sudoku::swap_cols(c1 + j, c2 + j);
 
 			r1 = ::random(3);
-			r2 = (r1 + 1) % 3;
+			r2 = static_cast<uint>((r1 + 1) % 3);
 			r1 *= 3; r2 *= 3;
 			for (uint j = 0; j < 3; j++)
 				Sudoku::swap_rows(r1 + j, r2 + j);
@@ -687,11 +693,11 @@ private:
 	{
 		auto tmp = Sudoku::Temp(this);
 
-		std::max_element(Sudoku::begin(), Sudoku::end(), Cell::by_length)->solve();
+		std::ranges::max_element(*this, Cell::by_length)->solve();
 		if (!Sudoku::solved())
 			return -2;
 
-		if (!std::all_of(Sudoku::begin(), Sudoku::end(), [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; }))
+		if (!std::ranges::all_of(*this, [this]( Cell &c ){ return c.generate(Sudoku::level, true) != c.immutable; }))
 			return -1;
 
 		return 0;
@@ -738,7 +744,7 @@ public:
 	{
 		if (Sudoku::solvable() == 0)
 		{
-			std::max_element(Sudoku::begin(), Sudoku::end(), Cell::by_length)->solve();
+			std::ranges::max_element(*this, Cell::by_length)->solve();
 			Sudoku::mem.clear();
 		}
 	}
@@ -750,7 +756,7 @@ public:
 
 		if (Sudoku::level == Difficulty::Extreme)
 		{
-			Sudoku::init(Sudoku::extreme[::random(Sudoku::extreme.size())]);
+			Sudoku::init(Sudoku::extreme[::random(static_cast<uint>(Sudoku::extreme.size()))]);
 			Sudoku::shuffle();
 		}
 		else
@@ -920,7 +926,7 @@ private:
 			return result;
 		}
 			
-		Cell &cell = *std::min_element(Sudoku::begin(), Sudoku::end(), Cell::by_length);
+		Cell &cell = *std::ranges::min_element(*this, Cell::by_length);
 		if (cell.num != 0) // solved!
 			return 1;
 
@@ -1011,9 +1017,9 @@ private:
 			r[c.pos] = static_cast<uint32_t>(c.range());
 		}
 
-		std::sort(std::begin(v), std::end(v));
-		std::sort(std::begin(l), std::end(l));
-		std::sort(std::begin(r), std::end(r));
+		std::ranges::sort(v);
+		std::ranges::sort(l);
+		std::ranges::sort(r);
 
 		Sudoku::signature = Sudoku::calculate_crc32(v);
 		Sudoku::signature = Sudoku::calculate_crc32(l, Sudoku::signature);
@@ -1076,9 +1082,11 @@ public:
 			sudoku.level = Difficulty::Medium;
 			if (line.size() > 82)
 			{
-				Difficulty l = (Difficulty)(line[82] - _T('0'));
+				Difficulty l = static_cast<Difficulty>(line[82] - _T('0'));
 				sudoku.level = (l > Difficulty::Any && l <= Difficulty::Extreme) ? l : Difficulty::Medium;
 			}
+			if (line.size() > 100)
+				sudoku.duration = std::stoi(line.substr(100));
 			if (line.size() > 0)
 				sudoku.init(line.substr(0, 81));
 		}
@@ -1094,36 +1102,39 @@ public:
 		out << '|'          <<             sudoku.level     << ':'
 		    << std::setw(2) <<             sudoku.len()     << ':'
 		    << std::setw(3) <<             sudoku.rating    << ':'
-		    << std::setw(8) << std::hex << sudoku.signature << std::dec;
+		    << std::setw(8) << std::hex << sudoku.signature << ':'
+		    << std::setw(0) << std::dec << sudoku.duration;
 		return out;
 	}
 
-	bool load( const TCHAR *filename = _T("sudoku.board") )
+	bool load( const TCHAR *filename = nullptr, int * const gametime = nullptr )
 	{
-		auto file = std::basic_ifstream<TCHAR>(filename);
+		auto name = filename != nullptr ? filename : _T("sudoku.board");
+		auto file = std::basic_ifstream<TCHAR>(name);
 		if (!file.is_open())
 			return false;
 
 		Sudoku::Backup tmp(this);
 
 		file >> *this;
-
 		file.close();
+		if (gametime != nullptr) *gametime = Sudoku::duration;
 
 		return tmp.changed();
 	}
 
-	void save( const TCHAR *filename = _T("sudoku.board") )
+	void save( const TCHAR *filename = nullptr, const int gametime = 0 )
 	{
-		auto file = std::basic_ofstream<TCHAR>(filename, std::ios::out);
+		auto name = filename != nullptr ? filename : _T("sudoku.board");
+		auto file = std::basic_ofstream<TCHAR>(name, std::ios::out);
 		if (!file.is_open())
 			return;
 
+		Sudoku::duration = gametime;
 		file << *this << std::endl;
-
 		file.close();
 
-		auto htmlname = std::basic_string<TCHAR>(filename) + _T(".html");
+		auto htmlname = std::basic_string<TCHAR>(name) + _T(".html");
 		file = std::basic_ofstream<TCHAR>(htmlname.c_str(), std::ios::out);
 		if (!file.is_open())
 			return;
