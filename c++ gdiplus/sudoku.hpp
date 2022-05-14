@@ -101,7 +101,7 @@ public:
 
 		uint len()
 		{
-			size_t result = std::ranges::count_if(*this, []( uint v ){ return v != 0; });
+			auto result = std::ranges::count_if(*this, []( uint v ){ return v != 0; });
 			return static_cast<uint>(result);
 		}
 	};
@@ -202,7 +202,7 @@ public:
 		if (Cell::num == 0)
 			return 0;
 
-		size_t result = std::ranges::count_if(Cell::lst, []( Cell &c ){ return c.num != 0; }) + 1;
+		auto result = std::ranges::count_if(Cell::lst, []( Cell &c ){ return c.num != 0; }) + 1;
 		return static_cast<uint>(result);
 	}
 
@@ -424,7 +424,7 @@ class Sudoku: public cell_array
 
 		uint len()
 		{
-			size_t result = std::ranges::count_if(*this, []( std::tuple<Cell *, uint, bool> &t )
+			auto result = std::ranges::count_if(*this, []( std::tuple<Cell *, uint, bool> &t )
 			{
 				return std::get<uint>(t) != 0;
 			});
@@ -492,13 +492,13 @@ public:
 
 	uint len()
 	{
-		size_t result = std::ranges::count_if(*this, []( Cell &c ){ return c.num != 0; });
+		auto result = std::ranges::count_if(*this, []( Cell &c ){ return c.num != 0; });
 		return static_cast<uint>(result);
 	}
 
 	uint count( uint n )
 	{
-		size_t result = std::ranges::count_if(*this, [n]( Cell &c ){ return c.num == n; });
+		auto result = std::ranges::count_if(*this, [n]( Cell &c ){ return c.num == n; });
 		return static_cast<uint>(result);
 	}
 
