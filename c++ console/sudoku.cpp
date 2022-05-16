@@ -2,7 +2,7 @@
 
    @file    sudoku.cpp
    @author  Rajmund Szymanski
-   @date    14.05.2022
+   @date    16.05.2022
    @brief   Sudoku game, solver and generator
 
 *******************************************************************************
@@ -106,7 +106,7 @@ public:
 
 	GameHeader() {}
 
-	void    update      ( Console &, const bool, const TCHAR *, const int );
+	void    update      ( Console &, const bool, const TCHAR *, const int, const uint, const int );
 	Command mouseLButton( const int, const int );
 };
 
@@ -239,7 +239,7 @@ public:
 /*                              IMPLEMENTATION                               */
 /*---------------------------------------------------------------------------*/
 
-void GameHeader::update( Console &con, const bool init, const TCHAR *info, const int time )
+void GameHeader::update( Console &con, const bool init, const TCHAR *info, const int time, const uint len, const int rating )
 {
 	if (init)
 	{
@@ -251,18 +251,13 @@ void GameHeader::update( Console &con, const bool init, const TCHAR *info, const
 	con.Fill(TAB.x + 9, HDR.y, TAB.width - 10 - s, 1);
 	con.Put(TAB.Right(s + 1), HDR.y, info);
 
-
+	TCHAR v[16];
 	if (time >= 0)
-	{
-		TCHAR v[16];
 		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
-		s = (int)_tcslen(v);
-		con.Put(MNU.Right(s + 1), HDR.y, v);
-	}
 	else
-	{
-		con.Fill(HDR.right - 12, HDR.y, 12, 1);
-	}
+		_sntprintf(v, sizeof(v), _T("%8d:%03d"), static_cast<int>(len), rating);
+	s = (int)_tcslen(v);
+	con.Put(MNU.Right(s + 1), HDR.y, v);
 }
 
 Command GameHeader::mouseLButton( const int _x, const int _y )
@@ -655,7 +650,7 @@ void Game::update()
 
 	Console::Fill(HDR, Console::White, colors[Sudoku::level]);
 
-	Game::hdr.update(*this, init, info, time);
+	Game::hdr.update(*this, init, info, time, Sudoku::len(), Sudoku::rating);
 	Game::tab.update(*this, init, Game::number, Game::help, Game::tab.getCell(), Game::light_f);
 	Game::mnu.update(*this, init, Game::xpos);
 	Game::ftr.update(*this, init, Game::mnu.getInfo());
