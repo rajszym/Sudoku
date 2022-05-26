@@ -2,7 +2,7 @@
 
    @file    sudoku.hpp
    @author  Rajmund Szymanski
-   @date    14.05.2022
+   @date    26.05.2022
    @brief   sudoku class: generator and solver
 
 *******************************************************************************
@@ -33,6 +33,7 @@
 
 #include <list>
 #include <array>
+#include <tuple>
 #include <vector>
 #include <utility>
 #include <algorithm>
