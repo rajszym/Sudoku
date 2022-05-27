@@ -50,9 +50,8 @@ CXX_SRCS   :=              $(foreach d,$(VPATH),$(wildcard $d*.cpp))
 FOR_SRCS   :=              $(foreach d,$(VPATH),$(wildcard $d*.f))
 RES_SRCS   :=              $(foreach d,$(VPATH),$(wildcard $d*.rc))
 LIB_SRCS   :=     $(notdir $(foreach d,$(VPATH),$(wildcard $dlib*.a)))
-ifeq ($(strip $(PROJECT)),)
-PROJECT    := $(firstword $(notdir $(CURDIR)))
-endif
+
+PROJECT    := $(firstword $(PROJECT) $(notdir $(CURDIR)))
 
 #----------------------------------------------------------#
 
@@ -86,8 +85,8 @@ ifneq ($(filter STATIC,$(DEFS)),)
 DEFS       := $(DEFS:STATIC=)
 COMMON_F   += -static
 endif
-ifneq ($(filter USE_LTO,$(DEFS)),)
-DEFS       := $(DEFS:USE_LTO=)
+ifneq ($(filter LTO,$(DEFS)),)
+DEFS       := $(DEFS:LTO=)
 COMMON_F   += -flto
 endif
 ifneq ($(filter UNICODE,$(DEFS)),)
