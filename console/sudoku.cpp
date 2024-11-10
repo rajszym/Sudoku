@@ -290,9 +290,9 @@ void GameCell::update( Console &con, const bool, const uint number, const Assist
 		    help <= Assistance::Current                              ?      Console::Black :
 		                                                               (l ? Console::Yellow     : Console::Orange);
 	#if defined(UNICODE)
-		con.Put(GameCell::x, GameCell::y, _T("·¹²³⁴⁵⁶⁷⁸⁹")[number]);
+		con.Put(GameCell::x, GameCell::y, L"·¹²³⁴⁵⁶⁷⁸⁹"[number]);
 	#else
-		con.Put(GameCell::x, GameCell::y, _T("-123456789")[number]);
+		con.Put(GameCell::x, GameCell::y,  "-123456789"[number]);
 	#endif
 	}
 	else
@@ -302,9 +302,9 @@ void GameCell::update( Console &con, const bool, const uint number, const Assist
 			f = l ? Console::LightGreen : Console::Green;
 
 	#if defined(UNICODE)
-		con.Put(GameCell::x, GameCell::y, _T("·¹²³⁴⁵⁶⁷⁸⁹")[sure]);
+		con.Put(GameCell::x, GameCell::y, L"·¹²³⁴⁵⁶⁷⁸⁹"[sure]);
 	#else
-		con.Put(GameCell::x, GameCell::y, _T("-123456789")[sure]);
+		con.Put(GameCell::x, GameCell::y,  "-123456789"[sure]);
 	#endif
 	}
 
@@ -613,7 +613,7 @@ void GameFooter::update( Console &con, const bool init, const TCHAR *info )
 
 /*---------------------------------------------------------------------------*/
 
-Game::Game(): Console(::title), hdr{}, tab{*this}, mnu{}, ftr{}, timer_f{true}, light_f{false}, help{Assistance::None}, alive{true}, xpos{0}
+Game::Game(): Console(::title), hdr{}, tab{*this}, mnu{}, ftr{}, number{}, timer_f{true}, light_f{false}, help{Assistance::None}, alive{true}, xpos{0}
 {
 	Console::SetFont(56, L"Consolas");
 	Console::Center(WIN.width, WIN.height);
@@ -655,8 +655,7 @@ void Game::update()
 	Game::mnu.update(*this, init, Game::xpos);
 	Game::ftr.update(*this, init, Game::mnu.getInfo());
 
-	if (init)
-		init = false;
+	init = false;
 }
 
 void Game::mouseMove( const int _x, const int _y )
