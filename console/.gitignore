@@ -1,0 +1,9 @@
+# build output (makefile)
+build/
+
+# saved game
+sudoku.board
+sudoku.board.html
+
+# default output file of the find mode (sudoku -f)
+sudoku.exe.board

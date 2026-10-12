@@ -1,0 +1,7 @@
+# bytecode
+__pycache__/
+*.py[cod]
+
+# saved game
+sudoku.board
+sudoku.board.html
