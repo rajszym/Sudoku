@@ -253,9 +253,9 @@ void GameHeader::update( Console &con, const bool init, const TCHAR *info, const
 
 	TCHAR v[16];
 	if (time >= 0)
-		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
+		_sntprintf(v, std::size(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
 	else
-		_sntprintf(v, sizeof(v), _T("%8d:%03d"), static_cast<int>(len), rating);
+		_sntprintf(v, std::size(v), _T("%8d:%03d"), static_cast<int>(len), rating);
 	s = (int)_tcslen(v);
 	con.Put(MNU.Right(s + 1), HDR.y, v);
 }
@@ -733,6 +733,9 @@ void Game::run()
 		int x, y, s, k;
 		INPUT_RECORD input;
 
+		// do not poll the console in a busy loop (wakes up on input)
+		WaitForSingleObject(Console::Cin, 15);
+
 		if (Console::GetInput(&input))
 		{
 			switch (input.EventType)
@@ -854,8 +857,9 @@ void Game::command( const Command _c )
 	case EditCmd:       Sudoku::discard();                    GameTimer::reset();
 	                    break;
 	case AcceptCmd:     Sudoku::accept();
+	                    if (GameTimer::now() == 0) GameTimer::start();
 	                    break;
-	case SaveCmd:       seconds = Game::timer_f ? GameTimer::now() : 0;
+	case SaveCmd:       seconds = GameTimer::now();
 	                    Sudoku::save({}, seconds);
 	                    break;
 	case LoadCmd:       if (Sudoku::load({}, &seconds))

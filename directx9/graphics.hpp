@@ -34,24 +34,70 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
-#include <d3dx9.h>
+#include <d3d9.h>
+#include <cmath>
+#include <map>
+#include <string>
 #include <vector>
+#include <utility>
 #include <tchar.h>
 
 class Graphics
 {
 	class Vertex
 	{
-		D3DXVECTOR4 v;
-		D3DCOLOR    c;
+		FLOAT    v[4];
+		D3DCOLOR c;
 
 	public:
+
+		static constexpr DWORD FVF = D3DFVF_XYZRHW | D3DFVF_DIFFUSE;
 
 		Vertex():                                          v{ 0,  0, 0, 1}, c{Color::Black} {}
 		Vertex(FLOAT _x, FLOAT _y):                        v{_x, _y, 0, 1}, c{Color::Black} {}
 		Vertex(FLOAT _x, FLOAT _y, D3DCOLOR _c):           v{_x, _y, 0, 1}, c{_c}           {}
 		Vertex(FLOAT _x, FLOAT _y, D3DCOLOR _c, DWORD _a): v{_x, _y, 0, 1}, c{_c^(~_a<<24)} {}
 	};
+
+	class TexVertex
+	{
+		FLOAT    v[4];
+		D3DCOLOR c;
+		FLOAT    t[2];
+
+	public:
+
+		static constexpr DWORD FVF = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1;
+
+		TexVertex(FLOAT _x, FLOAT _y, D3DCOLOR _c, FLOAT _u, FLOAT _v): v{_x, _y, 0, 1}, c{_c}, t{_u, _v} {}
+	};
+
+public:
+
+	class Font
+	{
+		friend class Graphics;
+
+		HFONT handle;
+
+		Font( HFONT h ): handle{h} {}
+
+	public:
+
+		~Font() { DeleteObject(handle); }
+	};
+
+private:
+
+	// text rendered by GDI into the texture (alpha channel = glyph coverage)
+	struct Text
+	{
+		IDirect3DTexture9 *tex;
+		LONG pad, width, height; // size of the text bitmap (with padding)
+		UINT tw, th;             // size of the texture
+	};
+
+	using TextKey = std::pair<Font *, std::basic_string<TCHAR>>;
 
 	static
 	D3DCOLOR Alpha( const D3DCOLOR c, const DWORD a )
@@ -68,11 +114,131 @@ class Graphics
 	HWND                     wnd;
 	LPDIRECT3D9              d3d;
 	LPDIRECT3DDEVICE9        dev;
-	std::vector<ID3DXFont *> fnt;
+	D3DPRESENT_PARAMETERS    par;
+	bool                     lost;
+	std::vector<Font *>      fnt;
+	std::map<TextKey, Text>  txt;
+
+	void setup()
+	{
+		dev->SetFVF(Vertex::FVF);
+		dev->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);
+		dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
+
+		// color from the vertex; alpha from the vertex (shapes) or from the texture (texts)
+		dev->SetTextureStageState(0, D3DTSS_COLOROP,   D3DTOP_SELECTARG2);
+		dev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG2);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+		dev->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+		dev->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+	}
+
+	static UINT pow2( LONG n )
+	{
+		UINT p = 1;
+		while (p < static_cast<UINT>(n)) p <<= 1;
+		return p;
+	}
+
+	void release_texts()
+	{
+		for (auto &t: txt) t.second.tex->Release();
+		txt.clear();
+	}
+
+	Text *text( Font *f, const std::basic_string<TCHAR> &s )
+	{
+		auto key = std::make_pair(f, s);
+		auto it = txt.find(key);
+		if (it != txt.end())
+			return &it->second;
+
+		if (txt.size() >= 256) // the timer creates a new text every second
+			release_texts();
+
+		Text t = {};
+		HDC dc = CreateCompatibleDC(NULL);
+		if (dc == NULL)
+			return nullptr;
+		HGDIOBJ old_font = SelectObject(dc, f->handle);
+
+		SIZE size = {};
+		TEXTMETRIC tm = {};
+		GetTextExtentPoint32(dc, s.c_str(), static_cast<int>(s.size()), &size);
+		GetTextMetrics(dc, &tm);
+		t.pad    = tm.tmHeight / 8 + 1; // room for the glyph overhangs
+		t.width  = size.cx + t.pad * 2;
+		t.height = tm.tmHeight + t.pad * 2;
+		t.tw     = pow2(t.width);
+		t.th     = pow2(t.height);
+
+		BITMAPINFO bi = {};
+		bi.bmiHeader.biSize        = sizeof(bi.bmiHeader);
+		bi.bmiHeader.biWidth       = t.width;
+		bi.bmiHeader.biHeight      = -t.height; // top-down
+		bi.bmiHeader.biPlanes      = 1;
+		bi.bmiHeader.biBitCount    = 32;
+		bi.bmiHeader.biCompression = BI_RGB;
+
+		void *bits = nullptr;
+		HBITMAP bmp = CreateDIBSection(dc, &bi, DIB_RGB_COLORS, &bits, NULL, 0);
+		bool success = false;
+		if (bmp != NULL && bits != nullptr)
+		{
+			HGDIOBJ old_bmp = SelectObject(dc, bmp);
+			ZeroMemory(bits, static_cast<size_t>(t.width) * static_cast<size_t>(t.height) * 4);
+			SetBkMode(dc, TRANSPARENT);
+			SetTextColor(dc, RGB(0xFF, 0xFF, 0xFF));
+			TextOut(dc, t.pad, t.pad, s.c_str(), static_cast<int>(s.size()));
+			GdiFlush();
+
+			HRESULT hr = dev->CreateTexture(t.tw, t.th, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &t.tex, NULL);
+			D3DLOCKED_RECT lr;
+			if (SUCCEEDED(hr) && SUCCEEDED(t.tex->LockRect(0, &lr, NULL, 0)))
+			{
+				const DWORD *src = static_cast<const DWORD *>(bits);
+				for (UINT y = 0; y < t.th; ++y)
+				{
+					DWORD *dst = reinterpret_cast<DWORD *>(static_cast<BYTE *>(lr.pBits) + y * static_cast<UINT>(lr.Pitch));
+					for (UINT x = 0; x < t.tw; ++x)
+					{
+						DWORD a = 0;
+						if (x < static_cast<UINT>(t.width) && y < static_cast<UINT>(t.height))
+						{
+							DWORD p = src[y * static_cast<UINT>(t.width) + x]; // grayscale antialiasing: R == G == B
+							DWORD r = (p >> 16) & 0xFF, g = (p >> 8) & 0xFF, b = p & 0xFF;
+							a = r > g ? (r > b ? r : b) : (g > b ? g : b);
+						}
+						dst[x] = (a << 24) | 0x00FFFFFF;
+					}
+				}
+				t.tex->UnlockRect(0);
+				success = true;
+			}
+			else
+			if (t.tex != NULL)
+			{
+				t.tex->Release();
+			}
+
+			SelectObject(dc, old_bmp);
+			DeleteObject(bmp);
+		}
+
+		SelectObject(dc, old_font);
+		DeleteDC(dc);
+
+		if (!success)
+			return nullptr;
+
+		return &txt.emplace(std::move(key), t).first->second;
+	}
 
 public:
-
-	using Font = ID3DXFont;
 
 	enum Color: D3DCOLOR
 	{
@@ -348,7 +514,7 @@ public:
 		}
 	};
 
-	Graphics(): wnd{NULL}, d3d{NULL}, dev{NULL}, fnt{}
+	Graphics(): wnd{NULL}, d3d{NULL}, dev{NULL}, par{}, lost{false}, fnt{}
 	{
 	}
 
@@ -358,27 +524,33 @@ public:
 		d3d = Direct3DCreate9(D3D_SDK_VERSION);
 		if (d3d == NULL) return false;
 
-		D3DPRESENT_PARAMETERS d3dpp = {};
-		d3dpp.Windowed         = TRUE;
-		d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
-		d3dpp.hDeviceWindow    = wnd;
-	    d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+		// the size of the back buffer is fixed (it is stretched to the window),
+		// so the reset of the device does not change the size of the drawing
+		RECT rc;
+		GetClientRect(wnd, &rc);
 
+		par = {};
+		par.Windowed         = TRUE;
+		par.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+		par.hDeviceWindow    = wnd;
+		par.BackBufferFormat = D3DFMT_UNKNOWN;
+		par.BackBufferWidth  = rc.right > rc.left ? static_cast<UINT>(rc.right - rc.left) : 0;
+		par.BackBufferHeight = rc.bottom > rc.top ? static_cast<UINT>(rc.bottom - rc.top) : 0;
+
+		D3DPRESENT_PARAMETERS d3dpp = par; // CreateDevice may modify the parameters
 		HRESULT hr;
 		hr = d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &dev);
 		if (FAILED(hr)) return false;
 
-		dev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE);
-		dev->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);
-		dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		setup();
 
 		return true;
 	}
 
 	~Graphics()
 	{
-		for (ID3DXFont *f: fnt) f->Release();
+		release_texts();
+		for (Font *f: fnt) delete f;
 
 		if (dev != NULL) dev->Release();
 		if (d3d != NULL) d3d->Release();
@@ -386,22 +558,13 @@ public:
 
 	Font *font( const INT h, const UINT w, const BYTE p, const TCHAR *f )
 	{
-		D3DXFONT_DESC desc = {};
-		desc.Height          = h;
-		desc.Width           = 0;
-		desc.Weight          = w;
-		desc.MipLevels       = 0;
-		desc.Italic          = FALSE;
-		desc.CharSet         = DEFAULT_CHARSET;
-		desc.OutputPrecision = OUT_TT_PRECIS;
-		desc.Quality         = CLEARTYPE_QUALITY;
-		desc.PitchAndFamily  = p;
-		_tcscpy(desc.FaceName, f);
+		HFONT handle = CreateFont(h, 0, 0, 0, static_cast<int>(w), FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+		                          OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, p, f);
+		if (handle == NULL)
+			return nullptr;
 
-		Font *font = nullptr;
-		HRESULT hr = D3DXCreateFontIndirect(dev, &desc, &font);
-		if (SUCCEEDED(hr))
-			fnt.push_back(font);
+		Font *font = new Font(handle);
+		fnt.push_back(font);
 
 		return font;
 	}
@@ -413,6 +576,23 @@ public:
 
 	void begin( const Color &c )
 	{
+		if (lost)
+		{
+			// e.g. after locking the screen; the textures are managed, so they survive the reset
+			HRESULT hr = dev->TestCooperativeLevel();
+			if (hr == D3DERR_DEVICENOTRESET)
+			{
+				D3DPRESENT_PARAMETERS d3dpp = par;
+				hr = dev->Reset(&d3dpp);
+				if (SUCCEEDED(hr))
+					setup();
+			}
+			if (SUCCEEDED(hr))
+				lost = false;
+			else
+				Sleep(50); // the device cannot be restored yet; the drawing is ignored
+		}
+
 		dev->Clear(0, NULL, D3DCLEAR_TARGET, c, 1.0f, 0);
 		dev->BeginScene();
 	}
@@ -420,7 +600,8 @@ public:
 	void end()
 	{
 		dev->EndScene();
-		dev->Present(NULL, NULL, NULL, NULL);
+		if (dev->Present(NULL, NULL, NULL, NULL) == D3DERR_DEVICELOST)
+			lost = true;
 	}
 
 	void draw_line( const Rect &r, const Color &c )
@@ -468,13 +649,51 @@ public:
 
 	void draw_char( const Rect &r, Font *f, const Color &c, DWORD a, const TCHAR t )
 	{
-		RECT rc = r;
-		f->DrawText(NULL, &t, 1, &rc, a | DT_NOCLIP, c);
+		draw_text(r, f, c, a, std::basic_string<TCHAR>(1, t));
 	}
 
 	void draw_text( const Rect &r, Font *f, const Color &c, DWORD a, const TCHAR *t )
 	{
+		draw_text(r, f, c, a, std::basic_string<TCHAR>(t));
+	}
+
+	void draw_text( const Rect &r, Font *f, const Color &c, DWORD a, const std::basic_string<TCHAR> &s )
+	{
+		if (f == nullptr || s.empty())
+			return;
+
+		Text *t = text(f, s);
+		if (t == nullptr)
+			return;
+
 		RECT rc = r;
-		f->DrawText(NULL, t, -1, &rc, a | DT_NOCLIP, c);
+		const LONG w = t->width  - t->pad * 2;
+		const LONG h = t->height - t->pad * 2;
+		LONG x = (a & DT_RIGHT)   ? rc.right - w : (a & DT_CENTER)  ? (rc.left + rc.right - w) / 2 : rc.left;
+		LONG y = (a & DT_BOTTOM)  ? rc.bottom - h : (a & DT_VCENTER) ? (rc.top + rc.bottom - h) / 2 : rc.top;
+
+		// -0.5 maps the texels directly to the pixels
+		const FLOAT x1 = static_cast<FLOAT>(x - t->pad) - 0.5f;
+		const FLOAT y1 = static_cast<FLOAT>(y - t->pad) - 0.5f;
+		const FLOAT x2 = x1 + static_cast<FLOAT>(t->width);
+		const FLOAT y2 = y1 + static_cast<FLOAT>(t->height);
+		const FLOAT u  = static_cast<FLOAT>(t->width)  / static_cast<FLOAT>(t->tw);
+		const FLOAT v  = static_cast<FLOAT>(t->height) / static_cast<FLOAT>(t->th);
+
+		TexVertex vtx[] =
+		{
+			TexVertex(x1, y1, c, 0, 0),
+			TexVertex(x2, y1, c, u, 0),
+			TexVertex(x2, y2, c, u, v),
+			TexVertex(x1, y2, c, 0, v),
+		};
+
+		dev->SetFVF(TexVertex::FVF);
+		dev->SetTexture(0, t->tex);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+		dev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, vtx, sizeof(TexVertex));
+		dev->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2);
+		dev->SetTexture(0, NULL);
+		dev->SetFVF(Vertex::FVF);
 	}
 };

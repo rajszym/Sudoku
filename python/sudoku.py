@@ -578,8 +578,10 @@ class Sudoku(list):
 			cell.num = n
 			return False
 		else:
+			changed = any(not c.immutable and c.num != 0 for c in self)
 			self.again()
-			self.specify_layout()
+			if changed or self.rating == 0: # otherwise the accepted layout is already specified
+				self.specify_layout()
 			return True
 
 	def parse_rating(self):
@@ -1548,8 +1550,10 @@ class Game(Sudoku):
 		elif c == Command.AcceptCmd:
 			self.wait()
 			self.accept()
+			if self.timer.now() == 0:
+				self.timer.start()
 		elif c == Command.SaveCmd:
-			seconds = self.timer.now() if self.timer_f else 0
+			seconds = self.timer.now()
 			self.save(None, seconds)
 		elif c == Command.LoadCmd:
 			self.wait()

@@ -245,7 +245,7 @@ public:
 	void mouseLeave  ();
 	void mouseLButton( const int, const int );
 	void mouseRButton( const int, const int );
-	void mouseWheel  ( const int, const int, const int, HWND );
+	void mouseWheel  ( const int, const int, const int );
 	void keyboard    ( const int );
 };
 
@@ -286,9 +286,9 @@ void GameHeader::update( Graphics &gr, const TCHAR *info, const int time, const 
 
 	TCHAR v[16];
 	if (time >= 0)
-		_sntprintf(v, sizeof(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
+		_sntprintf(v, std::size(v), _T("%6d:%02d:%02d"), time / 3600, (time / 60) % 60, time % 60);
 	else
-		_sntprintf(v, sizeof(v), _T("%8d:%03d"), static_cast<int>(len), rating);
+		_sntprintf(v, std::size(v), _T("%8d:%03d"), static_cast<int>(len), rating);
 	gr.draw_text(rc, GameHeader::font, Graphics::Color::Silver, Graphics::Alignment::Right, v);
 }
 
@@ -745,13 +745,11 @@ void Game::mouseRButton( const int _x, const int _y )
 	Game::command(Game::tab.mouseRButton(_x, _y));
 }
 
-void Game::mouseWheel( const int _x, const int _y, const int _d, const HWND hWnd )
+void Game::mouseWheel( const int _x, const int _y, const int _d )
 {
 	auto cell = Game::tab.getCell();
-	POINT cursor = { _x, _y };
-	ScreenToClient(hWnd, &cursor);
 
-	if ((Game::help != Assistance::None && TAB.contains(cursor)) || (cell != nullptr && cell->empty()))
+	if ((Game::help != Assistance::None && TAB.contains(_x, _y)) || (cell != nullptr && cell->empty()))
 		Game::command((Command)(Button0Cmd + (_d < 0 ? (Game::number == 0 ? 1 : 1 + (Game::number + 0) % 9)
 		                                             : (Game::number == 0 ? 9 : 1 + (Game::number + 7) % 9))));
 }
@@ -861,8 +859,9 @@ void Game::command( const Command _c )
 	case EditCmd:       Sudoku::discard();                    GameTimer::reset();
 	                    break;
 	case AcceptCmd:     Sudoku::accept();
+	                    if (GameTimer::now() == 0) GameTimer::start();
 	                    break;
-	case SaveCmd:       seconds = Game::timer_f ? GameTimer::now() : 0;
+	case SaveCmd:       seconds = GameTimer::now();
 	                    Sudoku::save({}, seconds);
 	                    break;
 	case LoadCmd:       if (Sudoku::load({}, &seconds))
@@ -893,18 +892,22 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	const int h = rc.bottom - rc.top;
 	const int k = GET_KEYSTATE_WPARAM(wParam);
 	const int d = GET_WHEEL_DELTA_WPARAM(wParam);
-	const int x = w > 0 ? (int)std::round((FLOAT)GET_X_LPARAM(lParam) * WIN.width  / (FLOAT)w) : 0;
-	const int y = h > 0 ? (int)std::round((FLOAT)GET_Y_LPARAM(lParam) * WIN.height / (FLOAT)h) : 0;
+	POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+	if (msg == WM_MOUSEWHEEL) // WM_MOUSEWHEEL provides screen coordinates
+		ScreenToClient(hWnd, &p);
+	const int x = w > 0 ? (int)std::round((FLOAT)p.x * WIN.width  / (FLOAT)w) : 0;
+	const int y = h > 0 ? (int)std::round((FLOAT)p.y * WIN.height / (FLOAT)h) : 0;
 
 	switch (msg)
 	{
-		case WM_PAINT:       game.update(hWnd);              break;
+		case WM_PAINT:       game.update(hWnd);
+		                     ValidateRect(hWnd, NULL);       break;
 		case WM_ERASEBKGND:  return TRUE;
 		case WM_MOUSEMOVE:   game.mouseMove(x, y, hWnd);     break;
 		case WM_MOUSELEAVE:  game.mouseLeave();              break;
 		case WM_LBUTTONDOWN: game.mouseLButton(x, y);        break;
 		case WM_RBUTTONDOWN: game.mouseRButton(x, y);        break;
-		case WM_MOUSEWHEEL:  game.mouseWheel(x, y, d, hWnd); break;
+		case WM_MOUSEWHEEL:  game.mouseWheel(x, y, d);       break;
 		case WM_KEYDOWN:     game.keyboard(k);               break;
 		case WM_DESTROY:     PostQuitMessage(0);             break;
 		default:             return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -923,7 +926,7 @@ int WINAPI _tWinMain( HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow )
 	wc.hInstance     = hInstance;
 	wc.hIcon         = NULL;
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
+	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wc.lpszMenuName  = NULL;
 	wc.lpszClassName = ::title;
 	RegisterClassEx(&wc);
@@ -936,7 +939,7 @@ int WINAPI _tWinMain( HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow )
 
 	HWND hWnd = CreateWindowEx(0, ::title, ::title, style,
 	                          (s.cx - w.cx) / 2, (s.cy - w.cy) / 2, w.cx, w.cy,
-	                          GetDesktopWindow(), NULL, hInstance, NULL);
+	                          NULL, NULL, hInstance, NULL);
 
 	if (!game.Graphics::init(hWnd))
 		return 0;
