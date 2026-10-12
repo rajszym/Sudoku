@@ -1,5 +1,5 @@
 # Sudoku
-Sudoku game, solver and generator using C++ and Python.
+Sudoku game, solver and generator using C++, C# and Python.
 
 ### Features
 - difficulty level: easy, medium / hard / expert, extreme.
@@ -20,6 +20,17 @@ The Python version (folder "*python*") requires [pygame](https://www.pygame.org)
 pip install pygame
 python sudoku.py
 ```
+
+### C# version (Avalonia)
+The C# version (folder "*avalonia*") requires the [.NET 9 SDK](https://dotnet.microsoft.com/download); the [Avalonia](https://avaloniaui.net) packages are downloaded automatically. It runs on Windows, Linux and macOS:
+```
+dotnet run
+```
+A single executable file that does not need .NET installed:
+```
+dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none
+```
+(use `linux-x64` or `osx-arm64` instead of `win-x64` for the other systems)
 
 ### [License](https://github.com/rajszym/Sudoku/blob/master/LICENSE)
 The project is licensed under the MIT license.
