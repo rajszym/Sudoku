@@ -14,5 +14,12 @@ Sudoku game, solver and generator using C++ and Python.
 - load: load layout from the file "*sudoku.board*".
 - quit: quit the game.
 
+### Python version
+The Python version (folder "*python*") requires [pygame](https://www.pygame.org):
+```
+pip install pygame
+python sudoku.py
+```
+
 ### [License](https://github.com/rajszym/Sudoku/blob/master/LICENSE)
 The project is licensed under the MIT license.
