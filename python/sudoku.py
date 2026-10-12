@@ -1548,8 +1548,10 @@ class Game(Sudoku):
 		elif c == Command.AcceptCmd:
 			self.wait()
 			self.accept()
+			if self.timer.now() == 0:
+				self.timer.start()
 		elif c == Command.SaveCmd:
-			seconds = self.timer.now() if self.timer_f else 0
+			seconds = self.timer.now()
 			self.save(None, seconds)
 		elif c == Command.LoadCmd:
 			self.wait()
