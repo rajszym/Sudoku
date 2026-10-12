@@ -22,7 +22,7 @@ python sudoku.py
 ```
 
 ### C# version (Avalonia)
-The C# version (folder "*avalonia*") requires the [.NET 9 SDK](https://dotnet.microsoft.com/download); the [Avalonia](https://avaloniaui.net) packages are downloaded automatically. It runs on Windows, Linux and macOS:
+The C# version (folder "*avalonia*") requires the [.NET 10 SDK](https://dotnet.microsoft.com/download); the [Avalonia](https://avaloniaui.net) packages are downloaded automatically. It runs on Windows, Linux and macOS:
 ```
 dotnet run
 ```
