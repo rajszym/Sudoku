@@ -33,6 +33,9 @@
 
 #include <list>
 #include <array>
+#include <climits>
+#include <functional>
+#include <numeric>
 #include <tuple>
 #include <vector>
 #include <utility>
