@@ -114,8 +114,28 @@ private:
 	HWND                     wnd;
 	LPDIRECT3D9              d3d;
 	LPDIRECT3DDEVICE9        dev;
+	D3DPRESENT_PARAMETERS    par;
+	bool                     lost;
 	std::vector<Font *>      fnt;
 	std::map<TextKey, Text>  txt;
+
+	void setup()
+	{
+		dev->SetFVF(Vertex::FVF);
+		dev->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);
+		dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
+
+		// color from the vertex; alpha from the vertex (shapes) or from the texture (texts)
+		dev->SetTextureStageState(0, D3DTSS_COLOROP,   D3DTOP_SELECTARG2);
+		dev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG2);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+		dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
+		dev->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+		dev->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+	}
 
 	static UINT pow2( LONG n )
 	{
@@ -494,7 +514,7 @@ public:
 		}
 	};
 
-	Graphics(): wnd{NULL}, d3d{NULL}, dev{NULL}, fnt{}
+	Graphics(): wnd{NULL}, d3d{NULL}, dev{NULL}, par{}, lost{false}, fnt{}
 	{
 	}
 
@@ -504,30 +524,25 @@ public:
 		d3d = Direct3DCreate9(D3D_SDK_VERSION);
 		if (d3d == NULL) return false;
 
-		D3DPRESENT_PARAMETERS d3dpp = {};
-		d3dpp.Windowed         = TRUE;
-		d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
-		d3dpp.hDeviceWindow    = wnd;
-	    d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+		// the size of the back buffer is fixed (it is stretched to the window),
+		// so the reset of the device does not change the size of the drawing
+		RECT rc;
+		GetClientRect(wnd, &rc);
 
+		par = {};
+		par.Windowed         = TRUE;
+		par.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+		par.hDeviceWindow    = wnd;
+		par.BackBufferFormat = D3DFMT_UNKNOWN;
+		par.BackBufferWidth  = rc.right > rc.left ? static_cast<UINT>(rc.right - rc.left) : 0;
+		par.BackBufferHeight = rc.bottom > rc.top ? static_cast<UINT>(rc.bottom - rc.top) : 0;
+
+		D3DPRESENT_PARAMETERS d3dpp = par; // CreateDevice may modify the parameters
 		HRESULT hr;
 		hr = d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &dev);
 		if (FAILED(hr)) return false;
 
-		dev->SetFVF(Vertex::FVF);
-		dev->SetRenderState(D3DRS_SRCBLEND,  D3DBLEND_SRCALPHA);
-		dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-		dev->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-		dev->SetRenderState(D3DRS_LIGHTING, FALSE);
-
-		// color from the vertex; alpha from the vertex (shapes) or from the texture (texts)
-		dev->SetTextureStageState(0, D3DTSS_COLOROP,   D3DTOP_SELECTARG2);
-		dev->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-		dev->SetTextureStageState(0, D3DTSS_ALPHAOP,   D3DTOP_SELECTARG2);
-		dev->SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-		dev->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-		dev->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
-		dev->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+		setup();
 
 		return true;
 	}
@@ -561,6 +576,23 @@ public:
 
 	void begin( const Color &c )
 	{
+		if (lost)
+		{
+			// e.g. after locking the screen; the textures are managed, so they survive the reset
+			HRESULT hr = dev->TestCooperativeLevel();
+			if (hr == D3DERR_DEVICENOTRESET)
+			{
+				D3DPRESENT_PARAMETERS d3dpp = par;
+				hr = dev->Reset(&d3dpp);
+				if (SUCCEEDED(hr))
+					setup();
+			}
+			if (SUCCEEDED(hr))
+				lost = false;
+			else
+				Sleep(50); // the device cannot be restored yet; the drawing is ignored
+		}
+
 		dev->Clear(0, NULL, D3DCLEAR_TARGET, c, 1.0f, 0);
 		dev->BeginScene();
 	}
@@ -568,7 +600,8 @@ public:
 	void end()
 	{
 		dev->EndScene();
-		dev->Present(NULL, NULL, NULL, NULL);
+		if (dev->Present(NULL, NULL, NULL, NULL) == D3DERR_DEVICELOST)
+			lost = true;
 	}
 
 	void draw_line( const Rect &r, const Color &c )

@@ -900,7 +900,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 	switch (msg)
 	{
-		case WM_PAINT:       game.update(hWnd);              break;
+		case WM_PAINT:       game.update(hWnd);
+		                     ValidateRect(hWnd, NULL);       break;
 		case WM_ERASEBKGND:  return TRUE;
 		case WM_MOUSEMOVE:   game.mouseMove(x, y, hWnd);     break;
 		case WM_MOUSELEAVE:  game.mouseLeave();              break;
@@ -925,7 +926,7 @@ int WINAPI _tWinMain( HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow )
 	wc.hInstance     = hInstance;
 	wc.hIcon         = NULL;
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
+	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wc.lpszMenuName  = NULL;
 	wc.lpszClassName = ::title;
 	RegisterClassEx(&wc);
@@ -938,7 +939,7 @@ int WINAPI _tWinMain( HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow )
 
 	HWND hWnd = CreateWindowEx(0, ::title, ::title, style,
 	                          (s.cx - w.cx) / 2, (s.cy - w.cy) / 2, w.cx, w.cy,
-	                          GetDesktopWindow(), NULL, hInstance, NULL);
+	                          NULL, NULL, hInstance, NULL);
 
 	if (!game.Graphics::init(hWnd))
 		return 0;
@@ -960,6 +961,9 @@ int WINAPI _tWinMain( HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow )
 		}
 
 		game.update(hWnd);
+
+		// GDI+ does not wait for the vertical sync: limit the frame rate (wakes up on input)
+		MsgWaitForMultipleObjects(0, NULL, FALSE, 15, QS_ALLINPUT);
 	}
 
 	return 0;

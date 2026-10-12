@@ -733,6 +733,9 @@ void Game::run()
 		int x, y, s, k;
 		INPUT_RECORD input;
 
+		// do not poll the console in a busy loop (wakes up on input)
+		WaitForSingleObject(Console::Cin, 15);
+
 		if (Console::GetInput(&input))
 		{
 			switch (input.EventType)

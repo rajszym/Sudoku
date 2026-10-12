@@ -492,6 +492,39 @@ public:
 		}
 	}
 
+	// the cells are linked with their neighbours, so only the values can be copied
+	Sudoku( const Sudoku &s ): Sudoku(s.level)
+	{
+		Sudoku::assign(s);
+	}
+
+	Sudoku &operator=( const Sudoku &s )
+	{
+		if (this != &s)
+			Sudoku::assign(s);
+
+		return *this;
+	}
+
+private:
+
+	void assign( const Sudoku &s )
+	{
+		for (Cell &c: *this)
+		{
+			c.num       = s[c.pos].num;
+			c.immutable = s[c.pos].immutable;
+		}
+
+		Sudoku::mem.clear();
+		Sudoku::level     = s.level;
+		Sudoku::rating    = s.rating;
+		Sudoku::signature = s.signature;
+		Sudoku::duration  = s.duration;
+	}
+
+public:
+
 	uint len()
 	{
 		auto result = std::ranges::count_if(*this, []( Cell &c ){ return c.num != 0; });
@@ -890,8 +923,10 @@ public:
 		}
 		else
 		{
+			bool changed = std::ranges::any_of(*this, []( Cell &c ){ return !c.immutable && c.num != 0; });
 			Sudoku::again();
-			Sudoku::specify_layout();
+			if (changed || Sudoku::rating == 0) // otherwise the accepted layout is already specified
+				Sudoku::specify_layout();
 			return true;
 		}
 	}

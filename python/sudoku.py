@@ -578,8 +578,10 @@ class Sudoku(list):
 			cell.num = n
 			return False
 		else:
+			changed = any(not c.immutable and c.num != 0 for c in self)
 			self.again()
-			self.specify_layout()
+			if changed or self.rating == 0: # otherwise the accepted layout is already specified
+				self.specify_layout()
 			return True
 
 	def parse_rating(self):
