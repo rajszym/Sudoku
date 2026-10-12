@@ -1,0 +1,6 @@
+# build output (makefile)
+build/
+
+# saved game
+sudoku.board
+sudoku.board.html
