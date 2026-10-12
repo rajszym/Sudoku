@@ -47,6 +47,7 @@ class Graphics
 	Gdiplus::Pen                *pen;
 	Gdiplus::SolidBrush         *brush;
 	std::vector<Gdiplus::Font *> fnt;
+	SIZE                         size; // client size at initialization (size of the drawing)
 
 public:
 
@@ -202,13 +203,18 @@ public:
 		}
 	};
 
-	Graphics(): wnd{NULL}, token{}, bm{nullptr}, gr{nullptr}, pen{nullptr}, brush{nullptr}, fnt{}
+	Graphics(): wnd{NULL}, token{}, bm{nullptr}, gr{nullptr}, pen{nullptr}, brush{nullptr}, fnt{}, size{}
 	{
 	}
 
 	bool init( HWND hWnd )
 	{
 		wnd = hWnd;
+
+		RECT rc;
+		GetClientRect(wnd, &rc);
+		size = { rc.right - rc.left, rc.bottom - rc.top };
+
 		Gdiplus::GdiplusStartupInput si = {};
 		auto status = Gdiplus::GdiplusStartup(&token, &si, NULL);
 		if (status != Gdiplus::Status::Ok) return false;
@@ -236,6 +242,13 @@ public:
 	{
 		Font *font = new Gdiplus::Font(f, h * 0.6f, s);
 
+		if (font != nullptr && font->GetLastStatus() != Gdiplus::Status::Ok)
+		{
+			// the font family is not installed: use the generic one
+			delete font;
+			font = new Gdiplus::Font(Gdiplus::FontFamily::GenericSansSerif(), h * 0.6f, s);
+		}
+
 		if (font != nullptr)
 			fnt.push_back(font);
 
@@ -251,8 +264,14 @@ public:
 	{
 		RECT rc;
 		GetClientRect(wnd, &rc);
-		bm = new Gdiplus::Bitmap(rc.right - rc.left, rc.bottom - rc.top);
+		const INT w = rc.right > rc.left ? static_cast<INT>(rc.right - rc.left) : 1;
+		const INT h = rc.bottom > rc.top ? static_cast<INT>(rc.bottom - rc.top) : 1;
+		bm = new Gdiplus::Bitmap(w, h);
 		gr = Gdiplus::Graphics::FromImage(bm);
+		// scale the drawing to the current size of the window
+		if (size.cx > 0 && size.cy > 0)
+			gr->ScaleTransform(static_cast<Gdiplus::REAL>(w) / static_cast<Gdiplus::REAL>(size.cx),
+			                   static_cast<Gdiplus::REAL>(h) / static_cast<Gdiplus::REAL>(size.cy));
 		gr->Clear(c);
 	}
 
