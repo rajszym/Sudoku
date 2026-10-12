@@ -1,0 +1,4 @@
+bin/
+obj/
+sudoku.board
+sudoku.board.html

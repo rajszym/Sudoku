@@ -1026,7 +1026,7 @@ class GameCell:
 			cell = self.cell
 			allowed = self.allowed(number, help)
 			sure    = cell.sure(number) if allowed and help >= Assistance.Sure else 0
-			full    = cell.sure()       if not allowed and help == Assistance.Full else 0
+			full    = cell.sure(number) if not allowed and help == Assistance.Full else 0
 			self.info = allowed, sure, full
 		return self.info
 
