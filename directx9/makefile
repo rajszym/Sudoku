@@ -5,7 +5,7 @@ BUILD      := # build folder name
 DEFS       := WINDOWS UNICODE
 INCS       :=
 SRCS       := sudoku.cpp
-LIBS       := -ld3d9 -ld3dx9
+LIBS       := -ld3d9 -lgdi32
 
 #----------------------------------------------------------#
 

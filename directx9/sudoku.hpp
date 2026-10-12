@@ -41,6 +41,7 @@
 #include <iomanip>
 #include <fstream>
 #include <random>
+#include <stdexcept>
 #include <tchar.h>
 
 class SudokuCell;
@@ -1087,7 +1088,16 @@ public:
 				sudoku.level = (l > Difficulty::Any && l <= Difficulty::Extreme) ? l : Difficulty::Medium;
 			}
 			if (line.size() > 100)
-				sudoku.duration = std::stoi(line.substr(100));
+			{
+				try
+				{
+					sudoku.duration = std::stoi(line.substr(100));
+				}
+				catch (const std::exception &)
+				{
+					sudoku.duration = 0;
+				}
+			}
 			if (line.size() > 0)
 				sudoku.init(line.substr(0, 81));
 		}
